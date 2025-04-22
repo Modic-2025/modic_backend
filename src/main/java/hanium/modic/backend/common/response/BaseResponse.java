@@ -1,0 +1,16 @@
+package hanium.modic.backend.common.response;
+
+import org.springframework.http.HttpStatusCode;
+
+import lombok.Getter;
+
+@Getter
+public abstract class BaseResponse {
+	private final boolean isSuccess;
+	private final int status;
+
+	protected BaseResponse(boolean isSuccess, HttpStatusCode status) {
+		this.isSuccess = isSuccess;
+		this.status = status.value();
+	}
+}
