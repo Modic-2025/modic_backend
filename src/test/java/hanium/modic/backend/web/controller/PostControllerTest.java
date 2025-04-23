@@ -11,10 +11,14 @@ import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.dto.CreatePostRequest;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -77,109 +81,88 @@ class PostControllerTest {
         );
     }
 
-    @Test
-    @DisplayName("게시물 생성 요청 실패 - 제목 누락")
-    void createPost_MissingTitle_ShouldReturn400AndErrorMessage() throws Exception {
-        // given
-        CreatePostRequest req = new CreatePostRequest(
-                null,
-                "설명",
-                0L,
-                0L,
-                List.of("url")
-        );
-        String json = objectMapper.writeValueAsString(req);
+    @ParameterizedTest(name = "[{index}] {2}")
+    @MethodSource("invalidCreatePostRequests")
+    void createPost_InvalidRequest_ShouldReturn400AndErrorMessage(CreatePostRequest request,
+                                                                  String expectedErrorMessage, String displayName)
+            throws Exception {
+        String json = objectMapper.writeValueAsString(request);
 
-        // when, then
         mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason[0]").value("제목은 필수입니다."));
+                .andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
     }
 
-    @Test
-    @DisplayName("게시물 생성 요청 실패 - 상업적 가격 음수")
-    void createPost_NullCommercialPrice_ShouldReturn400AndErrorMessage() throws Exception {
-        // given
-        CreatePostRequest req = new CreatePostRequest(
-                "제목",
-                "설명",
-                null,
-                0L,
-                List.of("url")
+    static Stream<Arguments> invalidCreatePostRequests() {
+        return Stream.of(
+                Arguments.of(
+                        new CreatePostRequest(
+                                null,
+                                "설명",
+                                0L,
+                                0L,
+                                List.of("url")
+                        ),
+                        "제목은 필수입니다.",
+                        "제목 누락"
+                ),
+                Arguments.of(
+                        new CreatePostRequest(
+                                "제목",
+                                "설명",
+                                null,
+                                0L,
+                                List.of("url")
+                        ),
+                        "상업적 가격은 필수입니다.",
+                        "상업적 가격 누락"
+                ),
+                Arguments.of(
+                        new CreatePostRequest(
+                                "제목",
+                                "설명",
+                                0L,
+                                null,
+                                List.of("url")
+                        ),
+                        "비상업적 가격은 필수입니다.",
+                        "비상업적 가격 누락"
+                ),
+                Arguments.of(
+                        new CreatePostRequest(
+                                "제목",
+                                "설명",
+                                0L,
+                                -1L,
+                                List.of("url")
+                        ),
+                        "비상업적 가격은 0 이상이어야 합니다.",
+                        "비상업적 가격 음수"
+                ),
+                Arguments.of(
+                        new CreatePostRequest(
+                                "제목",
+                                "설명",
+                                0L,
+                                0L,
+                                null
+                        ),
+                        "이미지는 필수입니다.",
+                        "이미지 누락"
+                ),
+                Arguments.of(
+                        new CreatePostRequest(
+                                "제목",
+                                "설명",
+                                0L,
+                                0L,
+                                Collections.nCopies(9, "url")
+                        ),
+                        "이미지는 최대 8개까지 업로드 가능합니다.",
+                        "이미지 개수 초과"
+                )
         );
-        String json = objectMapper.writeValueAsString(req);
-
-        // when, then
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason[0]").value("상업적 가격은 필수입니다."));
-    }
-
-    @Test
-    @DisplayName("게시물 생성 요청 실패 - 비상업적 가격 음수")
-    void createPost_NegativeNonCommercialPrice_ShouldReturn400AndErrorMessage() throws Exception {
-        // given
-        CreatePostRequest req = new CreatePostRequest(
-                "제목",
-                "설명",
-                0L,
-                -1L,
-                List.of("url")
-        );
-        String json = objectMapper.writeValueAsString(req);
-
-        // when, then
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason[0]").value("비상업적 가격은 0 이상이어야 합니다."));
-    }
-
-    @Test
-    @DisplayName("게시물 생성 요청 실패 - 이미지 URL 누락")
-    void createPost_NullImageUrls_ShouldReturn400AndErrorMessage() throws Exception {
-        // given
-        CreatePostRequest req = new CreatePostRequest(
-                "제목",
-                "설명",
-                0L,
-                0L,
-                null
-        );
-        String json = objectMapper.writeValueAsString(req);
-
-        // when, then
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason[0]").value("이미지는 필수입니다."));
-    }
-
-    @Test
-    @DisplayName("게시물 생성 요청 실패 - 이미지 URL 개수 초과")
-    void createPost_TooManyImages_ShouldReturn400AndErrorMessage() throws Exception {
-        // given
-        List<String> nineUrls = Collections.nCopies(9, "url");
-        CreatePostRequest req = new CreatePostRequest(
-                "제목",
-                "설명",
-                0L,
-                0L,
-                nineUrls
-        );
-        String json = objectMapper.writeValueAsString(req);
-
-        // when, then
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason[0]").value("이미지는 최대 8개까지 업로드 가능합니다."));
     }
 }
