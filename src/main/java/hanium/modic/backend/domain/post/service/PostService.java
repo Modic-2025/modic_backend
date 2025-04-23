@@ -19,14 +19,14 @@ public class PostService {
 
     @Transactional
     public void createPost(final String title, final String description, final Long commercialPrice,
-                           final Long noncommercialPrice,
+                           final Long nonCommercialPrice,
                            final List<String> imageUrls) {
 
         PostEntity postEntity = PostEntity.builder()
                 .title(title)
                 .description(description)
                 .commercialPrice(commercialPrice)
-                .nonCommercialPrice(noncommercialPrice)
+                .nonCommercialPrice(nonCommercialPrice)
                 .build();
 
         postEntityRepository.save(postEntity);
