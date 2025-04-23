@@ -68,7 +68,7 @@ class PostControllerIntegrationTest {
         assertThat(postImageEntityRepository.count()).isEqualTo(2);
 
         var saved = postEntityRepository.findAll().get(0);
-        var images = postImageEntityRepository.findByPostEntity(saved);
+        var images = postImageEntityRepository.findAllByPostId(saved.getId());
         assertThat(saved.getTitle()).isEqualTo("테스트제목");
         assertThat(saved.getDescription()).isEqualTo("테스트 설명");
         assertThat(saved.getCommercialPrice()).isEqualTo(10000L);

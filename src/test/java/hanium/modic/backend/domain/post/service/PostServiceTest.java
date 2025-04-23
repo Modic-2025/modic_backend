@@ -9,6 +9,7 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import java.util.List;
+import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +58,7 @@ class PostServiceTest {
 
         List<PostImageEntity> savedImages = imageCaptor.getValue();
         assertThat(savedImages).hasSize(2);
-        assertThat(savedImages).allMatch(image -> image.getPostEntity() == savedPost);
+        assertThat(savedImages).allMatch(image -> Objects.equals(image.getPostId(), savedPost.getId()));
         assertThat(savedImages).extracting(PostImageEntity::getImageUrl)
                 .containsExactlyInAnyOrderElementsOf(imageUrls);
     }
