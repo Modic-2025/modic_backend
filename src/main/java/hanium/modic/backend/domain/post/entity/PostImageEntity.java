@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.post.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -25,13 +26,12 @@ public class PostImageEntity {
 
     private String imageUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
-    private PostEntity postEntity;
+    @Column(name = "post_id", nullable = false)
+    private Long postId;
 
     @Builder
     public PostImageEntity(String imageUrl, PostEntity postEntity) {
         this.imageUrl = imageUrl;
-        this.postEntity = postEntity;
+        this.postId = postEntity.getId();
     }
 }
