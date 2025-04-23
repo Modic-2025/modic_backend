@@ -4,6 +4,7 @@ import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.web.dto.CreatePostRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,6 +45,7 @@ class PostControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("게시물 등록 요청 API")
     void createPost_ValidRequest_ShouldReturn200AndPersistData() throws Exception {
         // given
         CreatePostRequest request = new CreatePostRequest(
