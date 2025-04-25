@@ -1,18 +1,12 @@
 package hanium.modic.backend.web.controller;
 
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hanium.modic.backend.common.error.exception.handler.GlobalExceptionHandler;
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.EntityNotFoundException;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.dto.CreatePostRequest;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
+import hanium.modic.backend.web.dto.GetPostResponse;
+import hanium.modic.backend.web.dto.PageResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,37 +14,57 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(controllers = PostController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @ExtendWith(MockitoExtension.class)
 class PostControllerTest {
 
     @InjectMocks
     private PostController postController;
 
-    @Mock
+    @MockitoBean
     private PostService postService;
 
+    @Autowired
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeEach
-    void setUp() {
-        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-        validator.afterPropertiesSet();
-
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(postController)
-                .setValidator(validator)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
-    }
+//    @BeforeEach
+//    void setUp() {
+//        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+//        validator.afterPropertiesSet();
+//
+//        mockMvc = MockMvcBuilders
+//                .standaloneSetup(postController)
+//                .setValidator(validator)
+//                .setControllerAdvice(new GlobalExceptionHandler())
+//                .build();
+//    }
 
     @Test
     @DisplayName("게시물 생성 요청 성공")
@@ -83,6 +97,7 @@ class PostControllerTest {
 
     @ParameterizedTest(name = "[{index}] {2}")
     @MethodSource("invalidCreatePostRequests")
+    @DisplayName("게시물 생성 요청 실패 - 잘못된 요청")
     void createPost_InvalidRequest_ShouldReturn400AndErrorMessage(CreatePostRequest request,
                                                                   String expectedErrorMessage, String displayName)
             throws Exception {
@@ -163,6 +178,127 @@ class PostControllerTest {
                         "이미지는 최대 8개까지 업로드 가능합니다.",
                         "이미지 개수 초과"
                 )
+        );
+    }
+
+    @Test
+    @DisplayName("게시물 단일 조회 성공")
+    void getPost_Success() throws Exception {
+        // given
+        Long postId = 1L;
+        GetPostResponse response = new GetPostResponse(
+                1L, "제목", "설명", 10000L, 5000L, List.of("http://img1.jpg"));
+
+        when(postService.getPost(postId)).thenReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(response.id()))
+                .andExpect(jsonPath("$.data.title").value(response.title()))
+                .andExpect(jsonPath("$.data.description").value(response.description()));
+    }
+
+    @Test
+    @DisplayName("게시물 단일 조회 실패 - 존재하지 않는 게시물")
+    void getPost_NotFound() throws Exception {
+        // given
+        Long postId = 999L;
+        when(postService.getPost(postId)).thenThrow(new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+        // when & then
+        mockMvc.perform(get("/api/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage()))
+                .andDo(result -> {
+                    System.out.println("NotFound 응답: " + result.getResponse().getContentAsString());
+                });
+    }
+
+    @Test
+    @DisplayName("게시물 목록 조회 성공 - 기본 파라미터")
+    void getPosts_DefaultParams_Success() throws Exception {
+        // given
+        GetPostResponse post1 = new GetPostResponse(
+                1L, "제목1", "설명1", 10000L, 5000L, List.of("http://img1.jpg"));
+        GetPostResponse post2 = new GetPostResponse(
+                2L, "제목2", "설명2", 20000L, 8000L, List.of("http://img2.jpg"));
+
+        List<GetPostResponse> content = List.of(post1, post2);
+        Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
+        PageResponse<GetPostResponse> pageResponse = PageResponse.of(page);
+
+        when(postService.getPosts(any(String.class), anyInt(), anyInt())).thenReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(2))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(10))
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(1));
+    }
+
+    @ParameterizedTest(name = "[{index}] sort={0}, page={1}, size={2}")
+    @DisplayName("게시물 목록 조회 성공 - RequestParam 전달")
+    @MethodSource("provideValidParameters")
+    void getPosts_WithParameterizedPaging_Success(String sort, int pageNumber, int size, long totalElements) throws Exception {
+        // given
+        GetPostResponse post = new GetPostResponse(
+                1L, "제목", "설명", 10000L, 5000L, List.of("http://img1.jpg"));
+
+        List<GetPostResponse> content = List.of(post);
+        Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
+        PageResponse<GetPostResponse> pageResponse = PageResponse.of(page);
+
+        when(postService.getPosts(sort, pageNumber, size)).thenReturn(pageResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/posts")
+                        .param("sort", sort)
+                        .param("page", String.valueOf(pageNumber))
+                        .param("size", String.valueOf(size))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content.length()").value(1))
+                .andExpect(jsonPath("$.data.page").value(pageNumber))
+                .andExpect(jsonPath("$.data.size").value(size))
+                .andExpect(jsonPath("$.data.totalElements").value(totalElements))
+                .andExpect(jsonPath("$.data.totalPages").value((int) Math.ceil((double) totalElements / size)));
+    }
+
+    static Stream<Arguments> provideValidParameters() {
+        String sort = "LATEST";
+        return Stream.of(
+                Arguments.of(sort, 0, 10, 11),
+                Arguments.of(sort, 10, 20, 201)
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}={1}")
+    @DisplayName("게시물 목록 조회 실패 - 잘못된 RequestParam")
+    @MethodSource("provideInvalidPagingParameters")
+    void getPosts_InvalidPagingParam(String paramName, String paramValue) throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/posts")
+                        .param(paramName, paramValue)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").exists())
+                .andDo(result -> System.out.println("응답: " + result.getResponse().getContentAsString()));
+    }
+
+    static Stream<Arguments> provideInvalidPagingParameters() {
+        return Stream.of(
+                Arguments.of("page", "-1"),
+                Arguments.of("size", "9"),
+                Arguments.of("size", "21")
         );
     }
 }
