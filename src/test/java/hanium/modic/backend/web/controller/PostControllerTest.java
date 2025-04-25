@@ -98,8 +98,7 @@ class PostControllerTest {
     @ParameterizedTest(name = "[{index}] {2}")
     @MethodSource("invalidCreatePostRequests")
     @DisplayName("게시물 생성 요청 실패 - 잘못된 요청")
-    void createPost_InvalidRequest_ShouldReturn400AndErrorMessage(CreatePostRequest request,
-                                                                  String expectedErrorMessage, String displayName)
+    void createPost_InvalidRequest_ShouldReturn400AndErrorMessage(CreatePostRequest request, String expectedErrorMessage)
             throws Exception {
         String json = objectMapper.writeValueAsString(request);
 
@@ -211,10 +210,7 @@ class PostControllerTest {
         mockMvc.perform(get("/api/posts/{id}", postId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value(ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage()))
-                .andDo(result -> {
-                    System.out.println("NotFound 응답: " + result.getResponse().getContentAsString());
-                });
+                .andExpect(jsonPath("$.message").value(ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage()));
     }
 
     @Test
@@ -290,8 +286,7 @@ class PostControllerTest {
                         .param(paramName, paramValue)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason").exists())
-                .andDo(result -> System.out.println("응답: " + result.getResponse().getContentAsString()));
+                .andExpect(jsonPath("$.reason").exists());
     }
 
     static Stream<Arguments> provideInvalidPagingParameters() {
