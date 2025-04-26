@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.post.dto;
+package hanium.modic.backend.web.post.dto.response;
 
 import java.util.List;
 

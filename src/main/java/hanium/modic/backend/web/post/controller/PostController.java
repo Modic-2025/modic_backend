@@ -2,8 +2,8 @@ package hanium.modic.backend.web.post.controller;
 
 import hanium.modic.backend.common.response.ApiResponse;
 import hanium.modic.backend.domain.post.service.PostService;
-import hanium.modic.backend.web.post.dto.CreatePostRequest;
-import hanium.modic.backend.web.post.dto.GetPostResponse;
+import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
+import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -25,7 +25,7 @@ public class PostController {
     @PostMapping
     public void createPost(@RequestBody @Valid CreatePostRequest request) {
         postService.createPost(request.title(), request.description(), request.commercialPrice(),
-                request.nonCommercialPrice(), request.imageUrls());
+                request.nonCommercialPrice(), request.imageIds());
     }
 
     @GetMapping("/{id}")

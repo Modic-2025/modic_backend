@@ -7,6 +7,7 @@ public enum ImagePrefix {
 	PROFILE("profile"),
 	AI_REQUEST("ai-request"),
 	AI_RESPONSE("ai-response"),
+	POST("post"),
 	;
 
 	private final String prefix;
