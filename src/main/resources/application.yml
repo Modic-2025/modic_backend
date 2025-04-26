@@ -19,7 +19,21 @@ spring:
 cloud:
   aws:
     s3:
-      bucket-name: ${S3_BUCKET_NAME}
+      bucketName: ${S3_BUCKET_NAME}
       region: ${AWS_REGION}
-      access-key: ${AWS_ACCESS_KEY}
-      secret-key: ${AWS_SECRET_KEY}
+      accessKey: ${AWS_ACCESS_KEY}
+      secretKey: ${AWS_SECRET_KEY}
+
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json;charset=UTF-8
+
+swagger:
+  url: ${SWAGGER_URL}
