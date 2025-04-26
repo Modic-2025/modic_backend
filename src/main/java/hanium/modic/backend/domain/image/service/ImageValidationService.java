@@ -26,7 +26,7 @@ public class ImageValidationService {
 
 	// 파일 이름 유효성 검사
 	public void validateFullFileName(String fileName) {
-		if (fileName == null && fileName.isEmpty()) {
+		if (fileName == null || fileName.isEmpty()) {
 			throw new AppException(INVALID_IMAGE_FILE_NAME_EXCEPTION);
 		}
 
