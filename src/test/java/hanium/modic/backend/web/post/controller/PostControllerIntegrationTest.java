@@ -1,8 +1,8 @@
-package hanium.modic.backend.web.controller;
+package hanium.modic.backend.web.post.controller;
 
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.web.dto.CreatePostRequest;
+import hanium.modic.backend.web.post.dto.CreatePostRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

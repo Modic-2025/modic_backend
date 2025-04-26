@@ -1,12 +1,13 @@
-package hanium.modic.backend.web.controller;
+package hanium.modic.backend.web.post.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.EntityNotFoundException;
 import hanium.modic.backend.domain.post.service.PostService;
-import hanium.modic.backend.web.dto.CreatePostRequest;
-import hanium.modic.backend.web.dto.GetPostResponse;
-import hanium.modic.backend.web.dto.PageResponse;
+import hanium.modic.backend.web.post.dto.CreatePostRequest;
+import hanium.modic.backend.web.post.dto.GetPostResponse;
+import hanium.modic.backend.common.response.PageResponse;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
