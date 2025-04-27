@@ -16,7 +16,6 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 
 @Service
-@Transactional(readOnly = true)
 public class PostImageService extends ImageService {
 
 	private final PostImageEntityRepository postImageEntityRepository;
@@ -35,6 +34,7 @@ public class PostImageService extends ImageService {
 
 	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
 	@Override
+	@Transactional(readOnly = true)
 	public String createImageGetUrl(Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
@@ -42,13 +42,14 @@ public class PostImageService extends ImageService {
 	}
 
 	// 이미지 삭제
+	// Transactional 안 묶음. 각 delete 메서드 실패 시 RuntTimeException으로 롤백, 동시 삭제 요청오면 한쪽만 성공
 	@Override
 	public void deleteImage(Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
-		imageUtil.deleteImage(image.getImagePath());
 		postImageEntityRepository.delete(image);
+		imageUtil.deleteImage(image.getImagePath());
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장

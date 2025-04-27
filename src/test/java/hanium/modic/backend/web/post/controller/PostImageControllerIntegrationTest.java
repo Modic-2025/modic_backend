@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayInputStream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityCreator.ImageCreator;
 import hanium.modic.backend.domain.post.entityCreator.PostCreator;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.PostImageService;
 import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
@@ -38,6 +40,14 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	private PostImageService postImageService;
 	@Autowired
 	private PostImageEntityRepository postImageEntityRepository;
+	@Autowired
+	private PostEntityRepository postEntityRepository;
+
+	@BeforeEach
+	void setUp() {
+		postImageEntityRepository.deleteAll();
+		postEntityRepository.deleteAll();
+	}
 
 	@Test
 	@DisplayName("이미지 저장 URL 생성 성공")

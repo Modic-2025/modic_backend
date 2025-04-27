@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @EntityListeners(AuditingEntityListener.class)
 public class Image {
 
-	@Column(nullable = false, unique = true)
+	@Column(nullable = false)
 	private String imagePath;
 
 	@Column(nullable = false)
