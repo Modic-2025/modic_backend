@@ -18,7 +18,7 @@ public abstract class ImageService {
 		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
 	}
 
-	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
+	// 이미지의 접근 권한에 맞게 영구 URL 생성 or 임시 조회 가능 URL 생성
 	public abstract String createImageGetUrl(Long id);
 
 	// 이미지 삭제
