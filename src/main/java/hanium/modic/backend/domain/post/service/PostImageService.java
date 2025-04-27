@@ -56,6 +56,7 @@ public class PostImageService extends ImageService {
 	public Long saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);
+		validateDuplicatedImagePath(imagePath);
 
 		String[] fileNameParts = fullFileName.split("\\.");
 		String fileName = fileNameParts[0];
@@ -73,5 +74,12 @@ public class PostImageService extends ImageService {
 		);
 
 		return image.getId();
+	}
+
+	// 이미지 경로가 중복되면 에러
+	private void validateDuplicatedImagePath(String imagePath) {
+		if (postImageEntityRepository.existsByImagePath(imagePath)) {
+			throw new AppException(IMAGE_PATH_DUPLICATED_EXCEPTION);
+		}
 	}
 }
