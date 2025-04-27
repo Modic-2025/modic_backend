@@ -91,7 +91,7 @@ class PostServiceTest {
 		// Given
 		Long postId = 1L;
 		PostEntity mockPost = PostCreator.createMockPost(postId);
-		List<PostImageEntity> mockImages = ImageCreator.createMockPostImages(postId);
+		List<PostImageEntity> mockImages = ImageCreator.createMockPostImages(mockPost);
 		List<String> expectedImageUrls = mockImages.stream()
 			.map(PostImageEntity::getImageUrl)
 			.toList();
@@ -148,8 +148,8 @@ class PostServiceTest {
 			PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA),
 			mockPosts.size());
 
-		List<PostImageEntity> mockImagesForPost1 = ImageCreator.createMockPostImages(1L);
-		List<PostImageEntity> mockImagesForPost2 = ImageCreator.createMockPostImages(2L);
+		List<PostImageEntity> mockImagesForPost1 = ImageCreator.createMockPostImages(mockPosts.get(0));
+		List<PostImageEntity> mockImagesForPost2 = ImageCreator.createMockPostImages(mockPosts.get(1));
 
 		when(postEntityRepository.findAll(any(Pageable.class))).thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostId(1L)).thenReturn(mockImagesForPost1);

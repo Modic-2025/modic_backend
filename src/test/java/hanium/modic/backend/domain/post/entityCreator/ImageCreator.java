@@ -10,9 +10,7 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 
 public class ImageCreator {
 
-	public static List<PostImageEntity> createMockPostImages(Long postId) {
-		PostEntity postEntity = PostCreator.createMockPost(postId);
-
+	public static List<PostImageEntity> createMockPostImages(PostEntity postEntity) {
 		return Arrays.asList(
 			PostImageEntity.builder()
 				.imagePath("imagePath1")
@@ -33,5 +31,17 @@ public class ImageCreator {
 				.postEntity(postEntity)
 				.build()
 		);
+	}
+
+	public static PostImageEntity createMockPostImage(PostEntity postEntity ) {
+		return PostImageEntity.builder()
+			.imagePath("imagePath1")
+			.imageUrl("http://dqweq2ejh93-img1.jpg")
+			.fullImageName("img1.jpg")
+			.imageName("img1")
+			.extension(ImageExtension.JPG)
+			.imagePurpose(ImagePrefix.POST)
+			.postEntity(postEntity)
+			.build();
 	}
 }
