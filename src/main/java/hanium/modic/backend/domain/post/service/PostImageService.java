@@ -27,7 +27,7 @@ public class PostImageService extends ImageService {
 		ImageValidationService imageValidationService,
 		PostImageEntityRepository postImageEntityRepository
 	) {
-		super(imageValidationService,imageUtil);
+		super(imageValidationService, imageUtil);
 		this.postImageEntityRepository = postImageEntityRepository;
 		this.imageValidationService = imageValidationService;
 	}
