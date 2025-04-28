@@ -20,7 +20,7 @@ import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.post.entityCreator.ImageCreator;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +44,7 @@ class PostImageServiceTest {
 		// given
 		final Long postId = 1L;
 		final Long imageId = 1L;
-		PostImageEntity postImageEntity = ImageCreator.createMockPostImage(null);
+		PostImageEntity postImageEntity = ImageFactory.createMockPostImage(null);
 
 		when(postImageEntityRepository.findById(imageId)).thenReturn(Optional.of(postImageEntity));
 
@@ -77,7 +77,7 @@ class PostImageServiceTest {
 		// given
 		final Long postId = 1L;
 		final Long imageId = 1L;
-		PostImageEntity postImageEntity = ImageCreator.createMockPostImage(null);
+		PostImageEntity postImageEntity = ImageFactory.createMockPostImage(null);
 
 		when(postImageEntityRepository.findById(imageId)).thenReturn(Optional.of(postImageEntity));
 
@@ -110,7 +110,7 @@ class PostImageServiceTest {
 	@DisplayName("saveImage - 저장 성공")
 	void saveImage_success() {
 		// given
-		PostImageEntity postImageEntity = ImageCreator.createMockPostImage(null);
+		PostImageEntity postImageEntity = ImageFactory.createMockPostImage(null);
 
 		when(imageUtil.createImageUrl(postImageEntity.getImagePurpose(), postImageEntity.getImagePath()))
 			.thenReturn("https://s3.bucket/path/to/image.jpg");
@@ -172,7 +172,7 @@ class PostImageServiceTest {
 	@DisplayName("saveImage - 이미지가 저장되어 있지 않으면 예외 발생")
 	void saveImage_fail_imageNotStored() {
 		// given
-		PostImageEntity postImageEntity = ImageCreator.createMockPostImage(null);
+		PostImageEntity postImageEntity = ImageFactory.createMockPostImage(null);
 
 		doThrow(new AppException(IMAGE_NOT_STORE_EXCEPTION))
 			.when(imageValidationService)

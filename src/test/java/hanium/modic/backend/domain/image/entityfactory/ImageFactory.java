@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.post.entityCreator;
+package hanium.modic.backend.domain.image.entityfactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -8,7 +8,7 @@ import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 
-public class ImageCreator {
+public class ImageFactory {
 
 	public static List<PostImageEntity> createMockPostImages(PostEntity postEntity) {
 		return Arrays.asList(

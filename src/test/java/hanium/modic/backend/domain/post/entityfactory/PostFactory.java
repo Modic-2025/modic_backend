@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.post.entityCreator;
+package hanium.modic.backend.domain.post.entityfactory;
 
 import static org.mockito.Mockito.*;
 
@@ -6,7 +6,7 @@ import org.mockito.Mockito;
 
 import hanium.modic.backend.domain.post.entity.PostEntity;
 
-public class PostCreator {
+public class PostFactory {
 
 	public static PostEntity createMockPost(Long id) {
 		PostEntity post = PostEntity.builder()

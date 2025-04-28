@@ -22,8 +22,8 @@ import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.post.entityCreator.ImageCreator;
-import hanium.modic.backend.domain.post.entityCreator.PostCreator;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
+import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.PostImageService;
@@ -118,8 +118,8 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("이미지 저장 콜백 실패 : 이미지 경로 중복")
 	public void createImageUrlCallbackFail() throws Exception {
 		// given
-		PostEntity post = PostCreator.createMockPost(1L);
-		PostImageEntity savedPostImage = ImageCreator.createMockPostImage(post);
+		PostEntity post = PostFactory.createMockPost(1L);
+		PostImageEntity savedPostImage = ImageFactory.createMockPostImage(post);
 
 		CallbackImageSaveUrlRequest request = new CallbackImageSaveUrlRequest(
 			savedPostImage.getFullImageName(),

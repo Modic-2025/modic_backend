@@ -3,12 +3,10 @@ package hanium.modic.backend.domain.post.service;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.EntityNotFoundException;
-import hanium.modic.backend.domain.image.domain.ImageExtension;
-import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.post.entityCreator.ImageCreator;
-import hanium.modic.backend.domain.post.entityCreator.PostCreator;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
+import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
@@ -20,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
@@ -56,7 +53,7 @@ class PostServiceTest {
 		Long nonCommercialPrice = 500L;
 
 		List<Long> imageIds = new ArrayList<>();
-		List<PostImageEntity> postImageEntities = ImageCreator.createMockPostImages(null);
+		List<PostImageEntity> postImageEntities = ImageFactory.createMockPostImages(null);
 
 		for (int i = 0; i < postImageEntities.size(); i++) {
 			imageIds.add((long)i);
@@ -90,8 +87,8 @@ class PostServiceTest {
 	void getPost_Success() {
 		// Given
 		Long postId = 1L;
-		PostEntity mockPost = PostCreator.createMockPost(postId);
-		List<PostImageEntity> mockImages = ImageCreator.createMockPostImages(mockPost);
+		PostEntity mockPost = PostFactory.createMockPost(postId);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
 		List<String> expectedImageUrls = mockImages.stream()
 			.map(PostImageEntity::getImageUrl)
 			.toList();
@@ -140,16 +137,16 @@ class PostServiceTest {
 		String sort = "createdAt";
 
 		List<PostEntity> mockPosts = Arrays.asList(
-			PostCreator.createMockPost(1L),
-			PostCreator.createMockPost(2L)
+			PostFactory.createMockPost(1L),
+			PostFactory.createMockPost(2L)
 		);
 
 		Page<PostEntity> mockPostPage = new PageImpl<>(mockPosts,
 			PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA),
 			mockPosts.size());
 
-		List<PostImageEntity> mockImagesForPost1 = ImageCreator.createMockPostImages(mockPosts.get(0));
-		List<PostImageEntity> mockImagesForPost2 = ImageCreator.createMockPostImages(mockPosts.get(1));
+		List<PostImageEntity> mockImagesForPost1 = ImageFactory.createMockPostImages(mockPosts.get(0));
+		List<PostImageEntity> mockImagesForPost2 = ImageFactory.createMockPostImages(mockPosts.get(1));
 
 		when(postEntityRepository.findAll(any(Pageable.class))).thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostId(1L)).thenReturn(mockImagesForPost1);
