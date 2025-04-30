@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PostImageEntityRepository extends JpaRepository<PostImageEntity, Long> {
     List<PostImageEntity> findAllByPostId(Long postId);
+
+	boolean existsByImagePath(String imagePath);
 }

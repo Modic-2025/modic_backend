@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.dto;
+package hanium.modic.backend.common.response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
