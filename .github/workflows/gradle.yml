@@ -1,67 +1,127 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
-
 name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "develop", "master" ]
 
 jobs:
-  build:
-
+  build-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
-    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.1.0
+      with:
+        redis-version: 6
+
+    # ✅ 공통 application-common.properties 생성
+    - run: |
+        touch ./backend/src/main/resources/application-common.properties
+        echo -e "${{ secrets.COMMON_PROPERTIES }}" > ./backend/src/main/resources/application-common.properties
+
+        touch ./backend/src/main/resources/application-ci.properties
+        echo -e "${{ secrets.TEST_PROPERTIES }}" > ./backend/src/main/resources/application-test.properties
+
+    # ✅ 환경별 application-main.properties 또는 application-dev.properties 설정
+    - run: |
+        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+          touch ./backend/src/main/resources/application-main.properties
+          echo "${{ secrets.MAIN_PROPERTIES }}" > ./backend/src/main/resources/application-main.properties
+        else
+          touch ./backend/src/main/resources/application-dev.properties
+          echo "${{ secrets.DEV_PROPERTIES }}" > ./backend/src/main/resources/application-dev.properties
+        fi
+
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Set Gradle Wrapper executable permission
+      run: chmod +x ./backend/gradlew
+      
+    - name: Run tests with CI profile
+      run: cd backend/ && ./gradlew test -Dspring.profiles.active=test,common
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: cd backend/ && ./gradlew build
 
-    # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-    # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
-    #
-    # - name: Setup Gradle
-    #   uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-    #   with:
-    #     gradle-version: '8.9'
-    #
-    # - name: Build with Gradle 8.9
-    #   run: gradle build
-
-  dependency-submission:
-
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+    - name: Copy to DEV EC2
+      if: github.ref == 'refs/heads/develop'
+      uses: appleboy/scp-action@v0.1.4
       with:
-        java-version: '17'
-        distribution: 'temurin'
+        host: ${{ secrets.DEV_EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.DEV_EC2_PEM }}
+        port: 22
+        source: ./backend/build/libs/*.jar
+        target: /home/ubuntu/cicd
+        strip_components: 3
+    - name: Copy to MAIN EC2
+      if: github.ref == 'refs/heads/master'
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.MAIN_EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.MAIN_EC2_PEM }}
+        port: 22
+        source: ./backend/build/libs/*.jar
+        target: /home/ubuntu/cicd
+        strip_components: 3
 
-    # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
-    # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
-    - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+    # ✅ develop 브랜치: DEV 서버에 스크립트 복사 및 실행
+    - name: Copy deploy script file to DEV EC2
+      if: github.ref == 'refs/heads/develop'
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        username: ${{ secrets.EC2_USERNAME }}
+        host: ${{ secrets.DEV_EC2_HOST }}
+        key: ${{ secrets.DEV_EC2_PEM }}
+        source: ".github/workflows/deploy_dev.sh"
+        target: "/home/ubuntu/cicd"
+        strip_components: 2
+    
+    - name: Execute deploy script on DEV EC2
+      if: github.ref == 'refs/heads/develop'
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        username: ${{ secrets.EC2_USERNAME }}
+        host: ${{ secrets.DEV_EC2_HOST }}
+        key: ${{ secrets.DEV_EC2_PEM }}
+        script_stop: true
+        script: |
+          chmod +x /home/ubuntu/cicd/deploy_dev.sh
+          sh /home/ubuntu/cicd/deploy_dev.sh
+    
+    
+    # ✅ master 브랜치: MAIN 서버에 스크립트 복사 및 실행
+    - name: Copy deploy script file to MAIN EC2
+      if: github.ref == 'refs/heads/master'
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        username: ${{ secrets.EC2_USERNAME }}
+        host: ${{ secrets.MAIN_EC2_HOST }}
+        key: ${{ secrets.MAIN_EC2_PEM }}
+        source: ".github/workflows/deploy_main.sh"
+        target: "/home/ubuntu/cicd"
+        strip_components: 2
+    
+    - name: Execute deploy script on MAIN EC2
+      if: github.ref == 'refs/heads/master'
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        username: ${{ secrets.EC2_USERNAME }}
+        host: ${{ secrets.MAIN_EC2_HOST }}
+        key: ${{ secrets.MAIN_EC2_PEM }}
+        script_stop: true
+        script: |
+          chmod +x /home/ubuntu/cicd/deploy_main.sh
+          sh /home/ubuntu/cicd/deploy_main.sh
