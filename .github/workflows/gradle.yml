@@ -24,22 +24,22 @@ jobs:
       with:
         redis-version: 6
 
-    # ✅ 공통 application-common.properties 생성
+    # ✅ 공통 application-common.yml, ci.yml 생성
     - run: |
-        touch ./backend/src/main/resources/application-common.properties
-        echo -e "${{ secrets.COMMON_PROPERTIES }}" > ./backend/src/main/resources/application-common.properties
+        touch ./backend/src/main/resources/application-common.yml
+        echo -e "${{ secrets.COMMON_YML }}" > ./backend/src/main/resources/application-common.yml
 
-        touch ./backend/src/main/resources/application-ci.properties
-        echo -e "${{ secrets.TEST_PROPERTIES }}" > ./backend/src/main/resources/application-test.properties
+        touch ./backend/src/main/resources/application-test.yml
+        echo -e "${{ secrets.TEST_YML }}" > ./backend/src/main/resources/application-test.yml
 
-    # ✅ 환경별 application-main.properties 또는 application-dev.properties 설정
+    # ✅ 환경별 application-main.yml 또는 application-dev.yml 설정
     - run: |
         if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          touch ./backend/src/main/resources/application-main.properties
-          echo "${{ secrets.MAIN_PROPERTIES }}" > ./backend/src/main/resources/application-main.properties
+          touch ./backend/src/main/resources/application-main.yml
+          echo "${{ secrets.MAIN_YML }}" > ./backend/src/main/resources/application-main.yml
         else
-          touch ./backend/src/main/resources/application-dev.properties
-          echo "${{ secrets.DEV_PROPERTIES }}" > ./backend/src/main/resources/application-dev.properties
+          touch ./backend/src/main/resources/application-dev.yml
+          echo "${{ secrets.DEV_YML }}" > ./backend/src/main/resources/application-dev.yml
         fi
 
     - name: Setup Gradle
