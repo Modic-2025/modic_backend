@@ -26,33 +26,33 @@ jobs:
 
     # ✅ 공통 application-common.yml, ci.yml 생성
     - run: |
-        touch ./backend/src/main/resources/application-common.yml
-        echo -e "${{ secrets.COMMON_YML }}" > ./backend/src/main/resources/application-common.yml
+        touch ./src/main/resources/application-common.yml
+        echo -e "${{ secrets.COMMON_YML }}" > ./src/main/resources/application-common.yml
 
-        touch ./backend/src/main/resources/application-test.yml
-        echo -e "${{ secrets.TEST_YML }}" > ./backend/src/main/resources/application-test.yml
+        touch ./src/main/resources/application-test.yml
+        echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
 
     # ✅ 환경별 application-main.yml 또는 application-dev.yml 설정
     - run: |
         if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          touch ./backend/src/main/resources/application-main.yml
-          echo "${{ secrets.MAIN_YML }}" > ./backend/src/main/resources/application-main.yml
+          touch ./src/main/resources/application-main.yml
+          echo "${{ secrets.MAIN_YML }}" > ./src/main/resources/application-main.yml
         else
-          touch ./backend/src/main/resources/application-dev.yml
-          echo "${{ secrets.DEV_YML }}" > ./backend/src/main/resources/application-dev.yml
+          touch ./src/main/resources/application-dev.yml
+          echo "${{ secrets.DEV_YML }}" > ./src/main/resources/application-dev.yml
         fi
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
 
     - name: Set Gradle Wrapper executable permission
-      run: chmod +x ./backend/gradlew
+      run: chmod +x ./gradlew
       
     - name: Run tests with CI profile
-      run: cd backend/ && ./gradlew test -Dspring.profiles.active=test,common
+      run: ./gradlew test -Dspring.profiles.active=test,common
 
     - name: Build with Gradle Wrapper
-      run: cd backend/ && ./gradlew build
+      run: ./gradlew build
 
     - name: Copy to DEV EC2
       if: github.ref == 'refs/heads/develop'
@@ -62,7 +62,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.DEV_EC2_PEM }}
         port: 22
-        source: ./backend/build/libs/*.jar
+        source: ./build/libs/*.jar
         target: /home/ubuntu/cicd
         strip_components: 3
     - name: Copy to MAIN EC2
@@ -73,7 +73,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.MAIN_EC2_PEM }}
         port: 22
-        source: ./backend/build/libs/*.jar
+        source: ./build/libs/*.jar
         target: /home/ubuntu/cicd
         strip_components: 3
 
