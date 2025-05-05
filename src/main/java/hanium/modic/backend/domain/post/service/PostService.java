@@ -1,14 +1,6 @@
 package hanium.modic.backend.domain.post.service;
 
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
-import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.post.repository.PostEntityRepository;
-import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.web.post.dto.response.GetPostResponse;
-import hanium.modic.backend.common.response.PageResponse;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +9,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.EntityNotFoundException;
+import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.post.entity.PostEntity;
+import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +32,7 @@ public class PostService {
 	private static final Sort.Direction SORT_DIRECTION = Sort.Direction.DESC;
 
 	@Transactional
-	public void createPost(final String title, final String description, final Long commercialPrice,
+	public Long createPost(final String title, final String description, final Long commercialPrice,
 		final Long nonCommercialPrice,
 		final List<Long> imageIds) {
 
@@ -43,7 +43,7 @@ public class PostService {
 			.nonCommercialPrice(nonCommercialPrice)
 			.build();
 
-		postEntityRepository.save(postEntity);
+		PostEntity post = postEntityRepository.save(postEntity);
 
 		List<PostImageEntity> list = imageIds.stream()
 			.map(imageId -> postImageEntityRepository.findById(imageId)
@@ -52,6 +52,8 @@ public class PostService {
 			.toList();
 
 		postImageEntityRepository.saveAll(list);
+
+		return post.getId();
 	}
 
 	public GetPostResponse getPost(final Long id) {
