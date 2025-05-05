@@ -1,16 +1,16 @@
 package hanium.modic.backend.domain.post.service;
 
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
-import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
-import hanium.modic.backend.domain.post.entityfactory.PostFactory;
-import hanium.modic.backend.domain.post.repository.PostEntityRepository;
-import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.web.post.dto.response.GetPostResponse;
-import hanium.modic.backend.common.response.PageResponse;
+import static hanium.modic.backend.domain.post.entityfactory.PostFactory.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,14 +19,22 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
-import java.util.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.error.exception.EntityNotFoundException;
+import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
+import hanium.modic.backend.domain.post.entity.PostEntity;
+import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -60,6 +68,8 @@ class PostServiceTest {
 			when(postImageEntityRepository.findById((long)i))
 				.thenReturn(Optional.of(postImageEntities.get(i)));
 		}
+		PostEntity mockPost = createMockPost(1L);
+		when(postEntityRepository.save(any())).thenReturn(mockPost);
 
 		// when
 		postService.createPost(title, description, commercialPrice, nonCommercialPrice, imageIds);
@@ -87,7 +97,7 @@ class PostServiceTest {
 	void getPost_Success() {
 		// Given
 		Long postId = 1L;
-		PostEntity mockPost = PostFactory.createMockPost(postId);
+		PostEntity mockPost = createMockPost(postId);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
 		List<String> expectedImageUrls = mockImages.stream()
 			.map(PostImageEntity::getImageUrl)
@@ -137,8 +147,8 @@ class PostServiceTest {
 		String sort = "createdAt";
 
 		List<PostEntity> mockPosts = Arrays.asList(
-			PostFactory.createMockPost(1L),
-			PostFactory.createMockPost(2L)
+			createMockPost(1L),
+			createMockPost(2L)
 		);
 
 		Page<PostEntity> mockPostPage = new PageImpl<>(mockPosts,
@@ -189,6 +199,5 @@ class PostServiceTest {
 		verify(postEntityRepository, times(1)).findAll(any(Pageable.class));
 		verify(postImageEntityRepository, never()).findAllByPostId(any());
 	}
-
 
 }

@@ -71,7 +71,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		mockMvc.perform(post("/api/posts")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json))
-			.andExpect(status().isOk());
+			.andExpect(status().isCreated());
 
 		// then
 		assertThat(postEntityRepository.count()).isEqualTo(1);
