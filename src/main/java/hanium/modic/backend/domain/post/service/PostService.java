@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class PostService {
 
 	private final PostEntityRepository postEntityRepository;
@@ -57,6 +56,7 @@ public class PostService {
 		return post.getId();
 	}
 
+	@Transactional(readOnly = true)
 	public GetPostResponse getPost(final Long id) {
 		PostEntity postEntity = postEntityRepository.findById(id)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
@@ -69,6 +69,7 @@ public class PostService {
 		return GetPostResponse.from(postEntity, imageUrls);
 	}
 
+	@Transactional(readOnly = true)
 	public PageResponse<GetPostResponse> getPosts(final String sort, final int page, final int size) {
 
 		// Todo: sort 기능 추가
