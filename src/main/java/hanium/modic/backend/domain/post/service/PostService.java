@@ -27,6 +27,7 @@ public class PostService {
 	private final PostEntityRepository postEntityRepository;
 
 	private final PostImageEntityRepository postImageEntityRepository;
+	private final PostImageService postImageService;
 
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = Sort.Direction.DESC;
@@ -89,5 +90,15 @@ public class PostService {
 		});
 
 		return PageResponse.of(responsePages);
+	}
+
+	public void deletePost(Long postId) {
+		PostEntity post = postEntityRepository.findById(postId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		postImageEntityRepository.findAllByPostId(postId)
+			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
+
+		postEntityRepository.delete(post);
 	}
 }

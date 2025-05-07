@@ -4,6 +4,7 @@ import static org.springframework.http.HttpStatus.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,5 +61,11 @@ public class PostController {
 	) {
 		PageResponse<GetPostResponse> response = postService.getPosts(sort, page, size);
 		return ResponseEntity.ok(ApiResponse.ok(response));
+	}
+
+	@DeleteMapping
+	public ResponseEntity<ApiResponse<Void>> deletePost(@RequestParam Long id) {
+		postService.deletePost(id);
+		return ResponseEntity.ok(ApiResponse.noContent());
 	}
 }
