@@ -63,8 +63,8 @@ public class PostController {
 		return ResponseEntity.ok(ApiResponse.ok(response));
 	}
 
-	@DeleteMapping
-	public ResponseEntity<ApiResponse<Void>> deletePost(@RequestParam Long id) {
+	@DeleteMapping("/{id}")
+	public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long id) {
 		postService.deletePost(id);
 		return ResponseEntity.status(NO_CONTENT).body(ApiResponse.noContent());
 	}
