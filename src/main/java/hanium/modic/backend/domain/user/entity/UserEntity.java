@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,4 +28,11 @@ public class UserEntity {
 	private String password;
 
 	private String name;
+
+	@Builder
+	private UserEntity(String email, String password, String name) {
+		this.email = email;
+		this.password = password;
+		this.name = name;
+	}
 }
