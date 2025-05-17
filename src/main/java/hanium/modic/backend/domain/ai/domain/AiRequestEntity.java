@@ -48,4 +48,8 @@ public class AiRequestEntity extends Image {
 		this.requestId = requestId;
 		this.status = status != null ? status : AiImageStatus.PENDING;
 	}
+
+	public void updateStatus(AiImageStatus status) {
+		this.status = status;
+	}
 }
