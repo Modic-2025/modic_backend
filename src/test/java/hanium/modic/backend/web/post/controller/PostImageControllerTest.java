@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.domain.post.service.PostImageService;
-import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
-import hanium.modic.backend.web.post.dto.request.CreateImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 
 @WebMvcTest(controllers = PostImageController.class)
 class PostImageControllerTest {
