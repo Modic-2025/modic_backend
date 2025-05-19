@@ -75,18 +75,18 @@ class UserControllerTest {
 		return Stream.of(
 			Arguments.of(
 				"이메일 형식이 올바르지 않은 경우",
-				new UserCreateRequest("invalid-email", "youth", "password"),
+				new UserCreateRequest("invalid-email", "youth", "qwer1234@#!"),
 				"이메일 형식으로 요청해주세요."
 			),
 			Arguments.of(
 				"이메일이 null인 경우",
-				new UserCreateRequest(null, "youth", "password"),
+				new UserCreateRequest(null, "youth", "qwer1234@#!"),
 				"이메일은 필수입니다."
 			),
 			Arguments.of(
-				"비밀번호가 null인 경우",
+				"비밀번호가 형식이 맞지 않는 경우",
 				new UserCreateRequest("youth@cotato.kr", "youth", null),
-				"비밀번호는 필수입니다."
+				"비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
 			)
 		);
 	}
