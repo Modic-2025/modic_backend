@@ -87,6 +87,11 @@ class UserControllerTest {
 				"비밀번호가 형식이 맞지 않는 경우",
 				new UserCreateRequest("youth@cotato.kr", "youth", null),
 				"비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+			),
+			Arguments.of(
+				"이름이 20자 이상인 경우",
+				new UserCreateRequest("youth@cotato.kr", "youthyouthyouthyouthyouth", "youth@123"),
+				"이름은 2자 이상 20자 이하로 입력해주세요."
 			)
 		);
 	}
