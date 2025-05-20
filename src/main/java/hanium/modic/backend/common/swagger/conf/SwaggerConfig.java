@@ -3,6 +3,7 @@ package hanium.modic.backend.common.swagger.conf;
 import java.util.Arrays;
 import java.util.List;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
+@EnableConfigurationProperties(SwaggerProperties.class)
 @RequiredArgsConstructor
 public class SwaggerConfig {
 
