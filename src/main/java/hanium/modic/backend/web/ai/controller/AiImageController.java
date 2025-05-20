@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
@@ -27,11 +28,15 @@ import lombok.RequiredArgsConstructor;
 public class AiImageController {
 
 	private final AiImageService aiImageService;
+	private final AiImageGenerationService aiImageGenerationService;
 
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
 	public ResponseEntity<ApiResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
+		/*
+		ToDo: AiImageGenerationService 에서 이미지 생성 권한 검증
+		 */
 		CreateImageSaveUrlDto dto = aiImageService.createImageSaveUrl(
 			request.imageUsagePurpose(),
 			request.fileName());
@@ -40,11 +45,11 @@ public class AiImageController {
 			.body(ApiResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
 	}
 
-	// AI 요청 이미지 저장 완료 콜백
+	// AI 요청 이미지 저장 완료 콜백과 함께 AI 이미지 생성 요청
 	@PostMapping("/save-url/callback")
 	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> callbackImageSaveUrl(
 		@RequestBody @Valid CallbackImageSaveUrlRequest request) {
-		Long id = aiImageService.saveImage(
+		Long id = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
 			request.imagePath());
