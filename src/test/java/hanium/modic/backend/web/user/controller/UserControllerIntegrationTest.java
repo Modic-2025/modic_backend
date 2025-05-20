@@ -28,7 +28,7 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("회원가입 API 테스트")
 	void createUserApiTest() throws Exception {
 		// given
-		UserCreateRequest request = new UserCreateRequest("youth@cotato.kr", "youth", "youth");
+		UserCreateRequest request = new UserCreateRequest("youth@cotato.kr", "youth", "qwer1234@#!");
 		String json = objectMapper.writeValueAsString(request);
 
 		// when

@@ -39,7 +39,7 @@ class UserControllerTest {
 	@DisplayName("유저 회원가입 컨트롤러 테스트")
 	void createUserSuccessTest() throws Exception {
 		// given
-		UserCreateRequest request = new UserCreateRequest("youth@cotato.kr", "password", "youth");
+		UserCreateRequest request = new UserCreateRequest("youth@cotato.kr", "youth", "qwer1234@#!");
 		String json = objectMapper.writeValueAsString(request);
 
 		// when
