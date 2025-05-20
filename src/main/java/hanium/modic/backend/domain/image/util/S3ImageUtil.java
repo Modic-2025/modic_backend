@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.UUID;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.HttpMethod;
@@ -32,6 +33,7 @@ public class S3ImageUtil implements ImageUtil {
 
 	// 이미지 삭제
 	@Override
+	@Async
 	public void deleteImage(String imagePath) {
 		validateImagePath(imagePath);
 

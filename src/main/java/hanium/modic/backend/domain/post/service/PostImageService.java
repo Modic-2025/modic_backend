@@ -42,14 +42,14 @@ public class PostImageService extends ImageService {
 	}
 
 	// 이미지 삭제
-	// Transactional 안 묶음. 각 delete 메서드 실패 시 RuntTimeException으로 롤백, 동시 삭제 요청오면 한쪽만 성공
 	@Override
+	@Transactional
 	public void deleteImage(Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
 		postImageEntityRepository.delete(image);
-		imageUtil.deleteImage(image.getImagePath());
+		imageUtil.deleteImage(image.getImagePath()); // s3는 비동기로 삭제, 트랜잭션 무관
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
