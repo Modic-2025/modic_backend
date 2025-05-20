@@ -44,6 +44,7 @@ class UserServiceTest {
 		UserCreateResponse user = userService.createUser(email, password, name);
 
 		// then
+		verify(passwordEncoder, times(1)).encode(password);
 		verify(userEntityRepository, times(1)).save(any(UserEntity.class));
 		assertNotNull(user);
 	}
