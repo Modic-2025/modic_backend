@@ -10,10 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
-import hanium.modic.backend.domain.ai.domain.AiResponseEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
-import hanium.modic.backend.domain.ai.repository.AiResponseRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.service.ImageService;
@@ -24,38 +22,23 @@ import hanium.modic.backend.domain.image.util.ImageUtil;
 public class AiImageService extends ImageService {
 
 	private final AiRequestRepository aiRequestRepository;
-	private final AiResponseRepository aiResponseRepository;
 	private final ImageValidationService imageValidationService;
 
 	@Autowired
 	public AiImageService(
 		ImageUtil imageUtil,
 		ImageValidationService imageValidationService,
-		AiRequestRepository aiRequestRepository,
-		AiResponseRepository aiResponseRepository) {
+		AiRequestRepository aiRequestRepository) {
 		super(imageValidationService, imageUtil);
 		this.aiRequestRepository = aiRequestRepository;
-		this.aiResponseRepository = aiResponseRepository;
 		this.imageValidationService = imageValidationService;
 	}
 
-	// AI 요청 이미지 URL 생성
+	// AI 이미지 URL 생성
 	@Override
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(Long id) {
-		// TODO: 이미지 URL 생성 전 사용자 권한 검증 로직 추가
-		// - 요청한 사용자가 해당 이미지에 접근할 권한이 있는지 확인
-		// - 권한이 없는 경우 적절한 예외 처리 (UNAUTHORIZED_EXCEPTION 등)
-
 		AiRequestEntity image = aiRequestRepository.findById(id)
-			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-		return image.getImageUrl();
-	}
-
-	// AI 응답 이미지 URL 조회
-	@Transactional(readOnly = true)
-	public String createResponseImageGetUrl(Long id) {
-		AiResponseEntity image = aiResponseRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 		return image.getImageUrl();
 	}
@@ -98,34 +81,6 @@ public class AiImageService extends ImageService {
 		return image.getId();
 	}
 
-	// AI 응답 이미지 저장
-	@Transactional
-	public Long saveResponseImage(ImagePrefix imagePrefix, String fullFileName, String imagePath, String requestId) {
-		imageValidationService.validateImageSaved(imagePath, imagePrefix);
-		imageValidationService.validateFullFileName(fullFileName);
-		validateResponseDuplicatedImagePath(imagePath);
-
-		String[] fileNameParts = fullFileName.split("\\.");
-		String fileName = fileNameParts[0];
-		String fileExtension = fileNameParts[1];
-
-		AiResponseEntity image = aiResponseRepository.save(
-			AiResponseEntity.builder()
-				.imagePurpose(imagePrefix)
-				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
-				.fullImageName(fullFileName)
-				.imageName(fileName)
-				.extension(ImageExtension.from(fileExtension))
-				.imagePath(imagePath)
-				.requestId(requestId)
-				.build());
-
-		// 요청 상태 업데이트
-		updateRequestStatus(requestId, AiImageStatus.DONE);
-
-		return image.getId();
-	}
-
 	// 요청 상태 업데이트
 	@Transactional
 	public void updateRequestStatus(String requestId, AiImageStatus status) {
@@ -138,13 +93,6 @@ public class AiImageService extends ImageService {
 	// 이미지 경로가 중복되면 에러 (요청 이미지)
 	private void validateDuplicatedImagePath(String imagePath) {
 		if (aiRequestRepository.existsByImagePath(imagePath)) {
-			throw new AppException(IMAGE_PATH_DUPLICATED_EXCEPTION);
-		}
-	}
-
-	// 이미지 경로가 중복되면 에러 (응답 이미지)
-	private void validateResponseDuplicatedImagePath(String imagePath) {
-		if (aiResponseRepository.existsByImagePath(imagePath)) {
 			throw new AppException(IMAGE_PATH_DUPLICATED_EXCEPTION);
 		}
 	}
