@@ -15,7 +15,10 @@ import org.springframework.http.MediaType;
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
+import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
@@ -84,5 +87,21 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		assertThat(saved.getCommercialPrice()).isEqualTo(10000L);
 		assertThat(saved.getNonCommercialPrice()).isEqualTo(5000L);
 		assertThat(images.size()).isEqualTo(2);
+	}
+
+	@Test
+	@DisplayName("게시글 삭제 요청 API")
+	void deletePost_ValidRequest_ShouldReturn200AndDeleteData() throws Exception {
+		// given
+		PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
+		postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
+
+		// when
+		mockMvc.perform(delete("/api/posts/{id}", post.getId())
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isNoContent());
+
+		assertThat(postEntityRepository.count()).isEqualTo(0);
+		assertThat(postImageEntityRepository.count()).isEqualTo(0);
 	}
 }
