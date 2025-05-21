@@ -93,6 +93,7 @@ public class PostService {
 		return PageResponse.of(responsePages);
 	}
 
+	@Transactional
 	public void deletePost(Long postId) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));

@@ -32,6 +32,7 @@ import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
@@ -41,9 +42,10 @@ class PostServiceTest {
 
 	@Mock
 	private PostEntityRepository postEntityRepository;
-
 	@Mock
 	private PostImageEntityRepository postImageEntityRepository;
+	@Mock
+	private PostImageService postImageService;
 
 	@InjectMocks
 	private PostService postService;
@@ -68,7 +70,7 @@ class PostServiceTest {
 			when(postImageEntityRepository.findById((long)i))
 				.thenReturn(Optional.of(postImageEntities.get(i)));
 		}
-		PostEntity mockPost = createMockPost(1L);
+		PostEntity mockPost = createMockPostWithId(1L);
 		when(postEntityRepository.save(any())).thenReturn(mockPost);
 
 		// when
@@ -97,7 +99,7 @@ class PostServiceTest {
 	void getPost_Success() {
 		// Given
 		Long postId = 1L;
-		PostEntity mockPost = createMockPost(postId);
+		PostEntity mockPost = createMockPostWithId(postId);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
 		List<String> expectedImageUrls = mockImages.stream()
 			.map(PostImageEntity::getImageUrl)
@@ -147,8 +149,8 @@ class PostServiceTest {
 		String sort = "createdAt";
 
 		List<PostEntity> mockPosts = Arrays.asList(
-			createMockPost(1L),
-			createMockPost(2L)
+			createMockPostWithId(1L),
+			createMockPostWithId(2L)
 		);
 
 		Page<PostEntity> mockPostPage = new PageImpl<>(mockPosts,
@@ -200,4 +202,24 @@ class PostServiceTest {
 		verify(postImageEntityRepository, never()).findAllByPostId(any());
 	}
 
+	@Test
+	@DisplayName("게시글 삭제 성공")
+	void deletePost_Success() {
+		// Given
+		final Long postId = 1L;
+		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+
+		// When
+		postService.deletePost(postId);
+
+		// Then
+		verify(postEntityRepository, times(1)).findById(postId);
+		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
+		verify(postImageService, times(mockImages.size())).deleteImage(any());
+		verify(postEntityRepository, times(1)).delete(mockPost);
+	}
 }

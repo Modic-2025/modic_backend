@@ -45,18 +45,6 @@ class PostControllerTest {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	//    @BeforeEach
-	//    void setUp() {
-	//        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-	//        validator.afterPropertiesSet();
-	//
-	//        mockMvc = MockMvcBuilders
-	//                .standaloneSetup(postController)
-	//                .setValidator(validator)
-	//                .setControllerAdvice(new GlobalExceptionHandler())
-	//                .build();
-	//    }
-
 	@Test
 	@DisplayName("게시물 생성 요청 성공")
 	void createPost_ValidRequest_ShouldReturn200AndInvokeService() throws Exception {
@@ -287,6 +275,24 @@ class PostControllerTest {
 			Arguments.of("page", "-1"),
 			Arguments.of("size", "9"),
 			Arguments.of("size", "21")
+		);
+	}
+
+	@ParameterizedTest
+	@DisplayName("게시물 삭제 실패 - 잘못된 RequestParam")
+	@MethodSource("provideInvalidDeleteParameters")
+	void deletePost_InvalidRequestParam(Long postId) throws Exception {
+		// when
+		mockMvc.perform(delete("/api/posts/{id}", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value(ErrorCode.USER_INPUT_EXCEPTION.getCode()));
+	}
+
+	static Stream<Arguments> provideInvalidDeleteParameters() {
+		return Stream.of(
+			Arguments.of(-1L),
+			Arguments.of("null")
 		);
 	}
 }
