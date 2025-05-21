@@ -102,4 +102,34 @@ public class PostService {
 
 		postEntityRepository.delete(post);
 	}
+
+	@Transactional
+	public void updatePost(
+		final Long id,
+		final String title,
+		final String description,
+		final Long commercialPrice,
+		final Long nonCommercialPrice,
+		final List<Long> imageIds
+	) {
+		PostEntity post = postEntityRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		post.updateTitle(title);
+		post.updateDescription(description);
+		post.updateCommercialPrice(commercialPrice);
+		post.updateNonCommercialPrice(nonCommercialPrice);
+		postEntityRepository.save(post);
+
+		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+
+		// imageIds에 포함되지 않은 이미지 삭제
+		postImages.stream()
+			.filter(postImageEntity -> !imageIds.contains(postImageEntity.getId()))
+			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
+
+		// 새로 추가된 이미지에 PostId 업데이트
+		postImageEntityRepository.findAllByIds(imageIds)
+			.forEach(postImageEntity -> postImageEntity.updatePost(post));
+	}
 }
