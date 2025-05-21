@@ -35,7 +35,9 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import jakarta.persistence.EntityManager;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -221,5 +223,68 @@ class PostServiceTest {
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
 		verify(postImageService, times(mockImages.size())).deleteImage(any());
 		verify(postEntityRepository, times(1)).delete(mockPost);
+	}
+
+	@Test
+	@DisplayName("게시글 변경 성공")
+	void updatePost_Success() {
+		// Given
+		final Long postId = 1L;
+		final Long postImageId1 = 1L;
+		final Long postImageId2 = 2L;
+
+		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
+		PostImageEntity postImage1 = ImageFactory.createMockPostImageWithId(mockPost, postImageId1);
+		PostImageEntity postImage2 = ImageFactory.createMockPostImageWithId(mockPost, postImageId2);
+		List<PostImageEntity> mockImages = List.of(postImage1, postImage2);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+
+		final String newTitle = "Updated Title";
+		final String newDescription = "Updated Description";
+		final Long newCommercialPrice = 2000L;
+		final Long newNonCommercialPrice = 1000L;
+		final Long anotherPostImageId1 = 3L;
+		final Long anotherPostImageId2 = 4L;
+		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
+
+		// When
+		postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice, newImageIds);
+
+		// Then
+		verify(postEntityRepository, times(1)).findById(postId);
+		verify(postEntityRepository, times(1)).save(any(PostEntity.class));
+		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
+
+
+		assertEquals(newTitle, mockPost.getTitle());
+		assertEquals(newDescription, mockPost.getDescription());
+		assertEquals(newCommercialPrice, mockPost.getCommercialPrice());
+		assertEquals(newNonCommercialPrice, mockPost.getNonCommercialPrice());
+	}
+
+	@Test
+	@DisplayName("게시글 변경 실패: 게시글 없는 경우")
+	void updatePost_NotFound() {
+		// Given
+		final Long postId = 1L;
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.empty());
+
+		final String newTitle = "Updated Title";
+		final String newDescription = "Updated Description";
+		final Long newCommercialPrice = 2000L;
+		final Long newNonCommercialPrice = 1000L;
+		final List<Long> newImageIds = List.of(3L, 4L);
+
+		// When & Then
+		AppException exception = assertThrows(AppException.class,
+			() -> postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice, newImageIds)
+		);
+		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
+
+		verify(postEntityRepository, times(1)).findById(postId);
+		verify(postEntityRepository, never()).save(any());
+		verify(postImageEntityRepository, never()).findAllByPostId(any());
 	}
 }

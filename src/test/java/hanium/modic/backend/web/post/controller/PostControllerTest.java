@@ -31,6 +31,7 @@ import hanium.modic.backend.common.error.exception.EntityNotFoundException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
+import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 
 @WebMvcTest(controllers = PostController.class)
@@ -293,6 +294,90 @@ class PostControllerTest {
 		return Stream.of(
 			Arguments.of(-1L),
 			Arguments.of("null")
+		);
+	}
+
+	@ParameterizedTest(name = "[{index}] {2}")
+	@DisplayName("게시글 변경 요청 실패 - 잘못된 RequestParam")
+	@MethodSource("provideInvalidUpdateParameters")
+	void updatePost_InvalidRequestParam(UpdatePostRequest request, String expectedErrorMessage) throws Exception {
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/posts/{id}", 1L)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value(ErrorCode.USER_INPUT_EXCEPTION.getCode()));
+	}
+
+	static Stream<Arguments> provideInvalidUpdateParameters() {
+		return Stream.of(
+			Arguments.of(
+				new UpdatePostRequest(
+					null,
+					"설명",
+					0L,
+					0L,
+					List.of(1L)
+				),
+				"제목은 필수입니다.",
+				"제목 누락"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"설명",
+					null,
+					0L,
+					List.of(1L)
+				),
+				"상업적 가격은 필수입니다.",
+				"상업적 가격 누락"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"설명",
+					0L,
+					null,
+					List.of(1L)
+				),
+				"비상업적 가격은 필수입니다.",
+				"비상업적 가격 누락"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"설명",
+					0L,
+					-1L,
+					List.of(1L)
+				),
+				"비상업적 가격은 0 이상이어야 합니다.",
+				"비상업적 가격 음수"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"설명",
+					0L,
+					0L,
+					null
+				),
+				"이미지는 필수입니다.",
+				"이미지 누락"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"설명",
+					0L,
+					0L,
+					Collections.nCopies(9, 1L)
+				),
+				"이미지는 최대 8개까지 업로드 가능합니다.",
+				"이미지 개수 초과"
+			)
 		);
 	}
 }
