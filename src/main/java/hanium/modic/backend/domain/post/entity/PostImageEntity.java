@@ -1,5 +1,8 @@
 package hanium.modic.backend.domain.post.entity;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -47,6 +50,11 @@ public class PostImageEntity extends Image {
 	}
 
 	public void updatePost(PostEntity postEntity) {
+		// 이미 Post에 속해있는 이미지에 대해 다시 Post를 설정할 경우 예외 발생
+		// Image에 해당하는 Post가 없었을 경우는 무관하지만, 있는 상황에서 다시 설정하려하는 것은 도용이다.
+		if (postId != null) {
+			throw new AppException(IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
+		}
 		this.postId = postEntity.getId();
 	}
 }
