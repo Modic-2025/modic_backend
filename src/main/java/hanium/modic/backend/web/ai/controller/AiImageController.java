@@ -35,7 +35,7 @@ public class AiImageController {
 	public ResponseEntity<ApiResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
 		/*
-		ToDo: AiImageGenerationService 에서 이미지 생성 권한 검증
+		 * ToDo: AiImageGenerationService 에서 이미지 생성 권한 검증
 		 */
 		CreateImageSaveUrlDto dto = aiImageService.createImageSaveUrl(
 			request.imageUsagePurpose(),
@@ -45,9 +45,9 @@ public class AiImageController {
 			.body(ApiResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
 	}
 
-	// AI 요청 이미지 저장 완료 콜백과 함께 AI 이미지 생성 요청
-	@PostMapping("/save-url/callback")
-	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> callbackImageSaveUrl(
+	// AI 요청 이미지 저장 완료 후 AI 이미지 생성 요청
+	@PostMapping("/requests")
+	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> requestAiImageGeneration(
 		@RequestBody @Valid CallbackImageSaveUrlRequest request) {
 		Long id = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
