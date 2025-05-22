@@ -63,7 +63,7 @@ class PostServiceTest {
 		Long nonCommercialPrice = 500L;
 
 		List<Long> imageIds = new ArrayList<>();
-		List<PostImageEntity> postImageEntities = ImageFactory.createMockPostImages(null);
+		List<PostImageEntity> postImageEntities = ImageFactory.createMockPostImages(null, 2);
 
 		for (int i = 0; i < postImageEntities.size(); i++) {
 			imageIds.add((long)i);
@@ -100,9 +100,9 @@ class PostServiceTest {
 		// Given
 		Long postId = 1L;
 		PostEntity mockPost = createMockPostWithId(postId);
-		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
-		List<String> expectedImageUrls = mockImages.stream()
-			.map(PostImageEntity::getImageUrl)
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
+		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
+			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
@@ -118,7 +118,10 @@ class PostServiceTest {
 		assertEquals(mockPost.getDescription(), response.description());
 		assertEquals(mockPost.getCommercialPrice(), response.commercialPrice());
 		assertEquals(mockPost.getNonCommercialPrice(), response.nonCommercialPrice());
-		assertEquals(expectedImageUrls, response.imageUrls());
+		for (int i = 0; i < expectedImages.size(); i++) {
+			assertEquals(expectedImages.get(i).getImageUrl(), response.images().get(i).getImageUrl());
+			assertEquals(expectedImages.get(i).getImageId(), response.images().get(i).getImageId());
+		}
 
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
@@ -157,8 +160,8 @@ class PostServiceTest {
 			PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA),
 			mockPosts.size());
 
-		List<PostImageEntity> mockImagesForPost1 = ImageFactory.createMockPostImages(mockPosts.get(0));
-		List<PostImageEntity> mockImagesForPost2 = ImageFactory.createMockPostImages(mockPosts.get(1));
+		List<PostImageEntity> mockImagesForPost1 = ImageFactory.createMockPostImages(mockPosts.get(0), 2);
+		List<PostImageEntity> mockImagesForPost2 = ImageFactory.createMockPostImages(mockPosts.get(1), 2);
 
 		when(postEntityRepository.findAll(any(Pageable.class))).thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostId(1L)).thenReturn(mockImagesForPost1);
@@ -208,7 +211,7 @@ class PostServiceTest {
 		// Given
 		final Long postId = 1L;
 		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
-		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
@@ -221,5 +224,69 @@ class PostServiceTest {
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
 		verify(postImageService, times(mockImages.size())).deleteImage(any());
 		verify(postEntityRepository, times(1)).delete(mockPost);
+	}
+
+	@Test
+	@DisplayName("게시글 변경 성공")
+	void updatePost_Success() {
+		// Given
+		final Long postId = 1L;
+		final Long postImageId1 = 1L;
+		final Long postImageId2 = 2L;
+
+		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
+		PostImageEntity postImage1 = ImageFactory.createMockPostImageWithId(mockPost, postImageId1);
+		PostImageEntity postImage2 = ImageFactory.createMockPostImageWithId(mockPost, postImageId2);
+		List<PostImageEntity> mockImages = List.of(postImage1, postImage2);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+
+		final String newTitle = "Updated Title";
+		final String newDescription = "Updated Description";
+		final Long newCommercialPrice = 2000L;
+		final Long newNonCommercialPrice = 1000L;
+		final Long anotherPostImageId1 = 3L;
+		final Long anotherPostImageId2 = 4L;
+		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
+
+		// When
+		postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
+			newImageIds);
+
+		// Then
+		verify(postEntityRepository, times(1)).findById(postId);
+		verify(postEntityRepository, times(1)).save(any(PostEntity.class));
+		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
+
+		assertEquals(newTitle, mockPost.getTitle());
+		assertEquals(newDescription, mockPost.getDescription());
+		assertEquals(newCommercialPrice, mockPost.getCommercialPrice());
+		assertEquals(newNonCommercialPrice, mockPost.getNonCommercialPrice());
+	}
+
+	@Test
+	@DisplayName("게시글 변경 실패: 게시글 없는 경우")
+	void updatePost_NotFound() {
+		// Given
+		final Long postId = 1L;
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.empty());
+
+		final String newTitle = "Updated Title";
+		final String newDescription = "Updated Description";
+		final Long newCommercialPrice = 2000L;
+		final Long newNonCommercialPrice = 1000L;
+		final List<Long> newImageIds = List.of(3L, 4L);
+
+		// When & Then
+		AppException exception = assertThrows(AppException.class,
+			() -> postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
+				newImageIds)
+		);
+		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
+
+		verify(postEntityRepository, times(1)).findById(postId);
+		verify(postEntityRepository, never()).save(any());
+		verify(postImageEntityRepository, never()).findAllByPostId(any());
 	}
 }
