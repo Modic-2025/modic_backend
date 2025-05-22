@@ -125,9 +125,10 @@ public class PostService {
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
 		// imageIds에 포함되지 않은 이미지 삭제
-		postImages.stream()
+		List<PostImageEntity> deleteImages = postImages.stream()
 			.filter(postImageEntity -> !imageIds.contains(postImageEntity.getId()))
-			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
+			.toList();
+		postImageService.deleteImages(deleteImages);
 
 		// 새로 추가된 이미지에 PostId 업데이트
 		postImageEntityRepository.findAllByIds(imageIds)

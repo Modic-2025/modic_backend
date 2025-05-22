@@ -1,11 +1,10 @@
 package hanium.modic.backend.web.post.controller;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
@@ -33,11 +35,13 @@ import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
+	private AmazonS3 amazonS3;
+	@Autowired
+	private S3Properties s3Properties;
+	@Autowired
 	private PostEntityRepository postEntityRepository;
-
 	@Autowired
 	private PostImageEntityRepository postImageEntityRepository;
-
 
 	@BeforeEach
 	void setUp() {
@@ -117,15 +121,18 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("게시글 수정 요청 API")
 	void updatePost_ValidRequest_ShouldReturn200AndUpdateData() throws Exception {
 		// given
-		PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
-		postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
+		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
+		final List<Long> postImageIds = postImageEntityRepository.saveAll(ImageFactory.createMockPostImages(post, 2))
+			.stream()
+			.map(PostImageEntity::getId)
+			.toList();
 
 		CreatePostRequest request = new CreatePostRequest(
 			"수정된 제목",
 			"수정된 설명",
 			20000L,
 			10000L,
-			List.of(1L, 2L)
+			postImageIds
 		);
 		String json = objectMapper.writeValueAsString(request);
 
@@ -133,10 +140,10 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		mockMvc.perform(put("/api/posts/{id}", post.getId())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json))
-			.andExpect(status().isOk());
+			.andExpect(status().isNoContent());
 
 		assertThat(postEntityRepository.count()).isEqualTo(1);
-		assertThat(postImageEntityRepository.count()).isEqualTo(2);
+		assertThat(postImageEntityRepository.count()).isEqualTo(postImageIds.size());
 
 		var updatedPost = postEntityRepository.findById(post.getId()).orElseThrow();
 		assertThat(updatedPost.getTitle()).isEqualTo("수정된 제목");
@@ -167,7 +174,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		String json = objectMapper.writeValueAsString(request);
 
 		// when
-		ResultActions resultActions = mockMvc.perform(patch("/api/posts/{id}", myPost.getId())
+		ResultActions resultActions = mockMvc.perform(put("/api/posts/{id}", myPost.getId())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isBadRequest());
@@ -180,30 +187,63 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@Test
 	@DisplayName("게시글 수정 요청 API - 없어진 이미지는 삭제")
 	void updatePost_ValidRequest_ShouldReturn200AndDeleteImage() throws Exception {
+		// 특정 포스트에 2개의 이미지가 존재할 때, 하나만 남기면 나머지가 삭제되는지 테스트
+
 		// given
+		// 기존에 존재하느 포스트
 		PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
-		PostImageEntity image1 = postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
-		PostImageEntity image2 = postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
 
-		UpdatePostRequest request = new UpdatePostRequest(
-			"수정된 제목",
-			"수정된 설명",
-			20000L,
-			10000L,
-			List.of(image1.getId())
+		// 기존에 존재하는 포스트 이미지
+		final int imageCount = 3;
+		List<PostImageEntity> postImages = postImageEntityRepository
+			.saveAll(ImageFactory.createMockPostImages(post, imageCount));
+		postImages.forEach(postImage -> uploadImage(postImage.getImagePath(), "test content"));
+
+		try {
+			// 요청
+			final PostImageEntity imageToKeep = postImages.get(0); // 남길 이미지
+			UpdatePostRequest request = new UpdatePostRequest(
+				"수정된 제목",
+				"수정된 설명",
+				20000L,
+				10000L,
+				List.of(imageToKeep.getId()) // 첫 번째 이미지만 남기고 나머지는 삭제
+			);
+			String json = objectMapper.writeValueAsString(request);
+
+			// when
+			mockMvc.perform(put("/api/posts/{id}", post.getId())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(json))
+				.andExpect(status().isNoContent());
+
+			// then
+			assertThat(postEntityRepository.count()).isEqualTo(1); // 저장된 게시글 개수
+			assertThat(postImageEntityRepository.count()).isEqualTo(1); // 남은 이미지 개수
+
+			var remainingImage = postImageEntityRepository.findById(imageToKeep.getId()).orElseThrow();
+			assertThat(remainingImage.getId()).isEqualTo(imageToKeep.getId());
+		} finally {
+			// 남은 이미지는 삭제
+			postImages.forEach(postImage -> deleteImage(postImage.getImagePath()));
+		}
+
+	}
+
+	private void uploadImage(String filePath, String content) {
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentLength(content.length());
+		metadata.setContentType("image/jpeg");
+
+		amazonS3.putObject(
+			s3Properties.getBucketName(),
+			filePath,
+			new ByteArrayInputStream(content.getBytes()),
+			metadata
 		);
-		String json = objectMapper.writeValueAsString(request);
+	}
 
-		// when
-		mockMvc.perform(patch("/api/posts/{id}", post.getId())
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(json))
-			.andExpect(status().isNoContent());
-
-		assertThat(postEntityRepository.count()).isEqualTo(1);
-		assertThat(postImageEntityRepository.count()).isEqualTo(1);
-
-		var remainingImage = postImageEntityRepository.findById(image1.getId()).orElseThrow();
-		assertThat(remainingImage.getId()).isEqualTo(image1.getId());
+	private void deleteImage(String filePath) {
+		amazonS3.deleteObject(s3Properties.getBucketName(), filePath);
 	}
 }
