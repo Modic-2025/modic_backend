@@ -14,6 +14,8 @@ public record UpdatePostRequest(
 	@Length(min = 1, max = 20)
 	String title,
 
+	@NotBlank(message = "설명은 필수입니다.")
+	@Length(min = 1, max = 10000, message = "설명은 최대 10000자까지 가능합니다.")
 	String description,
 
 	@NotNull(message = "상업적 가격은 필수입니다.")

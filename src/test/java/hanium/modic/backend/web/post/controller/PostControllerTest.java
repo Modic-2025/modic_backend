@@ -308,6 +308,29 @@ class PostControllerTest {
 			Arguments.of(
 				new UpdatePostRequest(
 					"제목",
+					null,
+					0L,
+					0L,
+					List.of(1L)
+				),
+				"설명은 필수입니다.",
+				"설명 누락"
+			),
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
+					"",
+					0L,
+					0L,
+					List.of(1L)
+				),
+				"설명은 필수입니다.",
+				"설명 비어있음"
+			),
+
+			Arguments.of(
+				new UpdatePostRequest(
+					"제목",
 					"설명",
 					null,
 					0L,
