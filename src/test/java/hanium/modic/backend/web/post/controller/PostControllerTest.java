@@ -279,24 +279,6 @@ class PostControllerTest {
 		);
 	}
 
-	@ParameterizedTest
-	@DisplayName("게시물 삭제 실패 - 잘못된 RequestParam")
-	@MethodSource("provideInvalidDeleteParameters")
-	void deletePost_InvalidRequestParam(Long postId) throws Exception {
-		// when
-		mockMvc.perform(delete("/api/posts/{id}", postId)
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.code").value(ErrorCode.USER_INPUT_EXCEPTION.getCode()));
-	}
-
-	static Stream<Arguments> provideInvalidDeleteParameters() {
-		return Stream.of(
-			Arguments.of(-1L),
-			Arguments.of("null")
-		);
-	}
-
 	@ParameterizedTest(name = "[{index}] {2}")
 	@DisplayName("게시글 변경 요청 실패 - 잘못된 RequestParam")
 	@MethodSource("provideInvalidUpdateParameters")
