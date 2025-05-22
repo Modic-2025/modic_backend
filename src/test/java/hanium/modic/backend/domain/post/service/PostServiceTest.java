@@ -35,9 +35,7 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
-import jakarta.persistence.EntityManager;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -103,8 +101,8 @@ class PostServiceTest {
 		Long postId = 1L;
 		PostEntity mockPost = createMockPostWithId(postId);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
-		List<String> expectedImageUrls = mockImages.stream()
-			.map(PostImageEntity::getImageUrl)
+		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
+			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
@@ -120,7 +118,10 @@ class PostServiceTest {
 		assertEquals(mockPost.getDescription(), response.description());
 		assertEquals(mockPost.getCommercialPrice(), response.commercialPrice());
 		assertEquals(mockPost.getNonCommercialPrice(), response.nonCommercialPrice());
-		assertEquals(expectedImageUrls, response.imageUrls());
+		for (int i = 0; i < expectedImages.size(); i++) {
+			assertEquals(expectedImages.get(i).getImageUrl(), response.images().get(i).getImageUrl());
+			assertEquals(expectedImages.get(i).getImageId(), response.images().get(i).getImageId());
+		}
 
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
@@ -250,13 +251,13 @@ class PostServiceTest {
 		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
 
 		// When
-		postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice, newImageIds);
+		postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
+			newImageIds);
 
 		// Then
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postEntityRepository, times(1)).save(any(PostEntity.class));
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
-
 
 		assertEquals(newTitle, mockPost.getTitle());
 		assertEquals(newDescription, mockPost.getDescription());
@@ -279,7 +280,8 @@ class PostServiceTest {
 
 		// When & Then
 		AppException exception = assertThrows(AppException.class,
-			() -> postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice, newImageIds)
+			() -> postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
+				newImageIds)
 		);
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 

@@ -167,7 +167,7 @@ class PostControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of("http://img1.jpg"));
+			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		when(postService.getPost(postId)).thenReturn(response);
 
@@ -199,9 +199,9 @@ class PostControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostResponse post1 = new GetPostResponse(
-			1L, "제목1", "설명1", 10000L, 5000L, List.of("http://img1.jpg"));
+			1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 		GetPostResponse post2 = new GetPostResponse(
-			2L, "제목2", "설명2", 20000L, 8000L, List.of("http://img2.jpg"));
+			2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostResponse.ImageDto("http://img2.jpg", 2L)));
 
 		List<GetPostResponse> content = List.of(post1, post2);
 		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
@@ -228,7 +228,7 @@ class PostControllerTest {
 		Exception {
 		// given
 		GetPostResponse post = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of("http://img1.jpg"));
+			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		List<GetPostResponse> content = List.of(post);
 		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
@@ -285,7 +285,7 @@ class PostControllerTest {
 	void updatePost_InvalidRequestParam(UpdatePostRequest request, String expectedErrorMessage) throws Exception {
 		String json = objectMapper.writeValueAsString(request);
 
-		mockMvc.perform(patch("/api/posts/{id}", 1L)
+		mockMvc.perform(put("/api/posts/{id}", 1L)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(json))
 			.andExpect(status().isBadRequest())
