@@ -45,6 +45,7 @@ public class AiImageService extends ImageService {
 
 	// 이미지 삭제
 	@Override
+	@Transactional
 	public void deleteImage(Long id) {
 		AiRequestEntity image = aiRequestRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
