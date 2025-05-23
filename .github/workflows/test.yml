@@ -20,12 +20,13 @@ jobs:
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
 
-      # ✅ application-test.yml 복원 (cat 방식, 줄바꿈/특수문자 안전)
-      - name: Restore application yml
+      # ✅ application-test.yml 복원
+      - name: Restore application-test.yml
         shell: bash
+        env:
+          TEST_YML: ${{ secrets.TEST_YML }}
         run: |
-          echo "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
-
+          echo "$TEST_YML" > ./src/main/resources/application-test.yml
 
       # ✅ 테스트 실행 (컴파일 포함)
       - name: Run tests (includes compilation)
