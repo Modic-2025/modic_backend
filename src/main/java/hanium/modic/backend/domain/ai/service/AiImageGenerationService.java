@@ -27,6 +27,13 @@ public class AiImageGenerationService {
 		return imageId;
 	}
 
+	public String createImageGetUrl(Long imageId) {
+		/**
+		 * ToDo: 이미지 조회 권한 검증
+		 */
+		return aiImageService.createImageGetUrl(imageId);
+	}
+
 	private void validateUserPermission(Long userId) {
 		// 사용자 권한 검증 로직
 	}

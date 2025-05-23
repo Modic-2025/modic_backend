@@ -62,7 +62,10 @@ public class AiImageController {
 	@GetMapping("/{imageId}/get-url")
 	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId) {
-		String imageGetUrl = aiImageService.createImageGetUrl(imageId);
+		/*
+		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
+		 */
+		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId);
 
 		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
