@@ -61,12 +61,9 @@ public class PostService {
 		PostEntity postEntity = postEntityRepository.findById(id)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
-		List<String> imageUrls = postImageEntityRepository.findAllByPostId(id)
-			.stream()
-			.map(PostImageEntity::getImageUrl)
-			.toList();
+		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
-		return GetPostResponse.from(postEntity, imageUrls);
+		return GetPostResponse.from(postEntity, postImages);
 	}
 
 	@Transactional(readOnly = true)
@@ -82,17 +79,15 @@ public class PostService {
 		}
 
 		Page<GetPostResponse> responsePages = posts.map(post -> {
-			List<String> imageUrls = postImageEntityRepository.findAllByPostId(post.getId())
-				.stream()
-				.map(PostImageEntity::getImageUrl)
-				.toList();
+			List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
 
-			return GetPostResponse.from(post, imageUrls);
+			return GetPostResponse.from(post, postImages);
 		});
 
 		return PageResponse.of(responsePages);
 	}
 
+	@Transactional
 	public void deletePost(Long postId) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
@@ -101,5 +96,36 @@ public class PostService {
 			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
 
 		postEntityRepository.delete(post);
+	}
+
+	@Transactional
+	public void updatePost(
+		final Long id,
+		final String title,
+		final String description,
+		final Long commercialPrice,
+		final Long nonCommercialPrice,
+		final List<Long> imageIds
+	) {
+		PostEntity post = postEntityRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		post.updateTitle(title);
+		post.updateDescription(description);
+		post.updateCommercialPrice(commercialPrice);
+		post.updateNonCommercialPrice(nonCommercialPrice);
+		postEntityRepository.save(post);
+
+		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+
+		// imageIds에 포함되지 않은 이미지 삭제
+		List<PostImageEntity> deleteImages = postImages.stream()
+			.filter(postImageEntity -> !imageIds.contains(postImageEntity.getId()))
+			.toList();
+		postImageService.deleteImages(deleteImages);
+
+		// 새로 추가된 이미지에 PostId 업데이트
+		postImageEntityRepository.findAllByIds(imageIds)
+			.forEach(postImageEntity -> postImageEntity.updatePost(post));
 	}
 }

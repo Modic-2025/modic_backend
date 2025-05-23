@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
@@ -75,5 +76,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.error("ConstraintViolationException 발생: requestURI={}, error={}", requestURI, ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.of(ErrorCode.USER_INPUT_EXCEPTION, messages));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+        ServletWebRequest servletWebRequest = (ServletWebRequest) request;
+        HttpServletRequest httpServletRequest = servletWebRequest.getRequest();
+        String requestURI = httpServletRequest.getRequestURI();
+
+        String message = String.format("잘못된 타입의 인자입니다. 경로: %s, 잘못된 값: %s", ex.getName(), ex.getValue());
+
+        log.error("MethodArgumentTypeMismatchException 발생: requestURI={}, error={}", requestURI, message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.from(ErrorCode.USER_INPUT_EXCEPTION));
     }
 }

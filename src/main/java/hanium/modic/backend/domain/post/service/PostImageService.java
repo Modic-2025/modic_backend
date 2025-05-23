@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.post.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,26 +37,44 @@ public class PostImageService extends ImageService {
 	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
 	@Override
 	@Transactional(readOnly = true)
-	public String createImageGetUrl(Long id) {
+	public String createImageGetUrl(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 		return image.getImageUrl();
 	}
 
 	// 이미지 삭제
-	// Transactional 안 묶음. 각 delete 메서드 실패 시 RuntTimeException으로 롤백, 동시 삭제 요청오면 한쪽만 성공
 	@Override
-	public void deleteImage(Long id) {
+	@Transactional
+	public void deleteImage(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
 		postImageEntityRepository.delete(image);
-		imageUtil.deleteImage(image.getImagePath());
+		imageUtil.deleteImage(image.getImagePath()); // s3는 비동기로 삭제, 트랜잭션 무관
+	}
+
+	// 여러 이미지 삭제
+	@Transactional
+	public void deleteImages(final List<PostImageEntity> postImages) {
+		if (postImages == null || postImages.isEmpty()) {
+			return;
+		}
+
+		final List<String> imagePaths = postImages.stream()
+			.map(PostImageEntity::getImagePath)
+			.toList();
+		final List<Long> ids = postImages.stream()
+			.map(PostImageEntity::getId)
+			.toList();
+
+		postImageEntityRepository.deleteAllByIds(ids);
+		imageUtil.deleteImages(imagePaths); // s3는 비동기로 삭제, 트랜잭션 무관
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
 	@Override
-	public Long saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
+	public Long saveImage(final ImagePrefix imagePrefix, final String fullFileName, final String imagePath) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
@@ -78,7 +98,7 @@ public class PostImageService extends ImageService {
 	}
 
 	// 이미지 경로가 중복되면 에러
-	private void validateDuplicatedImagePath(String imagePath) {
+	private void validateDuplicatedImagePath(final String imagePath) {
 		if (postImageEntityRepository.existsByImagePath(imagePath)) {
 			throw new AppException(IMAGE_PATH_DUPLICATED_EXCEPTION);
 		}
