@@ -23,6 +23,7 @@ jobs:
       # ✅ application-test.yml 복원
       - name: Restore application yml
         run: |
+          touch ./src/main/resources/application-test.yml
           echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
 
       # ✅ 테스트 실행 (컴파일 포함)
