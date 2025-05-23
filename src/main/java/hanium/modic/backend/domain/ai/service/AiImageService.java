@@ -34,13 +34,14 @@ public class AiImageService extends ImageService {
 		this.imageValidationService = imageValidationService;
 	}
 
-	// AI 이미지 URL 생성
+	// AI 이미지 조회용 URL 생성
 	@Override
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(Long id) {
 		AiRequestEntity image = aiRequestRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-		return image.getImageUrl();
+
+		return imageUtil.createImageGetUrl(image.getImagePath());
 	}
 
 	// 이미지 삭제
