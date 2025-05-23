@@ -118,7 +118,7 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("이미지 저장 콜백 실패 : 이미지 경로 중복")
 	public void createImageUrlCallbackFail() throws Exception {
 		// given
-		PostEntity post = PostFactory.createMockPost(1L);
+		PostEntity post = PostFactory.createMockPostWithId(1L);
 		PostImageEntity savedPostImage = ImageFactory.createMockPostImage(post);
 
 		CallbackImageSaveUrlRequest request = new CallbackImageSaveUrlRequest(

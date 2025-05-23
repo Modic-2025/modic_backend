@@ -8,7 +8,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 
 public class PostFactory {
 
-	public static PostEntity createMockPost(Long id) {
+	public static PostEntity createMockPostWithId(Long id) {
 		PostEntity post = PostEntity.builder()
 			.title("테스트 게시글 " + id)
 			.description("테스트 설명 " + id)
@@ -20,5 +20,14 @@ public class PostFactory {
 		when(spyPost.getId()).thenReturn(id);
 
 		return spyPost;
+	}
+
+	public static PostEntity createMockPost() {
+		return PostEntity.builder()
+			.title("테스트 게시글")
+			.description("테스트 설명")
+			.commercialPrice(10000L)
+			.nonCommercialPrice(5000L)
+			.build();
 	}
 }
