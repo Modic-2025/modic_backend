@@ -2,13 +2,12 @@ package hanium.modic.backend.domain.ai.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.util.KeyGenerator;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
@@ -23,15 +22,17 @@ public class AiImageService extends ImageService {
 
 	private final AiRequestRepository aiRequestRepository;
 	private final ImageValidationService imageValidationService;
+	private final KeyGenerator keyGenerator;
 
 	@Autowired
 	public AiImageService(
 		ImageUtil imageUtil,
 		ImageValidationService imageValidationService,
-		AiRequestRepository aiRequestRepository) {
+		AiRequestRepository aiRequestRepository, KeyGenerator keyGenerator) {
 		super(imageValidationService, imageUtil);
 		this.aiRequestRepository = aiRequestRepository;
 		this.imageValidationService = imageValidationService;
+		this.keyGenerator = keyGenerator;
 	}
 
 	// AI 이미지 조회용 URL 생성
@@ -66,7 +67,7 @@ public class AiImageService extends ImageService {
 		String[] fileNameParts = fullFileName.split("\\.");
 		String fileName = fileNameParts[0];
 		String fileExtension = fileNameParts[1];
-		String requestId = UUID.randomUUID().toString();
+		String requestId = keyGenerator.generateKey();
 
 		AiRequestEntity image = aiRequestRepository.save(
 			AiRequestEntity.builder()

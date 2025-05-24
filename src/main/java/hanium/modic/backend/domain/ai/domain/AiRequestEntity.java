@@ -11,13 +11,17 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "ai_request")
+@Table(name = "ai_request",
+	indexes = {
+		@Index(name = "idx_ai_request_request_id", columnList = "request_id")
+	})
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,7 +31,7 @@ public class AiRequestEntity extends Image {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "request_id", nullable = false)
+	@Column(name = "request_id", nullable = false, unique = true)
 	private String requestId;
 
 	@Enumerated(EnumType.STRING)
