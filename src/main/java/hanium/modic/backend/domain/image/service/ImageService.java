@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.image.service;
 
+import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.image.util.ImageUtil;
@@ -25,5 +26,5 @@ public abstract class ImageService {
 	public abstract void deleteImage(Long id);
 
 	// 이미지 저장
-	public abstract Long saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath);
+	public abstract Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath);
 }
