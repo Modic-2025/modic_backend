@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AiResponseEntity extends Image {
+public class CreatedAiImageEntity extends Image {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class AiResponseEntity extends Image {
 	private String requestId;
 
 	@Builder
-	public AiResponseEntity(
+	public CreatedAiImageEntity(
 		String imagePath,
 		String imageUrl,
 		String fullImageName,
