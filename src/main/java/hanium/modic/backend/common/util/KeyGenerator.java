@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class KeyGenerator {
 
-	private static final DateTimeFormatter FORMAT_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private static final DateTimeFormatter FORMAT_YYYYMMDDHHMMSS = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
 	public String generateKey() {
 		return generateDate() + "_" + generateUUID();
@@ -20,6 +20,6 @@ public class KeyGenerator {
 	}
 
 	private String generateDate() {
-		return FORMAT_YYYYMMDD.format(LocalDate.now());
+		return FORMAT_YYYYMMDDHHMMSS.format(LocalDate.now());
 	}
 }
