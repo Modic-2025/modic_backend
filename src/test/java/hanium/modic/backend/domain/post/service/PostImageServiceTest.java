@@ -17,10 +17,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -122,7 +122,7 @@ class PostImageServiceTest {
 			postImageEntity.getImagePurpose(),
 			postImageEntity.getFullImageName(),
 			postImageEntity.getImagePath()
-		);
+		).getId();
 
 		// then
 

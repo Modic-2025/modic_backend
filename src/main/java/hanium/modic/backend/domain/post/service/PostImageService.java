@@ -74,7 +74,7 @@ public class PostImageService extends ImageService {
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
 	@Override
-	public Long saveImage(final ImagePrefix imagePrefix, final String fullFileName, final String imagePath) {
+	public PostImageEntity saveImage(final ImagePrefix imagePrefix, final String fullFileName, final String imagePath) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
@@ -83,7 +83,7 @@ public class PostImageService extends ImageService {
 		String fileName = fileNameParts[0];
 		String fileExtension = fileNameParts[1];
 
-		PostImageEntity image = postImageEntityRepository.save(
+		return postImageEntityRepository.save(
 			PostImageEntity.builder()
 				.imagePurpose(imagePrefix)
 				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
@@ -93,8 +93,6 @@ public class PostImageService extends ImageService {
 				.imagePath(imagePath)
 				.build()
 		);
-
-		return image.getId();
 	}
 
 	// 이미지 경로가 중복되면 에러
