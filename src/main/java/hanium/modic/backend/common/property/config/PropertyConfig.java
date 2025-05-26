@@ -3,6 +3,7 @@ package hanium.modic.backend.common.property.config;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import hanium.modic.backend.common.property.property.RabbitMqProperties;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.common.property.property.SwaggerProperties;
 
@@ -10,7 +11,8 @@ import hanium.modic.backend.common.property.property.SwaggerProperties;
 @Configuration
 @EnableConfigurationProperties(value = {
 	S3Properties.class,
-	SwaggerProperties.class
+	SwaggerProperties.class,
+	RabbitMqProperties.class
 })
 public class PropertyConfig {
 }
