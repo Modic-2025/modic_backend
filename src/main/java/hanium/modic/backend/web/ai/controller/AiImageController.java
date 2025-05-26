@@ -14,9 +14,9 @@ import hanium.modic.backend.common.response.ApiResponse;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
-import hanium.modic.backend.web.ai.dto.response.AiRequestIdResponse;
 import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.response.CallbackImageSaveUrlResponse;
 import hanium.modic.backend.web.common.image.dto.response.CreateImageGetUrlResponse;
 import hanium.modic.backend.web.common.image.dto.response.CreateImageSaveUrlResponse;
 import jakarta.validation.Valid;
@@ -47,15 +47,15 @@ public class AiImageController {
 
 	// AI 요청 이미지 저장 완료 후 AI 이미지 생성 요청
 	@PostMapping("/requests")
-	public ResponseEntity<ApiResponse<AiRequestIdResponse>> requestAiImageGeneration(
+	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> requestAiImageGeneration(
 		@RequestBody @Valid CallbackImageSaveUrlRequest request) {
-		String requestId = aiImageGenerationService.processImageGeneration(
+		Long id = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
-			request.imagePath()).getRequestId();
+			request.imagePath()).getId();
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new AiRequestIdResponse(requestId)));
+			.body(ApiResponse.created(new CallbackImageSaveUrlResponse(id)));
 	}
 
 	// AI 요청 이미지 URL 조회
