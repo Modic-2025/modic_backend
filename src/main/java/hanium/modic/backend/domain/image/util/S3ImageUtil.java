@@ -5,13 +5,19 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import java.net.URL;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
+import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.property.property.S3Properties;
@@ -32,10 +38,44 @@ public class S3ImageUtil implements ImageUtil {
 
 	// 이미지 삭제
 	@Override
+	@Async
 	public void deleteImage(String imagePath) {
 		validateImagePath(imagePath);
 
+		// TODO : 실패한 이미지 경로를 로그로 남기거나 처리하는 로직 추가
 		amazonS3Client.deleteObject(s3Properties.getBucketName(), imagePath);
+	}
+
+	// 여러 이미지 삭제
+	@Override
+	@Async
+	public void deleteImages(List<String>imagePaths) {
+		if (imagePaths == null || imagePaths.isEmpty()) {
+			return;
+		}
+		for (String imagePath : imagePaths) {
+			validateImagePath(imagePath);
+		}
+
+		// KeyVersion 객체 리스트로 변환
+		List<KeyVersion> keyVersions = imagePaths.stream()
+			.map(KeyVersion::new)
+			.toList();
+
+		DeleteObjectsRequest deleteObjectsRequest = new DeleteObjectsRequest(s3Properties.getBucketName())
+			.withKeys(keyVersions);
+
+		try {
+			amazonS3Client.deleteObjects(deleteObjectsRequest);
+		} catch (MultiObjectDeleteException e) {
+			// 일부 실패한 경우
+			log.error("S3ImageUtil.deleteImages() - MultiObjectDeleteException: {}", e.getMessage());
+
+			// TODO : 실패한 이미지 경로를 로그로 남기거나 처리하는 로직 추가
+			e.getErrors().forEach(error ->
+				System.err.println(error.getKey())
+			);
+		}
 	}
 
 	// 이미지 URL 생성

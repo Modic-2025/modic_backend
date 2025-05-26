@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +63,26 @@ class S3ImageUtilTest {
 		// then
 		assertEquals(ErrorCode.INVALID_IMAGE_FILE_PATH_EXCEPTION.getCode(), exception.getErrorCode().getCode());
 	}
+
+	@ParameterizedTest
+	@DisplayName("여러 이미지 삭제 : imagePath가 유효하지 않을 경우 에러가 발생한다.")
+	@MethodSource("provideInvalidImagePaths")
+	void testDeleteImagesWithInvalidImagePaths(List<String> imagePaths) {
+		// when
+		AppException exception = assertThrows(AppException.class, () -> {
+			s3ImageUtil.deleteImages(imagePaths);
+		});
+
+		// then
+		assertEquals(ErrorCode.INVALID_IMAGE_FILE_PATH_EXCEPTION.getCode(), exception.getErrorCode().getCode());
+	}
+	private static Stream<List<String>> provideInvalidImagePaths() {
+		return Stream.of(
+			List.of(""),
+			List.of("test/image.jpg", "")
+		);
+	}
+
 
 	@Test
 	@DisplayName("이미지 url 생성 : 성공")
