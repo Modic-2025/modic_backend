@@ -49,7 +49,7 @@ public class PostImageController {
 			request.imageUsagePurpose(),
 			request.fileName(),
 			request.imagePath()
-		);
+		).getId();
 
 		return ResponseEntity.status(CREATED)
 			.body(ApiResponse.created(new CallbackImageSaveUrlResponse(id)));

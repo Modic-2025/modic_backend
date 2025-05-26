@@ -20,9 +20,9 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
-import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -158,7 +158,7 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 		try {
 			// 이미지 업로드
 			uploadImage(imagePath, "test content");
-			Long imageId = postImageService.saveImage(imagePurpose, fileName, imagePath);
+			Long imageId = postImageService.saveImage(imagePurpose, fileName, imagePath).getId();
 
 			// when
 			ResultActions resultActions2 = mockMvc.perform(get("/api/posts/images/{imageId}/get-url", imageId)
