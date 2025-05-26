@@ -52,7 +52,7 @@ public class AiImageController {
 		Long id = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
-			request.imagePath());
+			request.imagePath()).getId();
 
 		return ResponseEntity.status(CREATED)
 			.body(ApiResponse.created(new CallbackImageSaveUrlResponse(id)));

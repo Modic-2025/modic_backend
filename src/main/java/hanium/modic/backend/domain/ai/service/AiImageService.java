@@ -59,7 +59,7 @@ public class AiImageService extends ImageService {
 	// AI 요청 이미지 저장
 	@Override
 	@Transactional
-	public Long saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
+	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
@@ -69,7 +69,7 @@ public class AiImageService extends ImageService {
 		String fileExtension = fileNameParts[1];
 		String requestId = keyGenerator.generateKey();
 
-		AiRequestEntity image = aiRequestRepository.save(
+		return aiRequestRepository.save(
 			AiRequestEntity.builder()
 				.imagePurpose(imagePrefix)
 				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
@@ -80,8 +80,6 @@ public class AiImageService extends ImageService {
 				.requestId(requestId)
 				.status(AiImageStatus.PENDING)
 				.build());
-
-		return image.getId();
 	}
 
 	// 요청 상태 업데이트
