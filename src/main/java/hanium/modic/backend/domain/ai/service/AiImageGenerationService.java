@@ -5,7 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
+import hanium.modic.backend.domain.ai.enums.AiImageStatus;
+import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -20,6 +24,7 @@ public class AiImageGenerationService {
 	private final AiImageService aiImageService;
 	private final MessageQueueService messageQueueService;
 	private final PostImageEntityRepository postImageEntityRepository;
+	private final AiRequestRepository aiRequestRepository;
 
 	@Transactional
 	public AiRequestEntity processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
@@ -49,6 +54,12 @@ public class AiImageGenerationService {
 		 * ToDo: 이미지 조회 권한 검증
 		 */
 		return aiImageService.createImageGetUrl(imageId);
+	}
+
+	public AiImageStatus getAiImageStatus(String requestId) {
+		AiRequestEntity request = aiRequestRepository.findByRequestId(requestId)
+			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
+		return request.getStatus();
 	}
 
 	private void validateUserPermission(Long userId) {

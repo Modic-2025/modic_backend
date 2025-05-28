@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
+import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
+import hanium.modic.backend.web.ai.dto.response.AiRequestStatusResponse;
+import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
-import hanium.modic.backend.web.common.image.dto.response.CallbackImageSaveUrlResponse;
 import hanium.modic.backend.web.common.image.dto.response.CreateImageGetUrlResponse;
 import hanium.modic.backend.web.common.image.dto.response.CreateImageSaveUrlResponse;
 import jakarta.validation.Valid;
@@ -47,17 +50,17 @@ public class AiImageController {
 
 	// AI 요청 이미지 저장 완료 후 AI 이미지 생성 요청
 	@PostMapping("/requests")
-	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> requestAiImageGeneration(
+	public ResponseEntity<ApiResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request) {
-		Long id = aiImageGenerationService.processImageGeneration(
+		AiRequestEntity aiRequestEntity = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
 			request.imagePath(),
-			request.postId()
-		).getId();
+			request.postId());
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new CallbackImageSaveUrlResponse(id)));
+			.body(ApiResponse.created(
+				new RequestAiImageGenerationResponse(aiRequestEntity.getId(), aiRequestEntity.getRequestId())));
 	}
 
 	// AI 요청 이미지 URL 조회
@@ -70,5 +73,13 @@ public class AiImageController {
 		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId);
 
 		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+	}
+
+	// AI 이미지 생성 상태를 조회
+	@GetMapping("/requests/{requestId}/status")
+	public ResponseEntity<ApiResponse<AiRequestStatusResponse>> getAiRequestStatus(
+		@PathVariable String requestId) {
+		AiImageStatus status = aiImageGenerationService.getAiImageStatus(requestId);
+		return ResponseEntity.ok(ApiResponse.ok(new AiRequestStatusResponse(status)));
 	}
 }
