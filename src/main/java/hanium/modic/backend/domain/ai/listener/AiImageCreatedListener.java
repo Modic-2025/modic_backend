@@ -1,5 +1,7 @@
 package hanium.modic.backend.domain.ai.listener;
 
+import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +25,7 @@ public class AiImageCreatedListener {
 	private final AiRequestRepository aiRequestRepository;
 
 	@Transactional
-	@RabbitListener(queues = "ai.image.created.queue")
+	@RabbitListener(queues = AI_IMAGE_CREATED_QUEUE)
 	public void handleImageCreated(CreatedAiImageMessageDto message) {
 		log.info("[AI 이미지 생성 완료] 메시지 수신: {}", message);
 
