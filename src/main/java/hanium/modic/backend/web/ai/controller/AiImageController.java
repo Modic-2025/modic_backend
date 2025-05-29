@@ -75,6 +75,18 @@ public class AiImageController {
 		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 
+	// 생성된 AI 이미지 조회 URL 생성
+	@GetMapping("/requests/{requestId}/get-url")
+	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
+		@PathVariable String requestId) {
+		/*
+		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
+		 */
+		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId);
+
+		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+	}
+
 	// AI 이미지 생성 상태를 조회
 	@GetMapping("/requests/{requestId}/status")
 	public ResponseEntity<ApiResponse<AiRequestStatusResponse>> getAiRequestStatus(

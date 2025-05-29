@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
+import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
+import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -25,6 +27,8 @@ public class AiImageGenerationService {
 	private final MessageQueueService messageQueueService;
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final AiRequestRepository aiRequestRepository;
+	private final CreatedAiImageRepository createdAiImageRepository;
+	private final CreatedAiImageService createdAiImageService;
 
 	@Transactional
 	public AiRequestEntity processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
@@ -60,6 +64,16 @@ public class AiImageGenerationService {
 		AiRequestEntity request = aiRequestRepository.findByRequestId(requestId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
 		return request.getStatus();
+	}
+
+	public String createAiImageGetUrl(String requestId) {
+		/**
+		 * ToDo: AI 이미지 조회 권한 검증
+		 */
+		CreatedAiImageEntity createdAiImageEntity = createdAiImageRepository.findByRequestId(requestId)
+			.orElseThrow(() -> new AppException(ErrorCode.CREATED_AI_IMAGE_NOT_FOUND));
+
+		return createdAiImageService.createImageGetUrl(createdAiImageEntity.getId());
 	}
 
 	private void validateUserPermission(Long userId) {
