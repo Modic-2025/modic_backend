@@ -38,3 +38,8 @@ springdoc:
 
 swagger:
   url: ${SWAGGER_URL}
+
+jwt:
+  secretKey: ${JWT_SECRET}
+  accessExpiration: ${JWT_ACCESS_EXPIRATION}
+  refreshExpiration: ${JWT_REFRESH_EXPIRATION}
