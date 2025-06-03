@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
@@ -31,7 +32,7 @@ import jakarta.servlet.http.Cookie;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AuthControllerTest {
+class AuthControllerTest extends BaseControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;

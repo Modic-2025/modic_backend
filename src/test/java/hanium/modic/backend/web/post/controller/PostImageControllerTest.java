@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.domain.post.service.PostImageService;
 import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
@@ -25,7 +26,7 @@ import hanium.modic.backend.web.post.dto.request.CreateImageSaveUrlRequest;
 
 @WebMvcTest(controllers = PostImageController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class PostImageControllerTest {
+class PostImageControllerTest extends BaseControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
