@@ -21,13 +21,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+	private static final String AUTH_HEADER = "Authorization";
+
+	private static final String BEARER_TOKEN = "Bearer ";
+
 	private final AuthService authService;
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
-		response.addHeader("Authorization", "Bearer " + loginResponse.accessToken());
+		response.addHeader(AUTH_HEADER, BEARER_TOKEN + loginResponse.accessToken());
 		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(loginResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
