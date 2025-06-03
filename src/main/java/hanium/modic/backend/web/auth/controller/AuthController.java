@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
@@ -21,17 +22,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-	private static final String AUTH_HEADER = "Authorization";
-
-	private static final String BEARER_TOKEN = "Bearer ";
-
 	private final AuthService authService;
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
-		response.addHeader(AUTH_HEADER, BEARER_TOKEN + loginResponse.accessToken());
+		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + loginResponse.accessToken());
 		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(loginResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
