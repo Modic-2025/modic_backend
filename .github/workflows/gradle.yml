@@ -38,7 +38,7 @@ jobs:
           touch ./src/main/resources/application-main.yml
           echo "${{ secrets.MAIN_YML }}" > ./src/main/resources/application-main.yml
         else
-          echo "${{ secrets.DEV_YML }}" | base64 --decode > ./src/main/resources/application-dev.yml
+          echo "${{ secrets.DEB_YML }}" > ./src/main/resources/application-dev.yml
         fi
 
     - name: Setup Gradle
