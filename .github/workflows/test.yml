@@ -22,32 +22,17 @@ jobs:
         with:
           redis-version: 6
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
 
       # ✅ 공통 application-common.yml, ci.yml 생성
       - run: |
-          touch ./src/main/resources/application-common.yml
-          echo -e "${{ secrets.COMMON_YML }}" > ./src/main/resources/application-common.yml
-
           touch ./src/main/resources/application-test.yml
           echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
 
-      # ✅ 환경별 application-main.yml 또는 application-dev.yml 설정
-      - run: |
-          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-            touch ./src/main/resources/application-main.yml
-            echo "${{ secrets.MAIN_YML }}" > ./src/main/resources/application-main.yml
-          else
-            echo "${{ secrets.DEB_YML }}" > ./src/main/resources/application-dev.yml
-          fi
-
       # ✅ 테스트 실행 (컴파일 포함)
       - name: Run tests (includes compilation)
-        run: ./gradlew test -Dspring.profiles.active=test, common
+        run: ./gradlew test -Dspring.profiles.active=test
 
       # ✅ 전체 빌드 확인 (테스트 제외하고 jar 생성까지)
       - name: Build project
