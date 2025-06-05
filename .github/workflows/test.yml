@@ -15,12 +15,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin'
-
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.1.0
-        with:
-          redis-version: 6
+          distribution: 'zulu'
 
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
