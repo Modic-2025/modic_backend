@@ -23,7 +23,7 @@ jobs:
       # ✅ 공통 application-common.yml, ci.yml 생성
       - run: |
           touch ./src/main/resources/application-test.yml
-          echo -e "${{ secrets.PR_TEST_YML }}" | base64 -d > ./src/main/resources/application-test.yml
+          echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
 
       # ✅ 테스트 실행 (컴파일 포함)
       - name: Run tests (includes compilation)
