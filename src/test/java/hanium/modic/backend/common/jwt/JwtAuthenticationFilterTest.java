@@ -19,9 +19,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import hanium.modic.backend.domain.auth.service.JwtTokenProvider;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.factory.UserFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 

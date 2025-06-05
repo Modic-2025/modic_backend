@@ -12,7 +12,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
-import hanium.modic.backend.domain.auth.service.JwtTokenProvider;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

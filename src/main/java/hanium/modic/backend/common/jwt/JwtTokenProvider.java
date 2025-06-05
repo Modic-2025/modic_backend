@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.auth.service;
+package hanium.modic.backend.common.jwt;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -9,7 +9,6 @@ import javax.crypto.SecretKey;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
-import hanium.modic.backend.common.jwt.BlackListRepository;
 import hanium.modic.backend.common.property.property.TokenProperty;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;

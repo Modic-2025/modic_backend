@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.jwt.BlackListRepository;
+import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.property.property.TokenProperty;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
