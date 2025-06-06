@@ -15,10 +15,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.jwt.BlackListRepository;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
+import hanium.modic.backend.common.jwt.RefreshToken;
 import hanium.modic.backend.common.jwt.RefreshTokenRepository;
-import hanium.modic.backend.domain.auth .dto.Token;
+import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 
@@ -40,9 +43,12 @@ class AuthServiceTest {
 	@Mock
 	private RefreshTokenRepository refreshTokenRepository;
 
+	@Mock
+	private BlackListRepository blackListRepository;
+
 	@Test
 	@DisplayName("로그인 테스트 - 성공 케이스")
-	void loginSuccess () {
+	void loginSuccess() {
 		// given
 		UserEntity user = mock(UserEntity.class);
 
@@ -61,7 +67,7 @@ class AuthServiceTest {
 
 	@Test
 	@DisplayName("로그인 테스트 - 실패 케이스 (사용자 없음)")
-	void loginFail () {
+	void loginFail() {
 		// given
 		final String email = "youth@cotato.kr";
 		final String password = "password";
@@ -84,7 +90,100 @@ class AuthServiceTest {
 		when(passwordEncoder.matches(password, user.getPassword())).thenReturn(false);
 
 		// when & then
-		AppException appException = assertThrows(AppException.class, () -> authService.login(user.getEmail(), password));
+		AppException appException = assertThrows(AppException.class,
+			() -> authService.login(user.getEmail(), password));
 		assertEquals(appException.getErrorCode(), ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 - 성공 케이스")
+	void reissueSuccess() {
+		// given
+		final String oldRefreshToken = "oldRefreshToken";
+		final String newAccessToken = "newAccessToken";
+		final String newRefreshToken = "newRefreshToken";
+
+		UserEntity user = mock(UserEntity.class);
+
+		RefreshToken refreshToken = mock(RefreshToken.class);
+		when(refreshToken.getRefreshToken()).thenReturn(oldRefreshToken);
+
+		when(blackListRepository.existsById(any())).thenReturn(false);
+		when(jwtTokenProvider.getUser(oldRefreshToken)).thenReturn(Optional.of(user));
+		when(refreshTokenRepository.findById(any())).thenReturn(Optional.of(refreshToken));
+		when(jwtTokenProvider.createToken(any())).thenReturn(new Token(newAccessToken, newRefreshToken));
+
+		// when
+		var reissueResponse = authService.reissue(oldRefreshToken);
+
+		// then
+		assertNotNull(reissueResponse);
+		verify(jwtTokenProvider).getUser(oldRefreshToken);
+		verify(refreshTokenRepository).findById(any());
+		verify(jwtTokenProvider).setBlackList(oldRefreshToken);
+		verify(jwtTokenProvider).createToken(user);
+		verify(refreshTokenRepository).save(refreshToken);
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 - 실패 케이스 (블랙리스트에 존재하는 토큰)")
+	void reissueFail_BlackList() {
+		// given
+		final String refreshToken = "refreshToken";
+
+		when(blackListRepository.existsById(refreshToken)).thenReturn(true);
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.reissue(refreshToken));
+
+		assertEquals(appException.getErrorCode(), ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 - 실패 케이스 (사용자 없음)")
+	void reissueFail_TokenClaimException() {
+		// given
+		final String refreshToken = "refreshToken";
+
+		when(blackListRepository.existsById(refreshToken)).thenReturn(false);
+		when(jwtTokenProvider.getUser(refreshToken)).thenReturn(Optional.empty());
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.reissue(refreshToken));
+		assertEquals(appException.getErrorCode(), ErrorCode.USER_NOT_FOUND_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 - 실패 케이스 (리프레시 토큰이 존재하지 않음)")
+	void reissueFail_RefreshTokenNotFound() {
+		// given
+		final String refreshToken = "refreshToken";
+		UserEntity user = UserFactory.createMockUser(1L);
+
+		when(blackListRepository.existsById(refreshToken)).thenReturn(false);
+		when(jwtTokenProvider.getUser(refreshToken)).thenReturn(Optional.of(user));
+		when(refreshTokenRepository.findById(user.getId())).thenReturn(Optional.empty());
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.reissue(refreshToken));
+		assertEquals(appException.getErrorCode(), ErrorCode.REFRESH_TOKEN_NOT_FOUND_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 - 실패 케이스 (리프레시 토큰 불일치)")
+	void reissueFail_RefreshTokenMisMatch() {
+		// given
+		final String oldRefreshToken = "refreshToken";
+		UserEntity user = UserFactory.createMockUser(1L);
+		RefreshToken refreshToken = mock(RefreshToken.class);
+		when(refreshToken.getRefreshToken()).thenReturn("differentRefreshToken");
+
+		when(blackListRepository.existsById(oldRefreshToken)).thenReturn(false);
+		when(jwtTokenProvider.getUser(oldRefreshToken)).thenReturn(Optional.of(user));
+		when(refreshTokenRepository.findById(user.getId())).thenReturn(Optional.of(refreshToken));
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.reissue(oldRefreshToken));
+		assertEquals(appException.getErrorCode(), ErrorCode.REFRESH_TOKEN_MISMATCH_EXCEPTION);
 	}
 }

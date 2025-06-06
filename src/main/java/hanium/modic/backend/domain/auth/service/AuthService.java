@@ -13,6 +13,7 @@ import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
+import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -43,5 +44,30 @@ public class AuthService {
 		refreshTokenRepository.save(refreshToken);
 
 		return LoginResponse.from(token);
+	}
+
+	public ReissueResponse reissue(final String refreshToken) {
+		if (blackListRepository.existsById(refreshToken)) {
+			throw new AppException(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);
+		}
+
+		UserEntity user = jwtTokenProvider.getUser(refreshToken)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		RefreshToken savedRefreshToken = refreshTokenRepository.findById(user.getId())
+			.orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND_EXCEPTION));
+
+		if (!savedRefreshToken.getRefreshToken().equals(refreshToken)) {
+			throw new AppException(ErrorCode.REFRESH_TOKEN_MISMATCH_EXCEPTION);
+		}
+
+		jwtTokenProvider.setBlackList(refreshToken);
+
+		Token token = jwtTokenProvider.createToken(user);
+		savedRefreshToken.updateRefreshToken(token.refreshToken());
+
+		refreshTokenRepository.save(savedRefreshToken);
+
+		return ReissueResponse.from(token);
 	}
 }
