@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
+import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth .dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -36,6 +37,9 @@ class AuthServiceTest {
 	@Mock
 	private BCryptPasswordEncoder passwordEncoder;
 
+	@Mock
+	private RefreshTokenRepository refreshTokenRepository;
+
 	@Test
 	@DisplayName("로그인 테스트 - 성공 케이스")
 	void loginSuccess () {
@@ -52,6 +56,7 @@ class AuthServiceTest {
 		// then
 		verify(passwordEncoder).matches(any(), any());
 		verify(jwtTokenProvider).createToken(user);
+		verify(refreshTokenRepository).save(any());
 	}
 
 	@Test
