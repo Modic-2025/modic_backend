@@ -17,6 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -26,8 +27,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.EntityNotFoundException;
+import hanium.modic.backend.common.jwt.JwtAuthenticationEntryPoint;
+import hanium.modic.backend.common.jwt.JwtAuthenticationFilter;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
@@ -36,7 +40,7 @@ import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 
 @WebMvcTest(controllers = PostController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class PostControllerTest {
+class PostControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private PostService postService;

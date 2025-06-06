@@ -7,12 +7,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "jwt")
-public class TokenProperty {
+@ConfigurationProperties(prefix = "spring.data.redis")
+public class RedisProperty {
 
-	private String secretKey;
+	private String host;
 
-	private long accessExpiration;
-
-	private long refreshExpiration;
+	private int port;
 }
