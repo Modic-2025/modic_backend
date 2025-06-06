@@ -12,7 +12,7 @@ public class TokenProperty {
 
 	private String secretKey;
 
-	private long accessExpirationTime;
+	private long accessExpiration;
 
-	private long refreshExpirationTime;
+	private long refreshExpiration;
 }

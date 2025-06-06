@@ -58,8 +58,8 @@ class JwtTokenProviderTest {
 		// given
 		UserEntity user = UserFactory.createMockUser(1L);
 
-		when(tokenProperty.getAccessExpirationTime()).thenReturn(ACCESS_EXPIRE);
-		when(tokenProperty.getRefreshExpirationTime()).thenReturn(REFRESH_EXPIRE);
+		when(tokenProperty.getAccessExpiration()).thenReturn(ACCESS_EXPIRE);
+		when(tokenProperty.getRefreshExpiration()).thenReturn(REFRESH_EXPIRE);
 
 		// when
 		Token token = jwtTokenProvider.createToken(user);
