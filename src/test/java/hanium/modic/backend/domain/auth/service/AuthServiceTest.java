@@ -118,11 +118,13 @@ class AuthServiceTest {
 
 		// then
 		assertNotNull(reissueResponse);
-		verify(jwtTokenProvider).getUser(oldRefreshToken);
-		verify(refreshTokenRepository).findById(any());
+
 		verify(jwtTokenProvider).setBlackList(oldRefreshToken);
 		verify(jwtTokenProvider).createToken(user);
 		verify(refreshTokenRepository).save(refreshToken);
+
+		assertEquals(newAccessToken, reissueResponse.accessToken());
+		assertEquals(newRefreshToken, reissueResponse.refreshToken());
 	}
 
 	@Test
