@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
+import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 
 @WebMvcTest(AiImageController.class)
@@ -59,5 +60,42 @@ class AiImageControllerTest {
 		);
 	}
 
+	@ParameterizedTest
+	@DisplayName("AI 이미지 생성 요청 실패 - 필수값 누락 시 400 응답")
+	@MethodSource("provideInvalidAiImageGenerationRequests")
+	void requestAiImageGenerationValidationFail(AiImageGenerationRequest request) throws Exception {
+		// when + then
+		mockMvc.perform(post("/api/ai/images/requests")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value(ErrorCode.USER_INPUT_EXCEPTION.getCode()));
+	}
 
+	private static Stream<AiImageGenerationRequest> provideInvalidAiImageGenerationRequests() {
+		return Stream.of(
+			// 파일명 누락
+			new AiImageGenerationRequest(null, "valid/path", AI_REQUEST, 1L),
+			// 파일명 빈 문자열
+			new AiImageGenerationRequest("", "valid/path", AI_REQUEST, 1L),
+			// 파일명 공백
+			new AiImageGenerationRequest("   ", "valid/path", AI_REQUEST, 1L),
+
+			// 이미지 Path 누락
+			new AiImageGenerationRequest("valid.jpg", null, AI_REQUEST, 1L),
+			// 이미지 Path 빈 문자열
+			new AiImageGenerationRequest("valid.jpg", "", AI_REQUEST, 1L),
+			// 이미지 Path 공백
+			new AiImageGenerationRequest("valid.jpg", "   ", AI_REQUEST, 1L),
+
+			// 이미지 사용 목적 누락
+			new AiImageGenerationRequest("valid.jpg", "valid/path", null, 1L),
+
+			// postId 누락
+			new AiImageGenerationRequest("valid.jpg", "valid/path", AI_REQUEST, null),
+
+			// 모든 필수값 누락
+			new AiImageGenerationRequest(null, null, null, null)
+		);
+	}
 }
