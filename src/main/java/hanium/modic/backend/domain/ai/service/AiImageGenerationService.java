@@ -15,6 +15,7 @@ import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +32,7 @@ public class AiImageGenerationService {
 	private final CreatedAiImageService createdAiImageService;
 
 	@Transactional
-	public AiRequestEntity processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
+	public RequestAiImageGenerationResponse processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
 		String imagePath, Long postId) {
 		// ToDO: 인증 로직 추가되면 userId를 통해 검증 예정
 		// validateUserPermission(userId);
@@ -50,7 +51,7 @@ public class AiImageGenerationService {
 			aiRequestEntity.getImageUrl(),
 			styleImageUrls);
 
-		return aiRequestEntity;
+		return RequestAiImageGenerationResponse.from(aiRequestEntity);
 	}
 
 	public String createImageGetUrl(Long imageId) {

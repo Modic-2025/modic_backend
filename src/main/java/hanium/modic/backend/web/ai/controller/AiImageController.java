@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.ApiResponse;
-import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
@@ -52,15 +51,16 @@ public class AiImageController {
 	@PostMapping("/requests")
 	public ResponseEntity<ApiResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request) {
-		AiRequestEntity aiRequestEntity = aiImageGenerationService.processImageGeneration(
+
+		RequestAiImageGenerationResponse response = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
 			request.imagePath(),
-			request.postId());
+			request.postId()
+		);
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(
-				new RequestAiImageGenerationResponse(aiRequestEntity.getId(), aiRequestEntity.getRequestId())));
+			.body(ApiResponse.created(response));
 	}
 
 	// AI 요청 이미지 URL 조회
