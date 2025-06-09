@@ -2,12 +2,12 @@ package hanium.modic.backend.domain.ai.listener;
 
 import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
 
+import java.util.Optional;
+
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.dto.CreatedAiImageMessageDto;
@@ -29,14 +29,19 @@ public class AiImageCreatedListener {
 	public void handleImageCreated(CreatedAiImageMessageDto message) {
 		log.info("[AI 이미지 생성 완료] 메시지 수신: {}", message);
 
+		Optional<AiRequestEntity> aiRequestOpt = aiRequestRepository.findByRequestId(message.requestId());
+		if (aiRequestOpt.isEmpty()) {
+			log.error("[AI 이미지 처리 실패] AI 요청을 찾을 수 없습니다. requestId: {}", message.requestId());
+			return;
+		}
+
+		AiRequestEntity aiRequest = aiRequestOpt.get();
 		CreatedAiImageEntity created = CreatedAiImageEntity.builder()
 			.requestId(message.requestId())
 			.imageUrl(message.imageUrl())
 			.build();
 		createdAiImageRepository.save(created);
 
-		AiRequestEntity aiRequest = aiRequestRepository.findByRequestId(message.requestId())
-			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
 		aiRequest.updateStatus(AiImageStatus.DONE);
 	}
 }
