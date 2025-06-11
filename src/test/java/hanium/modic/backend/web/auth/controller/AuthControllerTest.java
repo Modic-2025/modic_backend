@@ -1,6 +1,7 @@
 package hanium.modic.backend.web.auth.controller;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,6 +22,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.bind.MissingRequestCookieException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -28,6 +30,7 @@ import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
+import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import jakarta.servlet.http.Cookie;
 
 @WebMvcTest(AuthController.class)
@@ -109,5 +112,31 @@ class AuthControllerTest extends BaseControllerTest {
 		);
 	}
 
+	@Test
+	@DisplayName("리프레시 토큰 재발급 테스트")
+	void reissueSuccess() throws Exception {
+		// given
+		String oldRefreshToken = "oldRefreshToken";
+		String newAccessToken = "newAccessToken";
+		String newRefreshToken = "newRefreshToken";
 
+		ReissueResponse mockResponse = new ReissueResponse(newAccessToken, newRefreshToken);
+
+		when(authService.reissue(oldRefreshToken)).thenReturn(mockResponse);
+
+		// when, then
+		mockMvc.perform(post("/api/auth/reissue")
+				.cookie(new Cookie("refreshToken", oldRefreshToken)))
+			.andExpect(status().isOk())
+			.andExpect(header().string("Authorization", "Bearer " + newAccessToken))
+			.andExpect(cookie().value("refreshToken", newRefreshToken));
+	}
+
+	@Test
+	@DisplayName("토큰 재발급 API - 실패 케이스 (쿠키 누락)")
+	void reissue_fail_missing_cookie() throws Exception {
+		mockMvc.perform(post("/api/auth/reissue"))
+			.andExpect(status().isBadRequest())
+			.andExpect(result -> assertInstanceOf(MissingRequestCookieException.class, result.getResolvedException()));
+	}
 }

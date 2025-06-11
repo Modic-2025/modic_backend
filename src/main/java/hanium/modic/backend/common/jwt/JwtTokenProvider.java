@@ -100,4 +100,10 @@ public class JwtTokenProvider {
 
 		return userEntityRepository.findById(userId);
 	}
+
+	public void setBlackList(final String refreshToken) {
+		BlackList blackList = BlackList.builder().id(refreshToken)
+			.build();
+		blackListRepository.save(blackList);
+	}
 }

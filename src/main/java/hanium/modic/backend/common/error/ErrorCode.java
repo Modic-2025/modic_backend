@@ -14,6 +14,9 @@ public enum ErrorCode {
 	USER_ROLE_EXCEPTION(HttpStatus.FORBIDDEN, "C-002", "유저 권한 오류"),
 	AUTHENTICATION_EXCEPTION(HttpStatus.UNAUTHORIZED, "C-003", "공통 권한 에러(필터)"),
 	JWT_AUTH_EXCEPTION(HttpStatus.UNAUTHORIZED, "C-004", "JWT 인증 에러"),
+	TOKEN_BLACKLISTED_EXCEPTION(HttpStatus.BAD_REQUEST, "C-005", "차단된 토큰입니다."),
+	REFRESH_TOKEN_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "C-006", "해당 유저에게 발급된 리프레시 토큰이 존재하지 않습니다."),
+	REFRESH_TOKEN_MISMATCH_EXCEPTION(HttpStatus.UNAUTHORIZED, "C-007", "리프레시 토큰이 일치하지 않습니다."),
 
 	// User
 	USER_EMAIL_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "U-001", "이미 사용중인 이메일입니다."),
