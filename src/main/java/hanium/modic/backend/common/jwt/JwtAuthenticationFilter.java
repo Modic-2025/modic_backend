@@ -25,11 +25,15 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final String AUTH_PATH = "/api/auth";
-
 	private static final String JOIN_PATH = "/api/users";
 
-	private final JwtTokenProvider jwtTokenProvider;
+	private static final String SWAGGER_UI_HTML = "/swagger-ui.html";
+	private static final String API_DOCS = "/api-docs";
+	private static final String API_DOCS_ALL = "/api-docs/**";
+	private static final String SWAGGER_UI_ALL = "/swagger-ui/**";
+	private static final String V3_API_DOCS_ALL = "/v3/api-docs/**";
 
+	private final JwtTokenProvider jwtTokenProvider;
 	private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
 	@Override
@@ -54,8 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		UserEntity user = jwtTokenProvider.getUser(accessToken)
 			.orElseThrow(() -> new BadCredentialsException("Invalid JWT token: User not found"));
 		Authentication authenticationToken = new UsernamePasswordAuthenticationToken(user, "", List.of());
-		// Todo https://github.com/Modic-2025/modic_backend/issues/42
-
 		SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 	}
 
@@ -67,8 +69,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+	protected boolean shouldNotFilter(HttpServletRequest request) {
 		final AntPathMatcher matcher = new AntPathMatcher();
-		return request.getRequestURI().startsWith(AUTH_PATH) || matcher.match(JOIN_PATH, request.getRequestURI());
+		final String uri = request.getRequestURI();
+
+		return uri.startsWith(AUTH_PATH)
+			|| matcher.match(JOIN_PATH, uri)
+			|| matcher.match(SWAGGER_UI_HTML, uri)
+			|| matcher.match(API_DOCS, uri)
+			|| matcher.match(API_DOCS_ALL, uri)
+			|| matcher.match(SWAGGER_UI_ALL, uri)
+			|| matcher.match(V3_API_DOCS_ALL, uri);
 	}
 }
