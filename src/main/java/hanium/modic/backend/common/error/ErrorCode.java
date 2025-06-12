@@ -18,6 +18,9 @@ public enum ErrorCode {
 	REFRESH_TOKEN_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "C-006", "해당 유저에게 발급된 리프레시 토큰이 존재하지 않습니다."),
 	REFRESH_TOKEN_MISMATCH_EXCEPTION(HttpStatus.UNAUTHORIZED, "C-007", "리프레시 토큰이 일치하지 않습니다."),
 
+	// Auth
+	EMAIL_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "A-001", "이메일 전송 중 에러가 발생하였습니다."),
+
 	// User
 	USER_EMAIL_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "U-001", "이미 사용중인 이메일입니다."),
 	USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-002", "해당 유저를 찾을 수 없습니다."),

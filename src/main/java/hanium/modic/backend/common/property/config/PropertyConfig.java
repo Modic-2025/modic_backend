@@ -3,10 +3,11 @@ package hanium.modic.backend.common.property.config;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import hanium.modic.backend.common.property.property.EmailProperty;
+import hanium.modic.backend.common.property.property.RedisProperty;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.common.property.property.SwaggerProperties;
 import hanium.modic.backend.common.property.property.TokenProperty;
-import hanium.modic.backend.common.property.property.RedisProperty;
 
 // 전역적으로 사용되는 상수
 @Configuration
@@ -14,7 +15,8 @@ import hanium.modic.backend.common.property.property.RedisProperty;
 	S3Properties.class,
 	SwaggerProperties.class,
 	TokenProperty.class,
-	RedisProperty.class
+	RedisProperty.class,
+	EmailProperty.class
 })
 public class PropertyConfig {
 }
