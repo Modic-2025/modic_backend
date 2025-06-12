@@ -14,6 +14,7 @@ import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
+import hanium.modic.backend.web.auth.dto.SendEmailRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -27,7 +28,8 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
+	public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request,
+		HttpServletResponse response) {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + loginResponse.accessToken());
@@ -38,13 +40,20 @@ public class AuthController {
 	}
 
 	@PostMapping("/reissue")
-	public ResponseEntity<ApiResponse<Void>> reissue(@CookieValue(name = "refreshToken") String refreshToken,  HttpServletResponse response) {
+	public ResponseEntity<ApiResponse<Void>> reissue(@CookieValue(name = "refreshToken") String refreshToken,
+		HttpServletResponse response) {
 		ReissueResponse reissueResponse = authService.reissue(refreshToken);
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + reissueResponse.accessToken());
 		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(reissueResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
+		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping(value = "/email/verification", params = "type=sign-up")
+	public ResponseEntity<ApiResponse<Void>> sendEmailVerification(@RequestBody @Valid SendEmailRequest request) {
+		authService.sendEmailVerification(request.email());
 		return ResponseEntity.ok().build();
 	}
 }
