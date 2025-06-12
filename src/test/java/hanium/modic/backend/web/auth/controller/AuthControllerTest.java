@@ -168,7 +168,7 @@ class AuthControllerTest extends BaseControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage)); // ✔ 여기를 수정
+			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
 	}
 
 	static Stream<Arguments> invalidEmailRequests() {
