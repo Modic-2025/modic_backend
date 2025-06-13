@@ -44,7 +44,7 @@ public class EmailSender {
 		try {
 			return new InternetAddress(emailProperty.getUsername(), EmailProperty.AUTH_PERSONAL);
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			throw new AppException(ErrorCode.EMAIL_SEND_ERROR);
 		}
 	}
 }
