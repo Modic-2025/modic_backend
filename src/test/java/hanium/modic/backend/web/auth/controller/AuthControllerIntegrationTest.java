@@ -19,6 +19,7 @@ import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
+import hanium.modic.backend.web.auth.dto.SendEmailRequest;
 import jakarta.servlet.http.Cookie;
 
 public class AuthControllerIntegrationTest extends BaseIntegrationTest {
@@ -84,5 +85,23 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(status().isOk())
 			.andExpect(header().string("Authorization", "Bearer " + token.accessToken()))
 			.andExpect(cookie().value("refreshToken", token.refreshToken()));
+	}
+
+	@Test
+	@DisplayName("회원 인증 이메일 코드 발송 API")
+	void sendEmailSignupCodeApiSuccess() throws Exception {
+		// given
+		SendEmailRequest request = new SendEmailRequest("boysoeng@naver.com");
+
+		// when, then
+		try {
+			mockMvc.perform(post("/api/auth/email/verification")
+					.param("type", "sign-up")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isOk());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
