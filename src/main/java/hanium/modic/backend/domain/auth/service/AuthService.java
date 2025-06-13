@@ -10,6 +10,9 @@ import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.jwt.RefreshToken;
 import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.dto.Token;
+import hanium.modic.backend.domain.auth.service.component.CodeManager;
+import hanium.modic.backend.domain.auth.service.component.EmailSender;
+import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
@@ -30,6 +33,10 @@ public class AuthService {
 
 	private final BlackListRepository blackListRepository;
 
+	private final CodeManager codeManager;
+
+	private final EmailSender emailSender;
+
 	public LoginResponse login(final String email, final String password) {
 		UserEntity user = userEntityRepository.findByEmail(email)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
@@ -40,7 +47,10 @@ public class AuthService {
 
 		Token token = jwtTokenProvider.createToken(user);
 
-		RefreshToken refreshToken = RefreshToken.builder().userId(user.getId()).refreshToken(token.refreshToken()).build();
+		RefreshToken refreshToken = RefreshToken.builder()
+			.userId(user.getId())
+			.refreshToken(token.refreshToken())
+			.build();
 		refreshTokenRepository.save(refreshToken);
 
 		return LoginResponse.from(token);
@@ -69,5 +79,16 @@ public class AuthService {
 		refreshTokenRepository.save(savedRefreshToken);
 
 		return ReissueResponse.from(token);
+	}
+
+	public void sendEmailVerification(final String email) {
+		if (userEntityRepository.existsByEmail(email)) {
+			throw new AppException(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
+		}
+
+		final String randomCode = codeManager.generateRandomCode(email);
+
+		EmailDto emailDto = EmailDto.signup(email, randomCode);
+		emailSender.sendEmail(emailDto);
 	}
 }

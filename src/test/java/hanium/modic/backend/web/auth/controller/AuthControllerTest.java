@@ -31,6 +31,7 @@ import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
+import hanium.modic.backend.web.auth.dto.SendEmailRequest;
 import jakarta.servlet.http.Cookie;
 
 @WebMvcTest(AuthController.class)
@@ -138,5 +139,50 @@ class AuthControllerTest extends BaseControllerTest {
 		mockMvc.perform(post("/api/auth/reissue"))
 			.andExpect(status().isBadRequest())
 			.andExpect(result -> assertInstanceOf(MissingRequestCookieException.class, result.getResolvedException()));
+	}
+
+	@Test
+	@DisplayName("이메일 인증 코드 전송 테스트")
+	void sendSignupEmailVerificationCode() throws Exception {
+		// given
+		final String email = "youth@youth.kr";
+
+		SendEmailRequest request = new SendEmailRequest(email);
+
+		// when, then
+		mockMvc.perform(post("/api/auth/email/verification?type=sign-up")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isOk());
+	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidEmailRequests")
+	@DisplayName("이메일 인증 코드 전송 실패 테스트")
+	void sendSignupEmailVerificationCodeFail(String description, SendEmailRequest request,
+		String expectedErrorMessage) throws Exception {
+		// given
+
+		// when, then
+		mockMvc.perform(post("/api/auth/email/verification?type=sign-up")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
+	}
+
+	static Stream<Arguments> invalidEmailRequests() {
+		return Stream.of(
+			Arguments.of(
+				"이메일이 빈 문자열인 경우",
+				new SendEmailRequest(""),
+				"이메일은 필수 입력 항목입니다."
+			),
+			Arguments.of(
+				"이메일 형식이 잘못된 경우",
+				new SendEmailRequest("not-an-email"),
+				"유효하지 않은 이메일 형식입니다."
+			)
+		);
 	}
 }

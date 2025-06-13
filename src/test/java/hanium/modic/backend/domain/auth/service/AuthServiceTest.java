@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.auth.service;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -20,6 +21,9 @@ import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.jwt.RefreshToken;
 import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.dto.Token;
+import hanium.modic.backend.domain.auth.service.component.CodeManager;
+import hanium.modic.backend.domain.auth.service.component.EmailSender;
+import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -45,6 +49,12 @@ class AuthServiceTest {
 
 	@Mock
 	private BlackListRepository blackListRepository;
+
+	@Mock
+	private CodeManager codeManager;
+
+	@Mock
+	private EmailSender emailSender;
 
 	@Test
 	@DisplayName("로그인 테스트 - 성공 케이스")
@@ -187,5 +197,35 @@ class AuthServiceTest {
 		// when, then
 		AppException appException = assertThrows(AppException.class, () -> authService.reissue(oldRefreshToken));
 		assertEquals(appException.getErrorCode(), ErrorCode.REFRESH_TOKEN_MISMATCH_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("회원 가입 인증 코드 발송")
+	void sendEmailVerificationCode() {
+		// given
+		final String email = "youth@youth.kr";
+
+		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
+		when(codeManager.generateRandomCode(email)).thenReturn("1234");
+
+		// when
+		authService.sendEmailVerification(email);
+
+		// then
+		verify(emailSender).sendEmail(any(EmailDto.class));
+	}
+
+	@Test
+	@DisplayName("회원 가입 인증 코드 발송 - 실패 케이스 (이메일 중복)")
+	void sendEmailVerificationCode_duplicateEmail() {
+		// given
+		final String email = "youth@youth.kr";
+
+		when(userEntityRepository.existsByEmail(email)).thenReturn(true);
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.sendEmailVerification(email));
+		assertThat(appException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
+		verifyNoInteractions(emailSender);
 	}
 }
