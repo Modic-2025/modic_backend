@@ -9,6 +9,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
+import hanium.modic.backend.web.user.dto.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -39,5 +40,9 @@ public class UserService {
 		if (userEntityRepository.existsByEmail(email)) {
 			throw new AppException(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
 		}
+	}
+
+	public UserInfoResponse getUserInfo(UserEntity user) {
+		return UserInfoResponse.from(user);
 	}
 }
