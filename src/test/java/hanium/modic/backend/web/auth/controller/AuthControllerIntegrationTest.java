@@ -91,17 +91,13 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("회원 인증 이메일 코드 발송 API")
 	void sendEmailSignupCodeApiSuccess() throws Exception {
 		// given
-		SendEmailRequest request = new SendEmailRequest("boysoeng@naver.com");
+		SendEmailRequest request = new SendEmailRequest("test@test.kr");
 
 		// when, then
-		try {
-			mockMvc.perform(post("/api/auth/email/verification")
-					.param("type", "sign-up")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content(objectMapper.writeValueAsString(request)))
-				.andExpect(status().isOk());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		mockMvc.perform(post("/api/auth/email/verification")
+				.param("type", "sign-up")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isOk());
 	}
 }
