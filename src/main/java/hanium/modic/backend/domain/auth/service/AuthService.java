@@ -17,6 +17,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -90,5 +91,12 @@ public class AuthService {
 
 		EmailDto emailDto = EmailDto.signup(email, randomCode);
 		emailSender.sendEmail(emailDto);
+	}
+
+	public VerifyEmailCodeResponse verifyEmailCode(final String email, final String code) {
+		if (!codeManager.checkSignupCode(email, code)) {
+			throw new AppException(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION);
+		}
+		return VerifyEmailCodeResponse.of(email, true);
 	}
 }
