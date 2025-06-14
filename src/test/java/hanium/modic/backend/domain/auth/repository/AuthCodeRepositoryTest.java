@@ -3,6 +3,8 @@ package hanium.modic.backend.domain.auth.repository;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +39,7 @@ class AuthCodeRepositoryTest {
 		authCodeRepository.saveCode(email, code);
 
 		// then
-		verify(valueOperations).set(email, code);
+		verify(valueOperations).set(email, code, 30L, TimeUnit.MINUTES);
 	}
 
 	@Test
