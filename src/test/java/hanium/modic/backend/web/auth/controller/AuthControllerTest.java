@@ -32,6 +32,8 @@ import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import hanium.modic.backend.web.auth.dto.SendEmailRequest;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeRequest;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import jakarta.servlet.http.Cookie;
 
 @WebMvcTest(AuthController.class)
@@ -182,6 +184,63 @@ class AuthControllerTest extends BaseControllerTest {
 				"이메일 형식이 잘못된 경우",
 				new SendEmailRequest("not-an-email"),
 				"유효하지 않은 이메일 형식입니다."
+			)
+		);
+	}
+
+	@Test
+	@DisplayName("이메일 인증 코드 검증 성공 테스트")
+	void verifyEmailCodeSuccess() throws Exception {
+		// given
+		VerifyEmailCodeRequest request = new VerifyEmailCodeRequest("youth@youth.kr", "1234");
+
+		when(authService.verifyEmailCode(request.email(), request.code()))
+			.thenReturn(new VerifyEmailCodeResponse(request.email(), true));
+
+		// when, then
+		mockMvc.perform(post("/api/auth/email/verification/check")
+				.param("type", "sign-up")
+				.content(objectMapper.writeValueAsString(request))
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpectAll(jsonPath("$.data.email").value(request.email()),
+				jsonPath("$.data.isVerified").value(true));
+	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidVerifyEmailCodeRequests")
+	@DisplayName("이메일 인증 코드 검증 실패 테스트")
+	void verifyEmailCodeFail(String description, VerifyEmailCodeRequest request,
+		String expectedErrorMessage) throws Exception {
+		// given
+		when(authService.verifyEmailCode(request.email(), request.code()))
+			.thenThrow(new RuntimeException(expectedErrorMessage));
+
+		// when, then
+		mockMvc.perform(post("/api/auth/email/verification/check")
+				.param("type", "sign-up")
+				.content(objectMapper.writeValueAsString(request))
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
+	}
+
+	static Stream<Arguments> invalidVerifyEmailCodeRequests() {
+		return Stream.of(
+			Arguments.of(
+				"이메일이 빈 문자열인 경우",
+				new VerifyEmailCodeRequest("", "1234"),
+				"이메일은 필수 입력 항목입니다."
+			),
+			Arguments.of(
+				"이메일 형식이 잘못된 경우",
+				new VerifyEmailCodeRequest("not-an-email", "1234"),
+				"유효하지 않은 이메일 형식입니다."
+			),
+			Arguments.of(
+				"인증 코드가 빈 문자열인 경우",
+				new VerifyEmailCodeRequest("email@email.email", ""),
+				"인증 코드를 입력해주세요."
 			)
 		);
 	}
