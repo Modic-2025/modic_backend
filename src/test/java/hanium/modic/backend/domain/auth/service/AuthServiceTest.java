@@ -228,4 +228,36 @@ class AuthServiceTest {
 		assertThat(appException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
 		verifyNoInteractions(emailSender);
 	}
+
+	@Test
+	@DisplayName("회원 가입 인증 코드 검증 성공")
+	void verifyEmailCodeTest() {
+		// given
+		final String code = "1234";
+		final String email = "youth@youth.kr";
+
+		when(codeManager.checkSignupCode(email, code)).thenReturn(true);
+
+		// when
+		var response = authService.verifyEmailCode(email, code);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.email()).isEqualTo(email);
+		assertThat(response.isVerified()).isTrue();
+	}
+
+	@Test
+	@DisplayName("회원 가입 인증 코드 검증 실패")
+	void verifyEmailCodeTest_Fail() {
+		// given
+		final String code = "1234";
+		final String email = "youth@youth.kr";
+
+		when(codeManager.checkSignupCode(email, code)).thenReturn(false);
+
+		// when, then
+		AppException appException = assertThrows(AppException.class, () -> authService.verifyEmailCode(email, code));
+		assertThat(appException.getErrorCode()).isEqualTo(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION);
+	}
 }
