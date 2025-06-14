@@ -127,5 +127,7 @@ class UserControllerTest extends BaseControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.id").value(mockUser.getId()))
 			.andExpect(jsonPath("$.data.email").value(mockUser.getEmail()));
+
+		SecurityContextHolder.clearContext();
 	}
 }
