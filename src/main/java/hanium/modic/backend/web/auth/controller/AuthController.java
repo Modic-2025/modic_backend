@@ -15,6 +15,8 @@ import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import hanium.modic.backend.web.auth.dto.SendEmailRequest;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeRequest;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -55,5 +57,11 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<Void>> sendEmailVerification(@RequestBody @Valid SendEmailRequest request) {
 		authService.sendEmailVerification(request.email());
 		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping(value = "/email/verification/check", params = "type=sign-up")
+	public ResponseEntity<ApiResponse<VerifyEmailCodeResponse>> verifyEmailCode(
+		@RequestBody @Valid VerifyEmailCodeRequest request) {
+		return ResponseEntity.ok().body(ApiResponse.ok(authService.verifyEmailCode(request.email(), request.code())));
 	}
 }

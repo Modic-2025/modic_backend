@@ -16,5 +16,6 @@ public class BlackList {
 	private String id;
 
 	@TimeToLive(unit = TimeUnit.DAYS)
+	@Builder.Default
 	private Long ttl = 7L;
 }
