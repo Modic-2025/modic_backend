@@ -31,4 +31,9 @@ public class CodeManager {
 		}
 		return String.valueOf(builder);
 	}
+
+	public Boolean checkSignupCode(final String email, final String code) {
+		String savedVerificationCode = authCodeRepository.getCode(email);
+		return code.equals(savedVerificationCode);
+	}
 }

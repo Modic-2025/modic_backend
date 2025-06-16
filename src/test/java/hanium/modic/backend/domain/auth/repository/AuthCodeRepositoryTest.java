@@ -1,6 +1,9 @@
 package hanium.modic.backend.domain.auth.repository;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
+
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +39,23 @@ class AuthCodeRepositoryTest {
 		authCodeRepository.saveCode(email, code);
 
 		// then
-		verify(valueOperations).set(email, code);
+		verify(valueOperations).set(email, code, 30L, TimeUnit.MINUTES);
+	}
+
+	@Test
+	@DisplayName("회원 가입 이메일 인증 코드 조회")
+	void getSignupCode() {
+		// given
+		final String email = "youth@youth.kr";
+		final String code = "1234";
+		given(redisTemplate.opsForValue()).willReturn(valueOperations);
+		when(valueOperations.get(email)).thenReturn(code);
+
+		// when
+		String savedCode = authCodeRepository.getCode(email);
+
+		// then
+		verify(valueOperations).get(email);
+		assertThat(savedCode).isEqualTo(code);
 	}
 }
