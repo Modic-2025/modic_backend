@@ -39,6 +39,9 @@ public enum ErrorCode {
 	IMAGE_PATH_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "I-005", "이미지 경로가 중복되었습니다."),
 	IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION(HttpStatus.BAD_REQUEST, "I-006", "이미지를 훔칠 수 없습니다."),
 
+	// Follow
+	CANNOT_FOLLOW_SELF_EXCEPTION(HttpStatus.BAD_REQUEST, "F-001", "자기 자신을 팔로우할 수 없습니다."),
+
 	// Server
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-001", "서버 내부에서 에러가 발생하였습니다."),
 	S3_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-002", "S3 서버에서 에러가 발생하였습니다."),
