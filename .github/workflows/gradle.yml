@@ -11,116 +11,113 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.1.0
-      with:
-        redis-version: 6
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: 6
 
-    # ✅ 공통 application-common.yml, ci.yml 생성
-    - run: |
-        touch ./src/main/resources/application-common.yml
-        echo -e "${{ secrets.COMMON_YML }}" > ./src/main/resources/application-common.yml
+      # ✅ 공통 application-common.yml, ci.yml 생성
+      - run: |
+          touch ./src/main/resources/application-common.yml
+          echo -e "${{ secrets.COMMON_YML }}" > ./src/main/resources/application-common.yml
+          touch ./src/main/resources/application-test.yml
+          echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
+      # ✅ 환경별 application-main.yml 또는 application-dev.yml 설정
+      - run: |
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            touch ./src/main/resources/application-main.yml
+            echo "${{ secrets.MAIN_YML }}" > ./src/main/resources/application-main.yml
+          else
+            echo "${{ secrets.DEB_YML }}" > ./src/main/resources/application-dev.yml
+          fi
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-        touch ./src/main/resources/application-test.yml
-        echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
+      - name: Set Gradle Wrapper executable permission
+        run: chmod +x ./gradlew
 
-    # ✅ 환경별 application-main.yml 또는 application-dev.yml 설정
-    - run: |
-        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          touch ./src/main/resources/application-main.yml
-          echo "${{ secrets.MAIN_YML }}" > ./src/main/resources/application-main.yml
-        else
-          echo "${{ secrets.DEB_YML }}" > ./src/main/resources/application-dev.yml
-        fi
+      - name: Run tests with CI profile
+        run: ./gradlew test -Dspring.profiles.active=test,common
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
 
-    - name: Set Gradle Wrapper executable permission
-      run: chmod +x ./gradlew
+      - name: Copy to DEV EC2
+        if: github.ref == 'refs/heads/develop'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.DEV_EC2_PEM }}
+          port: 22
+          source: ./build/libs/*.jar
+          target: /home/ubuntu/cicd
+          strip_components: 2
+      - name: Copy to MAIN EC2
+        if: github.ref == 'refs/heads/master'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.MAIN_EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.MAIN_EC2_PEM }}
+          port: 22
+          source: ./build/libs/*.jar
+          target: /home/ubuntu/cicd
+          strip_components: 2
+
+      # ✅ develop 브랜치: DEV 서버에 스크립트 복사 및 실행
+      - name: Copy deploy script file to DEV EC2
+        if: github.ref == 'refs/heads/develop'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          username: ${{ secrets.EC2_USERNAME }}
+          host: ${{ secrets.DEV_EC2_HOST }}
+          key: ${{ secrets.DEV_EC2_PEM }}
+          source: ".github/workflows/deploy_dev.sh"
+          target: "/home/ubuntu/cicd"
+          strip_components: 2
+
+      - name: Execute deploy script on DEV EC2
+        if: github.ref == 'refs/heads/develop'
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          username: ${{ secrets.EC2_USERNAME }}
+          host: ${{ secrets.DEV_EC2_HOST }}
+          key: ${{ secrets.DEV_EC2_PEM }}
+          script_stop: true
+          script: |
+            chmod +x /home/ubuntu/cicd/deploy_dev.sh
+            sh /home/ubuntu/cicd/deploy_dev.sh
       
-    - name: Run tests with CI profile
-      run: ./gradlew test -Dspring.profiles.active=test,common
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      # ✅ master 브랜치: MAIN 서버에 스크립트 복사 및 실행
+      - name: Copy deploy script file to MAIN EC2
+        if: github.ref == 'refs/heads/master'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          username: ${{ secrets.EC2_USERNAME }}
+          host: ${{ secrets.MAIN_EC2_HOST }}
+          key: ${{ secrets.MAIN_EC2_PEM }}
+          source: ".github/workflows/deploy_main.sh"
+          target: "/home/ubuntu/cicd"
+          strip_components: 2
 
-    - name: Copy to DEV EC2
-      if: github.ref == 'refs/heads/develop'
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.DEV_EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.DEV_EC2_PEM }}
-        port: 22
-        source: ./build/libs/*.jar
-        target: /home/ubuntu/cicd
-        strip_components: 2
-    - name: Copy to MAIN EC2
-      if: github.ref == 'refs/heads/master'
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.MAIN_EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.MAIN_EC2_PEM }}
-        port: 22
-        source: ./build/libs/*.jar
-        target: /home/ubuntu/cicd
-        strip_components: 2
-
-    # ✅ develop 브랜치: DEV 서버에 스크립트 복사 및 실행
-    - name: Copy deploy script file to DEV EC2
-      if: github.ref == 'refs/heads/develop'
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        username: ${{ secrets.EC2_USERNAME }}
-        host: ${{ secrets.DEV_EC2_HOST }}
-        key: ${{ secrets.DEV_EC2_PEM }}
-        source: ".github/workflows/deploy_dev.sh"
-        target: "/home/ubuntu/cicd"
-        strip_components: 2
-    
-    - name: Execute deploy script on DEV EC2
-      if: github.ref == 'refs/heads/develop'
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        username: ${{ secrets.EC2_USERNAME }}
-        host: ${{ secrets.DEV_EC2_HOST }}
-        key: ${{ secrets.DEV_EC2_PEM }}
-        script_stop: true
-        script: |
-          chmod +x /home/ubuntu/cicd/deploy_dev.sh
-          sh /home/ubuntu/cicd/deploy_dev.sh
-    
-    
-    # ✅ master 브랜치: MAIN 서버에 스크립트 복사 및 실행
-    - name: Copy deploy script file to MAIN EC2
-      if: github.ref == 'refs/heads/master'
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        username: ${{ secrets.EC2_USERNAME }}
-        host: ${{ secrets.MAIN_EC2_HOST }}
-        key: ${{ secrets.MAIN_EC2_PEM }}
-        source: ".github/workflows/deploy_main.sh"
-        target: "/home/ubuntu/cicd"
-        strip_components: 2
-    
-    - name: Execute deploy script on MAIN EC2
-      if: github.ref == 'refs/heads/master'
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        username: ${{ secrets.EC2_USERNAME }}
-        host: ${{ secrets.MAIN_EC2_HOST }}
-        key: ${{ secrets.MAIN_EC2_PEM }}
-        script_stop: true
-        script: |
-          chmod +x /home/ubuntu/cicd/deploy_main.sh
-          sh /home/ubuntu/cicd/deploy_main.sh
+      - name: Execute deploy script on MAIN EC2
+        if: github.ref == 'refs/heads/master'
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          username: ${{ secrets.EC2_USERNAME }}
+          host: ${{ secrets.MAIN_EC2_HOST }}
+          key: ${{ secrets.MAIN_EC2_PEM }}
+          script_stop: true
+          script: |
+            chmod +x /home/ubuntu/cicd/deploy_main.sh
+            sh /home/ubuntu/cicd/deploy_main.sh
