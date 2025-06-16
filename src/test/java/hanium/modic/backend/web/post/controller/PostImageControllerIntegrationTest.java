@@ -27,8 +27,8 @@ import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.PostImageService;
-import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
-import hanium.modic.backend.web.post.dto.request.CreateImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 
 public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 
