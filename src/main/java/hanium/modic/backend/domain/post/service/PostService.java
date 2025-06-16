@@ -16,8 +16,8 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -148,5 +148,15 @@ public class PostService {
 		if (userId != postUserId) {
 			throw new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
 		}
+	}
+
+	// 단순 포스트 목록 조회
+	public Page<GetSimplePostsResponse> getSimplePosts(Long userId, Pageable pageable) {
+		return postEntityRepository.findAllByUserId(userId, pageable)
+			.map(post -> {
+				// TODO: 쿼리 최적화 필요
+				List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
+				return new GetSimplePostsResponse(post.getId(), postImages.get(0).getImageUrl());
+			});
 	}
 }
