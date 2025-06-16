@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
@@ -26,13 +26,13 @@ public class UserController {
 	private final UserService userService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<UserCreateResponse>> createUser(@RequestBody @Valid UserCreateRequest request) {
+	public ResponseEntity<AppResponse<UserCreateResponse>> createUser(@RequestBody @Valid UserCreateRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(ApiResponse.created(userService.createUser(request.email(), request.password(), request.name())));
+			.body(AppResponse.created(userService.createUser(request.email(), request.password(), request.name())));
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@AuthenticationPrincipal UserEntity user) {
-		return ResponseEntity.ok(ApiResponse.ok(userService.getUserInfo(user)));
+	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@AuthenticationPrincipal UserEntity user) {
+		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
 	}
 }

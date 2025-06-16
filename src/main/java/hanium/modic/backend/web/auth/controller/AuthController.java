@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
@@ -30,7 +30,7 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request,
+	public ResponseEntity<AppResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request,
 		HttpServletResponse response) {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
@@ -38,11 +38,11 @@ public class AuthController {
 		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(loginResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
-		return ResponseEntity.ok(ApiResponse.ok(loginResponse));
+		return ResponseEntity.ok(AppResponse.ok(loginResponse));
 	}
 
 	@PostMapping("/reissue")
-	public ResponseEntity<ApiResponse<Void>> reissue(@CookieValue(name = "refreshToken") String refreshToken,
+	public ResponseEntity<AppResponse<Void>> reissue(@CookieValue(name = "refreshToken") String refreshToken,
 		HttpServletResponse response) {
 		ReissueResponse reissueResponse = authService.reissue(refreshToken);
 
@@ -54,14 +54,14 @@ public class AuthController {
 	}
 
 	@PostMapping(value = "/email/verification", params = "type=sign-up")
-	public ResponseEntity<ApiResponse<Void>> sendEmailVerification(@RequestBody @Valid SendEmailRequest request) {
+	public ResponseEntity<AppResponse<Void>> sendEmailVerification(@RequestBody @Valid SendEmailRequest request) {
 		authService.sendEmailVerification(request.email());
 		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping(value = "/email/verification/check", params = "type=sign-up")
-	public ResponseEntity<ApiResponse<VerifyEmailCodeResponse>> verifyEmailCode(
+	public ResponseEntity<AppResponse<VerifyEmailCodeResponse>> verifyEmailCode(
 		@RequestBody @Valid VerifyEmailCodeRequest request) {
-		return ResponseEntity.ok().body(ApiResponse.ok(authService.verifyEmailCode(request.email(), request.code())));
+		return ResponseEntity.ok().body(AppResponse.ok(authService.verifyEmailCode(request.email(), request.code())));
 	}
 }

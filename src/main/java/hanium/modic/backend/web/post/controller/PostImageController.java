@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.post.service.PostImageService;
 import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
@@ -29,7 +29,7 @@ public class PostImageController {
 	private final PostImageService postImageService;
 
 	@PostMapping("/save-url")
-	public ResponseEntity<ApiResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
+	public ResponseEntity<AppResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@RequestBody @Valid CreateImageSaveUrlRequest request
 	) {
 		CreateImageSaveUrlDto dto = postImageService.createImageSaveUrl(
@@ -38,11 +38,11 @@ public class PostImageController {
 		);
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
+			.body(AppResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
 	}
 
 	@PostMapping("/save-url/callback")
-	public ResponseEntity<ApiResponse<CallbackImageSaveUrlResponse>> callbackImageSaveUrl(
+	public ResponseEntity<AppResponse<CallbackImageSaveUrlResponse>> callbackImageSaveUrl(
 		@RequestBody @Valid CallbackImageSaveUrlRequest request
 	) {
 		Long id = postImageService.saveImage(
@@ -52,15 +52,15 @@ public class PostImageController {
 		).getId();
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new CallbackImageSaveUrlResponse(id)));
+			.body(AppResponse.created(new CallbackImageSaveUrlResponse(id)));
 	}
 
 	@GetMapping("/{imageId}/get-url")
-	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createImageGetUrl(
+	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId
 	) {
 		String imageGetUrl = postImageService.createImageGetUrl(imageId);
 
-		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 }

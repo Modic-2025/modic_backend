@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
@@ -36,10 +36,10 @@ public class PostController {
 	private final PostService postService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@RequestBody @Valid CreatePostRequest request) {
+	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(@RequestBody @Valid CreatePostRequest request) {
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(
+			.body(AppResponse.created(
 				CreatePostResponse.of(
 					postService.createPost(request.title(), request.description(), request.commercialPrice(),
 						request.nonCommercialPrice(), request.imageIds())
@@ -48,13 +48,13 @@ public class PostController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ApiResponse<GetPostResponse>> getPost(@PathVariable Long id) {
+	public ResponseEntity<AppResponse<GetPostResponse>> getPost(@PathVariable Long id) {
 		GetPostResponse response = postService.getPost(id);
-		return ResponseEntity.ok(ApiResponse.ok(response));
+		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@GetMapping
-	public ResponseEntity<ApiResponse<PageResponse<GetPostResponse>>> getPosts(
+	public ResponseEntity<AppResponse<PageResponse<GetPostResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
 		@RequestParam(required = false, defaultValue = "10")
@@ -62,22 +62,22 @@ public class PostController {
 		@Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
 	) {
 		PageResponse<GetPostResponse> response = postService.getPosts(sort, page, size);
-		return ResponseEntity.ok(ApiResponse.ok(response));
+		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long id) {
+	public ResponseEntity<AppResponse<Void>> deletePost(@PathVariable Long id) {
 		postService.deletePost(id);
-		return ResponseEntity.status(NO_CONTENT).body(ApiResponse.noContent());
+		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<ApiResponse<Void>> updatePost(
+	public ResponseEntity<AppResponse<Void>> updatePost(
 		@PathVariable Long id,
 		@RequestBody @Valid UpdatePostRequest request) {
 		postService.updatePost(id, request.title(), request.description(), request.commercialPrice(),
 			request.nonCommercialPrice(), request.imageIds());
-		return ResponseEntity.status(NO_CONTENT).body(ApiResponse.noContent());
+		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
 
 }
