@@ -37,7 +37,7 @@ public class FollowController {
 		})
 	public ResponseEntity<AppResponse<Void>> followOrUnfollow(
 		@AuthenticationPrincipal UserEntity me,
-		@RequestParam Long userId,
+		@RequestParam long userId,
 		@RequestParam FollowType type
 	) {
 		followService.followOrUnfollow(me, userId, type);
@@ -63,13 +63,13 @@ public class FollowController {
 		description = "팔로워 목록을 페이지네이션 형태로 반환합니다."
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getFollowers(
-		@RequestParam(required = true) Long userId,
+		@RequestParam(required = true) long userId,
 		Pageable pageable
 	) {
 		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(userId, pageable)));
 	}
 
-	@GetMapping("/following/me")
+	@GetMapping("/followings/me")
 	@Operation(
 		summary = "내 팔로잉 목록 조회",
 		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다."
@@ -81,13 +81,13 @@ public class FollowController {
 		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(me.getId(), pageable)));
 	}
 
-	@GetMapping("/following")
+	@GetMapping("/followings")
 	@Operation(
 		summary = "팔로잉 목록 조회",
 		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다."
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getFollowing(
-		@RequestParam(required = true) Long userId,
+		@RequestParam(required = true) long userId,
 		Pageable pageable
 	) {
 		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(userId, pageable)));
