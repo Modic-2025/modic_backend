@@ -1,6 +1,7 @@
 package hanium.modic.backend.common.jwt;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import hanium.modic.backend.common.property.property.SecurityProperties;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import io.jsonwebtoken.JwtException;
@@ -24,15 +26,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-	private static final String AUTH_PATH = "/api/auth";
-	private static final String JOIN_PATH = "/api/users";
 
-	private static final String SWAGGER_UI_HTML = "/swagger-ui.html";
-	private static final String API_DOCS = "/api-docs";
-	private static final String API_DOCS_ALL = "/api-docs/**";
-	private static final String SWAGGER_UI_ALL = "/swagger-ui/**";
-	private static final String V3_API_DOCS_ALL = "/v3/api-docs/**";
-
+	private final SecurityProperties securityProperties;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
@@ -73,12 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		final AntPathMatcher matcher = new AntPathMatcher();
 		final String uri = request.getRequestURI();
 
-		return uri.startsWith(AUTH_PATH)
-			|| matcher.match(JOIN_PATH, uri)
-			|| matcher.match(SWAGGER_UI_HTML, uri)
-			|| matcher.match(API_DOCS, uri)
-			|| matcher.match(API_DOCS_ALL, uri)
-			|| matcher.match(SWAGGER_UI_ALL, uri)
-			|| matcher.match(V3_API_DOCS_ALL, uri);
+		return Arrays.stream(securityProperties.getPermitUrls())
+			.anyMatch(permitUrl -> matcher.match(permitUrl, uri));
 	}
 }

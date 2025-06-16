@@ -3,9 +3,11 @@ package hanium.modic.backend.common.property.config;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import hanium.modic.backend.common.property.property.CorsProperties;
 import hanium.modic.backend.common.property.property.EmailProperty;
 import hanium.modic.backend.common.property.property.RedisProperty;
 import hanium.modic.backend.common.property.property.S3Properties;
+import hanium.modic.backend.common.property.property.SecurityProperties;
 import hanium.modic.backend.common.property.property.SwaggerProperties;
 import hanium.modic.backend.common.property.property.TokenProperty;
 
@@ -16,7 +18,9 @@ import hanium.modic.backend.common.property.property.TokenProperty;
 	SwaggerProperties.class,
 	TokenProperty.class,
 	RedisProperty.class,
-	EmailProperty.class
+	EmailProperty.class,
+	SecurityProperties.class,
+	CorsProperties.class
 })
 public class PropertyConfig {
 }
