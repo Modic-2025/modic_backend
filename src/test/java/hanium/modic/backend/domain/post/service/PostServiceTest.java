@@ -57,6 +57,7 @@ class PostServiceTest {
 	@DisplayName("게시글 생성 테스트")
 	void createPostTest() {
 		// given
+		Long userId = 1L;
 		String title = "Test Title";
 		String description = "Test Description";
 		Long commercialPrice = 1000L;
@@ -74,7 +75,7 @@ class PostServiceTest {
 		when(postEntityRepository.save(any())).thenReturn(mockPost);
 
 		// when
-		postService.createPost(title, description, commercialPrice, nonCommercialPrice, imageIds);
+		postService.createPost(userId, title, description, commercialPrice, nonCommercialPrice, imageIds);
 
 		// then - PostEntity 저장 확인
 		ArgumentCaptor<PostEntity> postCaptor = ArgumentCaptor.forClass(PostEntity.class);
@@ -210,6 +211,7 @@ class PostServiceTest {
 	void deletePost_Success() {
 		// Given
 		final Long postId = 1L;
+		final Long userId = 1L;
 		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 
@@ -217,7 +219,7 @@ class PostServiceTest {
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
 
 		// When
-		postService.deletePost(postId);
+		postService.deletePost(userId, postId);
 
 		// Then
 		verify(postEntityRepository, times(1)).findById(postId);
@@ -230,6 +232,7 @@ class PostServiceTest {
 	@DisplayName("게시글 변경 성공")
 	void updatePost_Success() {
 		// Given
+		final Long userId = 1L;
 		final Long postId = 1L;
 		final Long postImageId1 = 1L;
 		final Long postImageId2 = 2L;
@@ -251,7 +254,7 @@ class PostServiceTest {
 		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
 
 		// When
-		postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
+		postService.updatePost(userId, postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
 			newImageIds);
 
 		// Then
@@ -269,6 +272,7 @@ class PostServiceTest {
 	@DisplayName("게시글 변경 실패: 게시글 없는 경우")
 	void updatePost_NotFound() {
 		// Given
+		final Long userId = 1L;
 		final Long postId = 1L;
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.empty());
 
@@ -280,8 +284,8 @@ class PostServiceTest {
 
 		// When & Then
 		AppException exception = assertThrows(AppException.class,
-			() -> postService.updatePost(postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
-				newImageIds)
+			() -> postService.updatePost(userId, postId, newTitle, newDescription, newCommercialPrice,
+				newNonCommercialPrice, newImageIds)
 		);
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 

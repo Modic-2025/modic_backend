@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -30,8 +29,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.EntityNotFoundException;
-import hanium.modic.backend.common.jwt.JwtAuthenticationEntryPoint;
-import hanium.modic.backend.common.jwt.JwtAuthenticationFilter;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
@@ -71,6 +68,7 @@ class PostControllerTest extends BaseControllerTest {
 
 		// then
 		verify(postService).createPost(
+			1L,
 			"제목",
 			"설명",
 			10000L,
@@ -171,7 +169,7 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		when(postService.getPost(postId)).thenReturn(response);
 
@@ -203,9 +201,9 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostResponse post1 = new GetPostResponse(
-			1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 		GetPostResponse post2 = new GetPostResponse(
-			2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostResponse.ImageDto("http://img2.jpg", 2L)));
+			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostResponse.ImageDto("http://img2.jpg", 2L)));
 
 		List<GetPostResponse> content = List.of(post1, post2);
 		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
@@ -232,7 +230,7 @@ class PostControllerTest extends BaseControllerTest {
 		Exception {
 		// given
 		GetPostResponse post = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		List<GetPostResponse> content = List.of(post);
 		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
