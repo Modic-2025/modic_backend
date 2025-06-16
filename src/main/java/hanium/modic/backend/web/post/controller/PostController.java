@@ -3,6 +3,7 @@ package hanium.modic.backend.web.post.controller;
 import static org.springframework.http.HttpStatus.*;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
+import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
@@ -36,13 +38,22 @@ public class PostController {
 	private final PostService postService;
 
 	@PostMapping
-	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(@RequestBody @Valid CreatePostRequest request) {
+	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(
+		@AuthenticationPrincipal UserEntity user,
+		@RequestBody @Valid CreatePostRequest request
+	) {
 
 		return ResponseEntity.status(CREATED)
 			.body(AppResponse.created(
 				CreatePostResponse.of(
-					postService.createPost(request.title(), request.description(), request.commercialPrice(),
-						request.nonCommercialPrice(), request.imageIds())
+					postService.createPost(
+						user.getId(),
+						request.title(),
+						request.description(),
+						request.commercialPrice(),
+						request.nonCommercialPrice(),
+						request.imageIds()
+					)
 				)
 			));
 	}
@@ -66,17 +77,30 @@ public class PostController {
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<AppResponse<Void>> deletePost(@PathVariable Long id) {
-		postService.deletePost(id);
+	public ResponseEntity<AppResponse<Void>> deletePost(
+		@AuthenticationPrincipal UserEntity user,
+		@PathVariable Long id
+	) {
+		postService.deletePost(user.getId(), id);
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
 
 	@PutMapping("/{id}")
 	public ResponseEntity<AppResponse<Void>> updatePost(
-		@PathVariable Long id,
-		@RequestBody @Valid UpdatePostRequest request) {
-		postService.updatePost(id, request.title(), request.description(), request.commercialPrice(),
-			request.nonCommercialPrice(), request.imageIds());
+		@AuthenticationPrincipal UserEntity user,
+		@PathVariable long id,
+		@RequestBody @Valid UpdatePostRequest request
+	) {
+		postService.updatePost(
+			user.getId(),
+			id,
+			request.title(),
+			request.description(),
+			request.commercialPrice(),
+			request.nonCommercialPrice(),
+			request.imageIds()
+		);
+
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
 

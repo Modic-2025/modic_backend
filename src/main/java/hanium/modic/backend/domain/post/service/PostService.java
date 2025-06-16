@@ -16,6 +16,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -32,11 +33,16 @@ public class PostService {
 	private static final Sort.Direction SORT_DIRECTION = Sort.Direction.DESC;
 
 	@Transactional
-	public Long createPost(final String title, final String description, final Long commercialPrice,
+	public Long createPost(
+		final Long userId,
+		final String title,
+		final String description,
+		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds) {
-
+		final List<Long> imageIds
+	) {
 		PostEntity postEntity = PostEntity.builder()
+			.userId(userId)
 			.title(title)
 			.description(description)
 			.commercialPrice(commercialPrice)
@@ -88,26 +94,30 @@ public class PostService {
 	}
 
 	@Transactional
-	public void deletePost(Long postId) {
+	public void deletePost(final long userId, final Long postId) {
+		validatePostRole(userId, postId);
+
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
 		postImageEntityRepository.findAllByPostId(postId)
 			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
-
 		postEntityRepository.delete(post);
 	}
 
 	@Transactional
 	public void updatePost(
-		final Long id,
+		final long userId,
+		final long postId,
 		final String title,
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
 		final List<Long> imageIds
 	) {
-		PostEntity post = postEntityRepository.findById(id)
+		validatePostRole(userId, postId);
+
+		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
 		post.updateTitle(title);
@@ -116,7 +126,7 @@ public class PostService {
 		post.updateNonCommercialPrice(nonCommercialPrice);
 		postEntityRepository.save(post);
 
-		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(postId);
 
 		// imageIds에 포함되지 않은 이미지 삭제
 		List<PostImageEntity> deleteImages = postImages.stream()
@@ -127,5 +137,16 @@ public class PostService {
 		// 새로 추가된 이미지에 PostId 업데이트
 		postImageEntityRepository.findAllByIds(imageIds)
 			.forEach(postImageEntity -> postImageEntity.updatePost(post));
+	}
+
+	// 포스트 권한 검증
+	// Todo : 권한 검증 로직 개선 필요, AOP 등등
+	private void validatePostRole(
+		final long userId,
+		final long postUserId
+	) {
+		if (userId != postUserId) {
+			throw new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+		}
 	}
 }
