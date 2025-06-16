@@ -23,6 +23,9 @@ public class RabbitMqConfig {
 	public static final String AI_IMAGE_REQUEST_QUEUE = "ai.image.request.queue";
 	public static final String AI_IMAGE_REQUEST_EXCHANGE = "ai.image.request.exchange";
 	public static final String AI_IMAGE_REQUEST_ROUTING_KEY = "ai.image.request";
+	public static final String AI_IMAGE_CREATED_QUEUE = "ai.image.created.queue";
+	public static final String AI_IMAGE_CREATED_EXCHANGE = "ai.image.created.exchange";
+	public static final String AI_IMAGE_CREATED_ROUTING_KEY = "ai.image.created";
 
 	private final RabbitMqProperties rabbitMqProperties;
 
@@ -41,6 +44,23 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(aiImageRequestQueue)
 			.to(aiImageRequestExchange)
 			.with(AI_IMAGE_REQUEST_ROUTING_KEY);
+	}
+
+	@Bean
+	public Queue aiImageCreatedQueue() {
+		return new Queue(AI_IMAGE_CREATED_QUEUE, true);
+	}
+
+	@Bean
+	public TopicExchange aiImageCreatedExchange() {
+		return new TopicExchange(AI_IMAGE_CREATED_EXCHANGE, true, false);
+	}
+
+	@Bean
+	public Binding aiImageCreatedBinding(Queue aiImageCreatedQueue, TopicExchange aiImageCreatedExchange) {
+		return BindingBuilder.bind(aiImageCreatedQueue)
+			.to(aiImageCreatedExchange)
+			.with(AI_IMAGE_CREATED_ROUTING_KEY);
 	}
 
 	@Bean
