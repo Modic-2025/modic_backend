@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.user.service;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -14,8 +15,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
+import hanium.modic.backend.web.user.dto.UserInfoResponse;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -60,9 +63,26 @@ class UserServiceTest {
 		when(userEntityRepository.existsByEmail(email)).thenReturn(true);
 
 		// when
-		AppException appException = assertThrows(AppException.class, () -> userService.createUser(email, password, name));
+		AppException appException = assertThrows(AppException.class,
+			() -> userService.createUser(email, password, name));
 
 		// then
 		assertEquals(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION, appException.getErrorCode());
+	}
+
+	@Test
+	@DisplayName("유저 정보 조회 테스트")
+	void getUserInfoTest() {
+		// given
+		final Long userId = 1L;
+		UserEntity user = UserFactory.createMockUser(userId);
+
+		// when
+		UserInfoResponse response = userService.getUserInfo(user);
+
+		// then
+		assertThat(response.id()).isEqualTo(userId);
+		assertThat(response.email()).isEqualTo(user.getEmail());
+		assertThat(response.name()).isEqualTo(user.getName());
 	}
 }
