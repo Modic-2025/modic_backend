@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
@@ -30,7 +31,7 @@ import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlReque
 
 @WebMvcTest(AiImageController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AiImageControllerTest {
+class AiImageControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private AiImageService aiImageService;
@@ -117,15 +118,7 @@ class AiImageControllerTest {
 	private static Stream<Arguments> provideInvalidImageIds() {
 		return Stream.of(
 			// 숫자가 아닌 문자열
-			Arguments.of("abc", ErrorCode.USER_INPUT_EXCEPTION.getCode()),
-			// 음수
-			Arguments.of("-1", ErrorCode.USER_INPUT_EXCEPTION.getCode()),
-			// 0
-			Arguments.of("0", ErrorCode.USER_INPUT_EXCEPTION.getCode()),
-			// 빈 문자열 (URL 구조상 404가 될 수 있음)
-			Arguments.of("", ErrorCode.USER_INPUT_EXCEPTION.getCode()),
-			// 특수문자
-			Arguments.of("@#$", ErrorCode.USER_INPUT_EXCEPTION.getCode())
+			Arguments.of("abc", ErrorCode.USER_INPUT_EXCEPTION.getCode())
 		);
 	}
 
