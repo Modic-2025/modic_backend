@@ -10,6 +10,7 @@ import lombok.Getter;
 
 public record GetPostResponse(
 	Long id,
+	Long userId,
 	String title,
 	String description,
 	Long commercialPrice,
@@ -23,6 +24,7 @@ public record GetPostResponse(
 
 		return new GetPostResponse(
 			postEntity.getId(),
+			postEntity.getUserId(),
 			postEntity.getTitle(),
 			postEntity.getDescription(),
 			postEntity.getCommercialPrice(),
