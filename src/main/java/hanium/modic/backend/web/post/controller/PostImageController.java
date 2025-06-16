@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.response.ApiResponse;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.post.service.PostImageService;
-import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
-import hanium.modic.backend.web.post.dto.request.CreateImageSaveUrlRequest;
-import hanium.modic.backend.web.post.dto.response.CallbackImageSaveUrlResponse;
-import hanium.modic.backend.web.post.dto.response.CreateImageGetUrlResponse;
-import hanium.modic.backend.web.post.dto.response.CreateImageSaveUrlResponse;
+import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.response.CallbackImageSaveUrlResponse;
+import hanium.modic.backend.web.common.image.dto.response.CreateImageGetUrlResponse;
+import hanium.modic.backend.web.common.image.dto.response.CreateImageSaveUrlResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
