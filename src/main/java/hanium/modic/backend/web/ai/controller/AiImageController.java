@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
@@ -34,7 +34,7 @@ public class AiImageController {
 
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
-	public ResponseEntity<ApiResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
+	public ResponseEntity<AppResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
 		/*
 		 * ToDo: AiImageGenerationService 에서 이미지 생성 권한 검증
@@ -44,12 +44,12 @@ public class AiImageController {
 			request.fileName());
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
+			.body(AppResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
 	}
 
 	// AI 요청 이미지 저장 완료 후 AI 이미지 생성 요청
 	@PostMapping("/requests")
-	public ResponseEntity<ApiResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
+	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request) {
 
 		RequestAiImageGenerationResponse response = aiImageGenerationService.processImageGeneration(
@@ -60,38 +60,38 @@ public class AiImageController {
 		);
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(response));
+			.body(AppResponse.created(response));
 	}
 
 	// AI 요청 이미지 URL 조회
 	@GetMapping("/{imageId}/get-url")
-	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createImageGetUrl(
+	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId) {
 		/*
 		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
 		 */
 		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId);
 
-		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 
 	// 생성된 AI 이미지 조회 URL 생성
 	@GetMapping("/requests/{requestId}/get-url")
-	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
+	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
 		@PathVariable String requestId) {
 		/*
 		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
 		 */
 		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId);
 
-		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 
 	// AI 이미지 생성 상태를 조회
 	@GetMapping("/requests/{requestId}/status")
-	public ResponseEntity<ApiResponse<AiRequestStatusResponse>> getAiRequestStatus(
+	public ResponseEntity<AppResponse<AiRequestStatusResponse>> getAiRequestStatus(
 		@PathVariable String requestId) {
 		AiImageStatus status = aiImageGenerationService.getAiImageStatus(requestId);
-		return ResponseEntity.ok(ApiResponse.ok(new AiRequestStatusResponse(status)));
+		return ResponseEntity.ok(AppResponse.ok(new AiRequestStatusResponse(status)));
 	}
 }
