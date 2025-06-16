@@ -71,6 +71,12 @@ public class RabbitMqConfig {
 		connectionFactory.setUsername(rabbitMqProperties.getUsername());
 		connectionFactory.setPassword(rabbitMqProperties.getPassword());
 		connectionFactory.setVirtualHost("/");
+
+		try {
+			connectionFactory.getRabbitConnectionFactory().useSslProtocol("TLSv1.2");
+		} catch (Exception e) {
+			throw new RuntimeException("RabbitMQ SSL 설정 실패", e);
+		}
 		return connectionFactory;
 	}
 
