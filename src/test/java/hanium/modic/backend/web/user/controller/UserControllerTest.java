@@ -20,12 +20,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 
 @WebMvcTest(controllers = UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class UserControllerTest {
+class UserControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private UserService userService;

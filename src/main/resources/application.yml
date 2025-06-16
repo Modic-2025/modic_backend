@@ -24,6 +24,27 @@ spring:
     password: ${RABBITMQ_PASSWORD}
     virtual-host: /
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SENDER_EMAIL}
+    password: ${SENDER_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connection-timeout: 5000
+          timeout: 5000
+          write-timeout: 5000
+
 cloud:
   aws:
     s3:
@@ -45,3 +66,8 @@ springdoc:
 
 swagger:
   url: ${SWAGGER_URL}
+
+jwt:
+  secretKey: ${JWT_SECRET}
+  accessExpiration: ${JWT_ACCESS_EXPIRATION}
+  refreshExpiration: ${JWT_REFRESH_EXPIRATION}

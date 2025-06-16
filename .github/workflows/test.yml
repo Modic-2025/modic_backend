@@ -15,17 +15,20 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'zulu'
+          distribution: 'temurin'
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: 6
 
       - name: Grant permission for gradlew
         run: chmod +x ./gradlew
 
-      # ✅ application-test.yml 복원
-      - name: Restore application-test.yml
-        env:
-          TEST_YML: ${{ secrets.PR_TEST_YML }}
-        run: |
-          echo "$TEST_YML" | base64 -d > ./src/main/resources/application-test.yml
+      # ✅ 공통 application-common.yml, ci.yml 생성
+      - run: |
+          touch ./src/main/resources/application-test.yml
+           echo -e "${{ secrets.TEST_YML }}" > ./src/main/resources/application-test.yml
 
       # ✅ 테스트 실행 (컴파일 포함)
       - name: Run tests (includes compilation)
