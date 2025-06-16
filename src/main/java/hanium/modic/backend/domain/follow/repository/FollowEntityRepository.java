@@ -15,9 +15,9 @@ public interface FollowEntityRepository extends JpaRepository<FollowEntity, Long
 
 	void deleteByFollowerIdAndFollowingId(Long followerId, Long followingId);
 
-	long countFollowers(Long userId);
+	long countByFollowerId(Long userId);
 
-	long countByFollowerId(Long followerId);
+	long countByFollowingId(Long followerId);
 
 	@Query("SELECT f.followerId FROM FollowEntity f WHERE f.followingId = :userId")
 	Page<UserEntity> findFollowers(@Param("userId") Long userId, Pageable pageable);

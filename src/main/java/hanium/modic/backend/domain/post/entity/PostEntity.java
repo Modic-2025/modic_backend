@@ -21,6 +21,8 @@ public class PostEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long userId;
+
     private String title;
 
     @Column(columnDefinition = "TEXT")
@@ -31,7 +33,14 @@ public class PostEntity {
     private Long nonCommercialPrice;
 
     @Builder
-    public PostEntity(String title, String description, Long commercialPrice, Long nonCommercialPrice) {
+    public PostEntity(
+        Long userId,
+        String title,
+        String description,
+        Long commercialPrice,
+        Long nonCommercialPrice
+    ) {
+        this.userId = userId;
         this.title = title;
         this.description = description;
         this.commercialPrice = commercialPrice;
