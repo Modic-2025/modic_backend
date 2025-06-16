@@ -4,6 +4,7 @@ import static jakarta.persistence.EnumType.*;
 
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import hanium.modic.backend.common.baseEntity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Enumerated;
@@ -17,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class Image {
+public class Image extends BaseEntity {
 
 	@Column(nullable = false)
 	private String imagePath;
