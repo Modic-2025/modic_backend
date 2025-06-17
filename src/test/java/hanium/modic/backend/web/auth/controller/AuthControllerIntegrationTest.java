@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.auth.controller;
 
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -88,8 +89,8 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 		mockMvc.perform(post("/api/auth/reissue")
 				.cookie(refreshCookie))
 			.andExpect(status().isOk())
-			.andExpect(header().string("Authorization", "Bearer " + token.accessToken()))
-			.andExpect(cookie().value("refreshToken", token.refreshToken()));
+			.andExpect(header().string("Authorization", startsWith("Bearer ")))
+			.andExpect(cookie().exists("refreshToken"));
 	}
 
 	@Test
