@@ -11,17 +11,29 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 
 public interface FollowEntityRepository extends JpaRepository<FollowEntity, Long> {
 
-	boolean existsByFollowerIdAndFollowingId(Long followerId, Long followingId);
+	boolean existsByMyIdAndFollowingId(Long myId, Long followingId);
 
-	void deleteByFollowerIdAndFollowingId(Long followerId, Long followingId);
+	void deleteByMyIdAndFollowingId(Long myId, Long followingId);
 
-	long countByFollowerId(Long userId);
+	long countByMyId(Long myId);
 
 	long countByFollowingId(Long followerId);
 
-	@Query("SELECT f.followerId FROM FollowEntity f WHERE f.followingId = :userId")
-	Page<UserEntity> findFollowers(@Param("userId") Long userId, Pageable pageable);
+	// 내 팔로워 조회
+	@Query("""
+		    SELECT u FROM FollowEntity f
+		    JOIN UserEntity u ON f.myId = u.id
+		    WHERE f.followingId = :followingId
+		    ORDER BY f.createAt DESC
+		""")
+	Page<UserEntity> findFollowersOrderByCreatedAt(@Param("followingId") Long followingId, Pageable pageable);
 
-	@Query("SELECT f.followingId FROM FollowEntity f WHERE f.followerId = :userId")
-	Page<UserEntity> findFollowing(@Param("userId") Long userId, Pageable pageable);
+	// 내 팔로잉 조회
+	@Query("""
+		    SELECT u FROM FollowEntity f
+		    JOIN UserEntity u ON f.followingId = u.id
+		    WHERE f.myId = :followingId
+		    ORDER BY f.createAt DESC
+		""")
+	Page<UserEntity> findFollowingOrderByCreatedAt(@Param("followingId") Long followingId, Pageable pageable);
 }

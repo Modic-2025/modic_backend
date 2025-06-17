@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.follow.entity;
 import static jakarta.persistence.GenerationType.*;
 import static lombok.AccessLevel.*;
 
+import hanium.modic.backend.common.entity.BaseEntity;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,22 +17,22 @@ import lombok.NoArgsConstructor;
 // Todo: 추후 GRAPHQL로 변경 예정
 @Entity
 @Table(name = "follows",
-	uniqueConstraints = {@UniqueConstraint(columnNames = {"follower_id", "following_id"})})
+	uniqueConstraints = {@UniqueConstraint(columnNames = {"my_id", "following_id"})})
 @Getter
 @NoArgsConstructor(access = PROTECTED)
-public class FollowEntity {
+public class FollowEntity extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	private Long id;
 
-	private Long followerId;
+	private Long myId;
 
 	private Long followingId;
 
 	@Builder
-	private FollowEntity(UserEntity follower, UserEntity following) {
-		this.followerId = follower.getId();
+	private FollowEntity(UserEntity me, UserEntity following) {
+		this.myId = me.getId();
 		this.followingId = following.getId();
 	}
 }

@@ -22,8 +22,8 @@ public class ProfileService {
 	// 내 프로필 조회(코인 함께 조회)
 	public GetMyProfileResponse getMyProfile(final UserEntity user) {
 		final long postCount = postRepository.countByUserId(user.getId()); // TODO: 추후 개선 필요, count 쿼리 없애는 방법
-		final long followerCount = followRepository.countByFollowerId(user.getId()); // TODO: 추후 개선 필요
-		final long followingCount = followRepository.countByFollowingId(user.getId()); // TODO: 추후 개선 필요
+		final long followingCount = followRepository.countByMyId(user.getId()); // TODO: 추후 개선 필요
+		final long followerCount = followRepository.countByFollowingId(user.getId()); // TODO: 추후 개선 필요
 
 		return new GetMyProfileResponse(
 			user.getEmail(),
@@ -42,8 +42,8 @@ public class ProfileService {
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 
 		final long postCount = postRepository.countByUserId(userId); // TODO: 추후 개선 필요, count 쿼리 없애는 방법
-		final long followerCount = followRepository.countByFollowerId(userId); // TODO: 추후 개선 필요
-		final long followingCount = followRepository.countByFollowingId(userId); // TODO: 추후 개선 필요
+		final long followingCount = followRepository.countByMyId(userId); // TODO: 추후 개선 필요
+		final long followerCount = followRepository.countByFollowingId(userId); // TODO: 추후 개선 필요
 
 		return new GetProfileResponse(
 			user.getEmail(),

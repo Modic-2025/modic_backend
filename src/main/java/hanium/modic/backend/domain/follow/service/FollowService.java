@@ -4,7 +4,6 @@ import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,28 +40,28 @@ public class FollowService {
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 
 		// 팔로우 요청 및 기존 팔로우 존재 여부에 따라 팔로우, 언팔로우 처리
-		boolean exists = followRepository.existsByFollowerIdAndFollowingId(me.getId(), targetId);
+		boolean exists = followRepository.existsByMyIdAndFollowingId(me.getId(), targetId);
 		if (type == FOLLOW && !exists) {
 			followRepository.save(FollowEntity.builder()
-				.follower(me)
+				.me(me)
 				.following(target)
 				.build());
 		} else if (type == UNFOLLOW && exists) {
-			followRepository.deleteByFollowerIdAndFollowingId(me.getId(), targetId);
+			followRepository.deleteByMyIdAndFollowingId(me.getId(), targetId);
 		}
 	}
 
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회
 	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
-		return followRepository.findFollowers(userId, PageRequest.of(page, size))
-			.map(u -> new GetFollowersResponse(u.getName(), u.getEmail()));
+		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
+			.map(u -> new GetFollowersResponse(u.getId(), u.getName(), u.getEmail()));
 	}
 
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
-		return followRepository.findFollowing(userId, PageRequest.of(page, size))
-			.map(u -> new GetFollowingsResponse(u.getName(), u.getEmail()));
+		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
+			.map(u -> new GetFollowingsResponse(u.getId(), u.getName(), u.getEmail()));
 	}
 }
