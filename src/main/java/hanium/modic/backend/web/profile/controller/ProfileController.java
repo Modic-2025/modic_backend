@@ -1,8 +1,8 @@
 package hanium.modic.backend.web.user.controller;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,12 +17,15 @@ import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import hanium.modic.backend.web.profile.dto.GetMyProfileResponse;
 import hanium.modic.backend.web.profile.dto.GetProfileResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @RequestMapping("/api/profiles")
+@Validated
 public class ProfileController {
 
 	private final ProfileService profileService;
@@ -55,9 +58,10 @@ public class ProfileController {
 	)
 	public ResponseEntity<AppResponse<PageResponse<GetSimplePostsResponse>>> getMyPosts(
 		@AuthenticationPrincipal UserEntity me,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(postService.getSimplePosts(me.getId(), pageable))));
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(postService.getSimplePosts(me.getId(), page, size))));
 	}
 
 	@GetMapping("/posts")
@@ -67,8 +71,9 @@ public class ProfileController {
 	)
 	public ResponseEntity<AppResponse<PageResponse<GetSimplePostsResponse>>> getPosts(
 		@RequestParam(required = true) long userId,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(postService.getSimplePosts(userId, pageable))));
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(postService.getSimplePosts(userId, page, size))));
 	}
 }

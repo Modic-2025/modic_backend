@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.follow.service;
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,15 +52,17 @@ public class FollowService {
 		}
 	}
 
+	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회
-	public Page<GetFollowersResponse> getFollowers(final long userId, final Pageable pageable) {
-		return followRepository.findFollowers(userId, pageable)
+	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
+		return followRepository.findFollowers(userId, PageRequest.of(page, size))
 			.map(u -> new GetFollowersResponse(u.getName(), u.getEmail()));
 	}
 
+	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회
-	public Page<GetFollowingsResponse> getFollowings(final long userId, final Pageable pageable) {
-		return followRepository.findFollowing(userId, pageable)
+	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
+		return followRepository.findFollowing(userId, PageRequest.of(page, size))
 			.map(u -> new GetFollowingsResponse(u.getName(), u.getEmail()));
 	}
 }

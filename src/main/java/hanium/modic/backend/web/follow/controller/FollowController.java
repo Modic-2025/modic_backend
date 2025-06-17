@@ -1,9 +1,9 @@
 package hanium.modic.backend.web.follow.controller;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,12 +18,15 @@ import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @RequestMapping("/api/follows")
+@Validated
 public class FollowController {
 
 	private final FollowService followService;
@@ -52,9 +55,10 @@ public class FollowController {
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getMyFollowers(
 		@AuthenticationPrincipal UserEntity me,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(me.getId(), pageable)));
+		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(me.getId(), page, size)));
 	}
 
 	@GetMapping("/followers")
@@ -64,9 +68,10 @@ public class FollowController {
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getFollowers(
 		@RequestParam(required = true) long userId,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(userId, pageable)));
+		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(userId, page, size)));
 	}
 
 	@GetMapping("/followings/me")
@@ -76,9 +81,10 @@ public class FollowController {
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getMyFollowing(
 		@AuthenticationPrincipal UserEntity me,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(me.getId(), pageable)));
+		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(me.getId(), page, size)));
 	}
 
 	@GetMapping("/followings")
@@ -88,8 +94,9 @@ public class FollowController {
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getFollowing(
 		@RequestParam(required = true) long userId,
-		Pageable pageable
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
-		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(userId, pageable)));
+		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(userId, page, size)));
 	}
 }
