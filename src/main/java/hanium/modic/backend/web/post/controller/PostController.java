@@ -65,7 +65,7 @@ public class PostController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
-	@GetMapping
+	@GetMapping("/list")
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
