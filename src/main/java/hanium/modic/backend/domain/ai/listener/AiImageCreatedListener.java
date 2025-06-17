@@ -14,6 +14,7 @@ import hanium.modic.backend.domain.ai.dto.CreatedAiImageMessageDto;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,11 @@ public class AiImageCreatedListener {
 		CreatedAiImageEntity created = CreatedAiImageEntity.builder()
 			.requestId(message.requestId())
 			.imageUrl(message.imageUrl())
+			.imagePath(message.imagePath())
+			.fullImageName(message.fullImageName())
+			.imageName(message.imageName())
+			.extension(message.extension())
+			.imagePurpose(ImagePrefix.AI_RESPONSE)
 			.build();
 		createdAiImageRepository.save(created);
 
