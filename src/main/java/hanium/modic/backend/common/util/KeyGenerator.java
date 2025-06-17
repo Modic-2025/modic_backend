@@ -1,6 +1,6 @@
 package hanium.modic.backend.common.util;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -20,6 +20,6 @@ public class KeyGenerator {
 	}
 
 	private String generateDate() {
-		return FORMAT_YYYYMMDDHHMMSS.format(LocalDate.now());
+		return FORMAT_YYYYMMDDHHMMSS.format(LocalDateTime.now());
 	}
 }
