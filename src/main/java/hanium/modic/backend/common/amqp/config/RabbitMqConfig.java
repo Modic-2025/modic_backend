@@ -72,6 +72,8 @@ public class RabbitMqConfig {
 		connectionFactory.setPassword(rabbitMqProperties.getPassword());
 		connectionFactory.setVirtualHost("/");
 
+		connectionFactory.setRequestedHeartBeat(120); // 2분
+
 		try {
 			connectionFactory.getRabbitConnectionFactory().useSslProtocol("TLSv1.2");
 		} catch (Exception e) {
