@@ -23,6 +23,7 @@ import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -65,14 +66,14 @@ public class PostController {
 	}
 
 	@GetMapping
-	public ResponseEntity<AppResponse<PageResponse<GetPostResponse>>> getPosts(
+	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
 		@RequestParam(required = false, defaultValue = "10")
 		@Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.")
 		@Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
 	) {
-		PageResponse<GetPostResponse> response = postService.getPosts(sort, page, size);
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 

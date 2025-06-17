@@ -8,9 +8,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-public record GetPostResponse(
-	String userName,
-	String userEmail,
+public record GetPostsResponse(
 	Long id,
 	Long userId,
 	String title,
@@ -19,9 +17,7 @@ public record GetPostResponse(
 	Long nonCommercialPrice,
 	List<ImageDto> images
 ) {
-	public static GetPostResponse of(
-		String userName,
-		String userEmail,
+	public static GetPostsResponse of(
 		PostEntity postEntity,
 		List<PostImageEntity> images
 	) {
@@ -29,9 +25,7 @@ public record GetPostResponse(
 			.map(image -> new ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
 
-		return new GetPostResponse(
-			userName,
-			userEmail,
+		return new GetPostsResponse(
 			postEntity.getId(),
 			postEntity.getUserId(),
 			postEntity.getTitle(),

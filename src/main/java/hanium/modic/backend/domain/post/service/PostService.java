@@ -16,7 +16,10 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +31,8 @@ public class PostService {
 
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final PostImageService postImageService;
+
+	private final UserEntityRepository userEntityRepository;
 
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = Sort.Direction.DESC;
@@ -64,16 +69,21 @@ public class PostService {
 
 	@Transactional(readOnly = true)
 	public GetPostResponse getPost(final Long id) {
-		PostEntity postEntity = postEntityRepository.findById(id)
+		final PostEntity postEntity = postEntityRepository.findById(id)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		final String userName = userEntity.getName(); // Todo: 탈퇴회원처리 필요
+		final String userEmail = userEntity.getEmail();
+
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
-		return GetPostResponse.from(postEntity, postImages);
+		return GetPostResponse.of(userName, userEmail, postEntity, postImages);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostResponse> getPosts(final String sort, final int page, final int size) {
+	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size) {
 
 		// Todo: sort 기능 추가
 
@@ -84,10 +94,10 @@ public class PostService {
 			throw new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
 		}
 
-		Page<GetPostResponse> responsePages = posts.map(post -> {
+		Page<GetPostsResponse> responsePages = posts.map(post -> {
 			List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
 
-			return GetPostResponse.from(post, postImages);
+			return GetPostsResponse.of(post, postImages);
 		});
 
 		return PageResponse.of(responsePages);
