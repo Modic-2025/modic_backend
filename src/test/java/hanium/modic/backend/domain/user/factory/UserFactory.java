@@ -17,4 +17,12 @@ public class UserFactory {
 		when(spyUser.getId()).thenReturn(userId);
 		return spyUser;
 	}
+
+	public static UserEntity createMockUserWithoutId(final String name) {
+		return UserEntity.builder()
+			.name(name)
+			.email(name + "@example.com")
+			.password("password")
+			.build();
+	}
 }

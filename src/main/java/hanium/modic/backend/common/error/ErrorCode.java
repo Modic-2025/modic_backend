@@ -41,6 +41,7 @@ public enum ErrorCode {
 
 	// Follow
 	CANNOT_FOLLOW_SELF_EXCEPTION(HttpStatus.BAD_REQUEST, "F-001", "자기 자신을 팔로우할 수 없습니다."),
+	FOLLOW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "F-002", "해당 팔로우를 찾을 수 없습니다."),
 
 	// Server
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-001", "서버 내부에서 에러가 발생하였습니다."),
@@ -48,7 +49,8 @@ public enum ErrorCode {
 
 	// AI
 	AI_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "A-001", "해당 AI 요청을 찾을 수 없습니다."),
-	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "A-002", "생성된 AI 이미지를 찾을 수 없습니다.");
+	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "A-002", "생성된 AI 이미지를 찾을 수 없습니다."),
+	;
 
 	private final HttpStatus status;
 	private final String code;
