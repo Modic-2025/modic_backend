@@ -36,7 +36,9 @@ public class FollowController {
 		summary = "팔로우/언팔로우",
 		description = "다른 유저를 팔로우하거나 언팔로우합니다. type에는 FOLLOW 또는 UNFOLLOW를 입력합니다.",
 		responses = {
-			@ApiResponse(responseCode = "400", description = "자기 자신을 팔로우할 수 없습니다.(F-001)")
+			@ApiResponse(responseCode = "400", description = "자기 자신을 팔로우할 수 없습니다.(F-001)"),
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
 		})
 	public ResponseEntity<AppResponse<Void>> followOrUnfollow(
 		@AuthenticationPrincipal UserEntity me,
@@ -51,7 +53,10 @@ public class FollowController {
 	@GetMapping("/followers/me")
 	@Operation(
 		summary = "내 팔로워 목록 조회",
-		description = "팔로워 목록을 페이지네이션 형태로 반환합니다."
+		description = "팔로워 목록을 페이지네이션 형태로 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getMyFollowers(
 		@AuthenticationPrincipal UserEntity me,
@@ -64,7 +69,11 @@ public class FollowController {
 	@GetMapping("/followers")
 	@Operation(
 		summary = "팔로워 목록 조회",
-		description = "팔로워 목록을 페이지네이션 형태로 반환합니다."
+		description = "팔로워 목록을 페이지네이션 형태로 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
+		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getFollowers(
 		@RequestParam(required = true) long userId,
@@ -77,7 +86,10 @@ public class FollowController {
 	@GetMapping("/followings/me")
 	@Operation(
 		summary = "내 팔로잉 목록 조회",
-		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다."
+		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getMyFollowing(
 		@AuthenticationPrincipal UserEntity me,
@@ -90,7 +102,11 @@ public class FollowController {
 	@GetMapping("/followings")
 	@Operation(
 		summary = "팔로잉 목록 조회",
-		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다."
+		description = "팔로잉 목록을 페이지네이션 형태로 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
+		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getFollowing(
 		@RequestParam(required = true) long userId,
