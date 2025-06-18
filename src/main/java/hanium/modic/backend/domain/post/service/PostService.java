@@ -165,7 +165,7 @@ public class PostService {
 	// 단순 포스트 목록 조회
 	// TODO: 포스트 조회 순서
 	public Page<GetSimplePostsResponse> getSimplePosts(final long userId, final int page, final int size) {
-		return postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size, DESC))
+		return postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size))
 			.map(post -> {
 				// TODO: 쿼리 최적화 필요
 				List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
