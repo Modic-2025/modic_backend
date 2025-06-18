@@ -54,6 +54,8 @@ public class FollowService {
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회
 	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
+		validateUserExists(userId);
+
 		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> new GetFollowersResponse(u.getId(), u.getName(), u.getEmail()));
 	}
@@ -61,7 +63,16 @@ public class FollowService {
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
+		validateUserExists(userId);
+
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> new GetFollowingsResponse(u.getId(), u.getName(), u.getEmail()));
+	}
+
+	// 유저 존재 체크
+	private void validateUserExists(final long userId) {
+		if (!userRepository.existsById(userId)) {
+			throw new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION);
+		}
 	}
 }
