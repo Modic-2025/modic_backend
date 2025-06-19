@@ -107,10 +107,10 @@ public class PostService {
 
 	@Transactional
 	public void deletePost(final long userId, final Long postId) {
-		validatePostRole(userId, postId);
-
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		validatePostRole(userId, post.getUserId());
 
 		postImageEntityRepository.findAllByPostId(postId)
 			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
@@ -127,10 +127,10 @@ public class PostService {
 		final Long nonCommercialPrice,
 		final List<Long> imageIds
 	) {
-		validatePostRole(userId, postId);
-
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		validatePostRole(userId, post.getUserId());
 
 		post.updateTitle(title);
 		post.updateDescription(description);
