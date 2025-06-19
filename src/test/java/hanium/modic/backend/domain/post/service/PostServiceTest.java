@@ -35,7 +35,11 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
@@ -46,6 +50,8 @@ class PostServiceTest {
 	private PostImageEntityRepository postImageEntityRepository;
 	@Mock
 	private PostImageService postImageService;
+	@Mock
+	private UserEntityRepository userEntityRepository;
 
 	@InjectMocks
 	private PostService postService;
@@ -58,6 +64,7 @@ class PostServiceTest {
 	void createPostTest() {
 		// given
 		Long userId = 1L;
+		UserEntity mockUser = UserFactory.createMockUser(userId);
 		String title = "Test Title";
 		String description = "Test Description";
 		Long commercialPrice = 1000L;
@@ -71,7 +78,7 @@ class PostServiceTest {
 			when(postImageEntityRepository.findById((long)i))
 				.thenReturn(Optional.of(postImageEntities.get(i)));
 		}
-		PostEntity mockPost = createMockPostWithId(1L);
+		PostEntity mockPost = createMockPostWithId(1L, mockUser);
 		when(postEntityRepository.save(any())).thenReturn(mockPost);
 
 		// when
@@ -99,15 +106,18 @@ class PostServiceTest {
 	@DisplayName("단일 게시글 조회 성공")
 	void getPost_Success() {
 		// Given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
 		Long postId = 1L;
-		PostEntity mockPost = createMockPostWithId(postId);
+		PostEntity mockPost = createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
 			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+
 
 		// When
 		GetPostResponse response = postService.getPost(postId);
@@ -152,9 +162,10 @@ class PostServiceTest {
 		int size = 10;
 		String sort = "createdAt";
 
+		UserEntity mockUser = UserFactory.createMockUser(1L);
 		List<PostEntity> mockPosts = Arrays.asList(
-			createMockPostWithId(1L),
-			createMockPostWithId(2L)
+			createMockPostWithId(1L, mockUser),
+			createMockPostWithId(2L, mockUser)
 		);
 
 		Page<PostEntity> mockPostPage = new PageImpl<>(mockPosts,
@@ -169,7 +180,7 @@ class PostServiceTest {
 		when(postImageEntityRepository.findAllByPostId(2L)).thenReturn(mockImagesForPost2);
 
 		// When
-		PageResponse<GetPostResponse> response = postService.getPosts(sort, page, size);
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
 
 		// Then
 		assertThat(response).isNotNull();
@@ -212,7 +223,9 @@ class PostServiceTest {
 		// Given
 		final Long postId = 1L;
 		final Long userId = 1L;
-		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
+		final UserEntity mockUser = UserFactory.createMockUser(userId);
+
+		PostEntity mockPost = PostFactory.createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
@@ -233,11 +246,12 @@ class PostServiceTest {
 	void updatePost_Success() {
 		// Given
 		final Long userId = 1L;
+		final UserEntity mockUser = UserFactory.createMockUser(userId);
 		final Long postId = 1L;
 		final Long postImageId1 = 1L;
 		final Long postImageId2 = 2L;
 
-		PostEntity mockPost = PostFactory.createMockPostWithId(postId);
+		PostEntity mockPost = PostFactory.createMockPostWithId(postId, mockUser);
 		PostImageEntity postImage1 = ImageFactory.createMockPostImageWithId(mockPost, postImageId1);
 		PostImageEntity postImage2 = ImageFactory.createMockPostImageWithId(mockPost, postImageId2);
 		List<PostImageEntity> mockImages = List.of(postImage1, postImage2);

@@ -10,6 +10,7 @@ public class UserFactory {
 
 	public static UserEntity createMockUser(final Long userId) {
 		UserEntity user = UserEntity.builder()
+			.name("user" + userId)
 			.email("test" + userId + "@example.com")
 			.password("password" + userId)
 			.build();
