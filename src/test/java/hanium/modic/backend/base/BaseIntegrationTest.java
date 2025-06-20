@@ -1,5 +1,8 @@
 package hanium.modic.backend.base;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,4 +26,11 @@ public class BaseIntegrationTest {
 	protected ObjectMapper objectMapper;
 	@Autowired
 	protected TestUtils testUtils;
+	@Autowired
+	protected DatabaseCleanUp databaseCleanUp;
+
+	@AfterEach
+	public void cleanUp() {
+		databaseCleanUp.execute(); // 각 테스트 후 데이터베이스 정리
+	}
 }

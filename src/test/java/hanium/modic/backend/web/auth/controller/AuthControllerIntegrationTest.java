@@ -42,11 +42,6 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private AuthCodeRepository authCodeRepository;
 
-	@BeforeEach
-	void setUp() {
-		userEntityRepository.deleteAll();
-	}
-
 	@Test
 	@DisplayName("로그인 API 테스트")
 	void loginApiSuccessTest() throws Exception {

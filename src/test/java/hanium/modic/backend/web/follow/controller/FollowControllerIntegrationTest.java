@@ -31,12 +31,6 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private FollowEntityRepository followEntityRepository;
 
-	@BeforeEach
-	void setUp() {
-		followEntityRepository.deleteAll();
-		userEntityRepository.deleteAll();
-	}
-
 	// 공통 테스트 유저 저장 메서드
 	private UserEntity saveUser(String name) {
 		return userEntityRepository.save(

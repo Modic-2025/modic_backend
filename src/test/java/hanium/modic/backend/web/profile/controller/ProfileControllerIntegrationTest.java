@@ -21,12 +21,6 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 
-	@BeforeEach
-	void setUp() {
-		// 테스트 실행 전 데이터 정리
-		userEntityRepository.deleteAll();
-	}
-
 	// 현재 인증된 유저 정보를 SecurityContext에서 가져오기
 	private UserEntity getCurrentUser() {
 		return (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

@@ -50,13 +50,6 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 
-	@BeforeEach
-	void setUp() {
-		postEntityRepository.deleteAll();
-		postImageEntityRepository.deleteAll();
-		userEntityRepository.deleteAll();
-	}
-
 	// 컨텍스트에서 유저 정보 조회
 	private UserEntity getCurrentUser() {
 		return (UserEntity)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
