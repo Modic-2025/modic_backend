@@ -78,7 +78,6 @@ public class PostService {
 		final String userName = userEntity.getName(); // Todo: 탈퇴회원처리 필요
 		final String userEmail = userEntity.getEmail();
 
-
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
 		return GetPostResponse.of(userName, userEmail, postEntity, postImages);
