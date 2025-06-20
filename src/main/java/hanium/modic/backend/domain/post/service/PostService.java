@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.post.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
 import java.util.List;
@@ -11,8 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
@@ -60,7 +60,7 @@ public class PostService {
 
 		List<PostImageEntity> list = imageIds.stream()
 			.map(imageId -> postImageEntityRepository.findById(imageId)
-				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.IMAGE_NOT_FOUND_EXCEPTION)))
+				.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION)))
 			.peek(postImageEntity -> postImageEntity.updatePost(postEntity))
 			.toList();
 
@@ -72,9 +72,9 @@ public class PostService {
 	@Transactional(readOnly = true)
 	public GetPostResponse getPost(final Long id) {
 		final PostEntity postEntity = postEntityRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		final String userName = userEntity.getName(); // Todo: 탈퇴회원처리 필요
 		final String userEmail = userEntity.getEmail();
 
@@ -92,7 +92,7 @@ public class PostService {
 		Page<PostEntity> posts = postEntityRepository.findAll(pageable);
 
 		if (posts.isEmpty()) {
-			throw new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
 		}
 
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
@@ -107,7 +107,7 @@ public class PostService {
 	@Transactional
 	public void deletePost(final long userId, final Long postId) {
 		PostEntity post = postEntityRepository.findById(postId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
 		validatePostRole(userId, post.getUserId());
 
@@ -127,7 +127,7 @@ public class PostService {
 		final List<Long> imageIds
 	) {
 		PostEntity post = postEntityRepository.findById(postId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
 		validatePostRole(userId, post.getUserId());
 
@@ -157,7 +157,7 @@ public class PostService {
 		final long postUserId
 	) {
 		if (userId != postUserId) {
-			throw new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
 		}
 	}
 

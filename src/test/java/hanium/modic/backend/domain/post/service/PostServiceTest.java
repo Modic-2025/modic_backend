@@ -27,7 +27,6 @@ import org.springframework.data.domain.Sort;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -118,7 +117,6 @@ class PostServiceTest {
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
 
-
 		// When
 		GetPostResponse response = postService.getPost(postId);
 
@@ -146,7 +144,7 @@ class PostServiceTest {
 		when(postEntityRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
 
 		// When & Then
-		AppException exception = assertThrows(EntityNotFoundException.class,
+		AppException exception = assertThrows(AppException.class,
 			() -> postService.getPost(nonExistentPostId)
 		);
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
@@ -208,7 +206,7 @@ class PostServiceTest {
 		when(postEntityRepository.findAll(any(Pageable.class))).thenReturn(emptyPage);
 
 		// When & Then
-		EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+		AppException exception = assertThrows(AppException.class,
 			() -> postService.getPosts(sort, page, size)
 		);
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());

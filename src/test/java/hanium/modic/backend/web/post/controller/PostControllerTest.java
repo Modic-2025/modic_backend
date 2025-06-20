@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
@@ -192,7 +192,7 @@ class PostControllerTest extends BaseControllerTest {
 	void getPost_NotFound() throws Exception {
 		// given
 		Long postId = 999L;
-		when(postService.getPost(postId)).thenThrow(new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+		when(postService.getPost(postId)).thenThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
 		// when & then
 		mockMvc.perform(get("/api/posts/{id}", postId)
