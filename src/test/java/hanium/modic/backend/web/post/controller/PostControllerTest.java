@@ -17,7 +17,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,15 +27,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
+import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.EntityNotFoundException;
-import hanium.modic.backend.common.jwt.JwtAuthenticationEntryPoint;
-import hanium.modic.backend.common.jwt.JwtAuthenticationFilter;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 
 @WebMvcTest(controllers = PostController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -52,7 +51,9 @@ class PostControllerTest extends BaseControllerTest {
 
 	@Test
 	@DisplayName("게시물 생성 요청 성공")
+	@WithCustomUser(email = "user1@email.com")
 	void createPost_ValidRequest_ShouldReturn200AndInvokeService() throws Exception {
+
 		// given
 		CreatePostRequest req = new CreatePostRequest(
 			"제목",
@@ -71,6 +72,7 @@ class PostControllerTest extends BaseControllerTest {
 
 		// then
 		verify(postService).createPost(
+			null, // TODO: 현재 구조상 1이 들어갈 수 없음. 수정 필요
 			"제목",
 			"설명",
 			10000L,
@@ -171,7 +173,8 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+			"이름", "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
+			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		when(postService.getPost(postId)).thenReturn(response);
 
@@ -189,7 +192,7 @@ class PostControllerTest extends BaseControllerTest {
 	void getPost_NotFound() throws Exception {
 		// given
 		Long postId = 999L;
-		when(postService.getPost(postId)).thenThrow(new EntityNotFoundException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+		when(postService.getPost(postId)).thenThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
 		// when & then
 		mockMvc.perform(get("/api/posts/{id}", postId)
@@ -202,19 +205,19 @@ class PostControllerTest extends BaseControllerTest {
 	@DisplayName("게시물 목록 조회 성공 - 기본 파라미터")
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
-		GetPostResponse post1 = new GetPostResponse(
-			1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
-		GetPostResponse post2 = new GetPostResponse(
-			2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostResponse.ImageDto("http://img2.jpg", 2L)));
+		GetPostsResponse post1 = new GetPostsResponse(
+			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)));
+		GetPostsResponse post2 = new GetPostsResponse(
+			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)));
 
-		List<GetPostResponse> content = List.of(post1, post2);
-		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
-		PageResponse<GetPostResponse> pageResponse = PageResponse.of(page);
+		List<GetPostsResponse> content = List.of(post1, post2);
+		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
+		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
 		when(postService.getPosts(any(String.class), anyInt(), anyInt())).thenReturn(pageResponse);
 
 		// when & then
-		mockMvc.perform(get("/api/posts")
+		mockMvc.perform(get("/api/posts/list")
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.content").isArray())
@@ -231,17 +234,17 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_WithParameterizedPaging_Success(String sort, int pageNumber, int size, long totalElements) throws
 		Exception {
 		// given
-		GetPostResponse post = new GetPostResponse(
-			1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+		GetPostsResponse post = new GetPostsResponse(
+			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)));
 
-		List<GetPostResponse> content = List.of(post);
-		Page<GetPostResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
-		PageResponse<GetPostResponse> pageResponse = PageResponse.of(page);
+		List<GetPostsResponse> content = List.of(post);
+		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
+		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
 		when(postService.getPosts(sort, pageNumber, size)).thenReturn(pageResponse);
 
 		// when & then
-		mockMvc.perform(get("/api/posts")
+		mockMvc.perform(get("/api/posts/list")
 				.param("sort", sort)
 				.param("page", String.valueOf(pageNumber))
 				.param("size", String.valueOf(size))
@@ -268,7 +271,7 @@ class PostControllerTest extends BaseControllerTest {
 	@MethodSource("provideInvalidPagingParameters")
 	void getPosts_InvalidPagingParam(String paramName, String paramValue) throws Exception {
 		// when & then
-		mockMvc.perform(get("/api/posts")
+		mockMvc.perform(get("/api/posts/list")
 				.param(paramName, paramValue)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isBadRequest())

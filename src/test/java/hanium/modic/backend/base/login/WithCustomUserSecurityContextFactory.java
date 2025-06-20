@@ -1,0 +1,31 @@
+package hanium.modic.backend.base.login;
+
+import org.springframework.boot.test.context.TestComponent;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithSecurityContextFactory;
+import org.springframework.transaction.annotation.Transactional;
+
+import hanium.modic.backend.domain.user.entity.UserEntity;
+
+@TestComponent
+public class WithCustomUserSecurityContextFactory implements WithSecurityContextFactory<WithCustomUser> {
+
+	// SecurityContext 생성 및 UserEntity 저장
+	@Override
+	@Transactional
+	public SecurityContext createSecurityContext(WithCustomUser annotation) {
+		String email = annotation.email();
+		UserEntity user = UserEntity.builder()
+			.email(email)
+			.password("password")
+			.name("Test User")
+			.build();
+		Authentication auth = new UsernamePasswordAuthenticationToken(user, "");
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(auth);
+		return context;
+	}
+}

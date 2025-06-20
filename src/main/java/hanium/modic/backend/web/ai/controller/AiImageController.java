@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hanium.modic.backend.common.response.ApiResponse;
+import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
@@ -39,7 +39,7 @@ public class AiImageController {
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
 	@Operation(summary = "AI 요청 이미지 저장 URL 생성", description = "AI 요청을 위한 이미지 저장 URL을 생성합니다.")
-	public ResponseEntity<ApiResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
+	public ResponseEntity<AppResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@Parameter(description = "이미지 저장 요청 정보", required = true)
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
 		/*
@@ -50,7 +50,7 @@ public class AiImageController {
 			request.fileName());
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
+			.body(AppResponse.created(new CreateImageSaveUrlResponse(dto.imageSaveUrl(), dto.imagePath())));
 	}
 
 	// AI 요청 이미지 저장 완료 후 AI 이미지 생성 요청
@@ -59,7 +59,7 @@ public class AiImageController {
 		summary = "AI 이미지 생성 요청",
 		description = "AI 이미지 생성을 요청합니다. 요청이 성공하면 요청한 이미지(사용자 입력)의 imageId와 requestId를 반환합니다."
 	)
-	public ResponseEntity<ApiResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
+	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request) {
 
 		RequestAiImageGenerationResponse response = aiImageGenerationService.processImageGeneration(
@@ -70,20 +70,20 @@ public class AiImageController {
 		);
 
 		return ResponseEntity.status(CREATED)
-			.body(ApiResponse.created(response));
+			.body(AppResponse.created(response));
 	}
 
 	// AI 요청 이미지 URL 조회
 	@GetMapping("/{imageId}/get-url")
 	@Operation(summary = "요청 AI 이미지(사용자 입력) 조회 URL 생성", description = "요청할 AI 이미지 조회 URL을 생성합니다.")
-	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createImageGetUrl(
+	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId) {
 		/*
 		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
 		 */
 		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId);
 
-		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 
 	// 생성된 AI 이미지 조회 URL 생성
@@ -92,14 +92,14 @@ public class AiImageController {
 		summary = "생성된 AI 이미지(생성된 화풍 이미지) 조회 URL 생성",
 		description = "생성된 AI 이미지 조회 URL을 생성합니다. 이 API 호출 전 AI 이미지 생성 상태 확인 필요"
 	)
-	public ResponseEntity<ApiResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
+	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
 		@PathVariable String requestId) {
 		/*
 		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
 		 */
 		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId);
 
-		return ResponseEntity.ok(ApiResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
+		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
 
 	// AI 이미지 생성 상태를 조회
@@ -108,9 +108,9 @@ public class AiImageController {
 		summary = "AI 이미지 생성 상태 조회",
 		description = "AI 이미지 생성 요청의 상태를 조회합니다. requestId(UUID)를 통해 상태를 확인할 수 있습니다."
 	)
-	public ResponseEntity<ApiResponse<AiRequestStatusResponse>> getAiRequestStatus(
+	public ResponseEntity<AppResponse<AiRequestStatusResponse>> getAiRequestStatus(
 		@PathVariable String requestId) {
 		AiImageStatus status = aiImageGenerationService.getAiImageStatus(requestId);
-		return ResponseEntity.ok(ApiResponse.ok(new AiRequestStatusResponse(status)));
+		return ResponseEntity.ok(AppResponse.ok(new AiRequestStatusResponse(status)));
 	}
 }

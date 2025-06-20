@@ -1,5 +1,9 @@
 package hanium.modic.backend.domain.user.entity;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,10 +33,23 @@ public class UserEntity {
 
 	private String name;
 
+	private Long coin = 0L;
+
 	@Builder
 	private UserEntity(String email, String password, String name) {
 		this.email = email;
 		this.password = password;
 		this.name = name;
+	}
+
+	public void addCoin(Long coin) {
+		this.coin += coin;
+	}
+
+	public void subtractCoin(Long coin) {
+		if (this.coin < coin) {
+			throw new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION);
+		}
+		this.coin -= coin;
 	}
 }
