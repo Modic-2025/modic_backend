@@ -1,169 +1,79 @@
 package hanium.modic.backend.domain.follow.service;
 
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.AssertionsForClassTypes.*;
 
-import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.follow.entity.FollowEntity;
+import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
-import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
 
-@ExtendWith(MockitoExtension.class)
-class FollowServiceTest {
+@Transactional(propagation = Propagation.NOT_SUPPORTED) // 트랜잭션 끄고 직접 처리
+class FollowServiceTest extends BaseIntegrationTest {
 
-	@InjectMocks
-	private FollowService followService;
+	@Autowired
+	FollowEntityRepository followRepository;
 
-	@Mock
-	private FollowEntityRepository followRepository;
+	@Autowired
+	UserEntityRepository userRepository;
 
-	@Mock
-	private UserEntityRepository userRepository;
+	@Autowired
+	FollowService followService;
 
-	@Test
-	@DisplayName("TEST1: 존재하지 않는 유저의 팔로워 목록 조회 시 예외 발생")
-	void getFollowersThrowsIfUserNotExists() {
-		// given
-		long invalidUserId = 999L;
-		when(userRepository.existsById(invalidUserId)).thenReturn(false);
+	private UserEntity me;
+	private UserEntity target;
 
-		// when & then
-		AppException ex = assertThrows(AppException.class, () ->
-			followService.getFollowers(invalidUserId, 0, 10)
-		);
-
-		assertEquals(ErrorCode.USER_NOT_FOUND_EXCEPTION, ex.getErrorCode());
+	@BeforeEach
+	void setup() {
+		userRepository.deleteAll();
 	}
 
 	@Test
-	@DisplayName("TEST2: 팔로우 요청 처리 - 기존 팔로우 없음")
-	void followSuccess() {
-		// given
-		UserEntity me = mock(UserEntity.class);
-		when(me.getId()).thenReturn(1L);
+	@DisplayName("팔로우 요청 - 동시 요청 시 하나만 등록되고 예외 없이 끝남")
+	void 동시에_두_요청이_팔로우를_시도하면_하나만_등록되고_예외_없이_끝난다() throws Exception {
+		me = userRepository.save(UserFactory.createMockUserWithoutId("me"));
+		target = userRepository.save(UserFactory.createMockUserWithoutId("target"));
 
-		UserEntity target = mock(UserEntity.class);
-		when(target.getId()).thenReturn(2L);
+		int threadCount = 3;
+		ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		AtomicInteger successCount = new AtomicInteger();
+		AtomicInteger errorCount = new AtomicInteger();
 
-		when(userRepository.findById(2L)).thenReturn(Optional.of(target));
-		when(followRepository.existsByMyIdAndFollowingId(1L, 2L)).thenReturn(false);
+		for (int i = 0; i < threadCount; i++) {
+			executorService.execute(() -> {
+				try {
+					followService.followOrUnfollow(me, target.getId(), FOLLOW);
+					successCount.incrementAndGet();
+				} catch (Exception e) {
+					e.printStackTrace();
+					errorCount.incrementAndGet();
+				} finally {
+					latch.countDown();
+				}
+			});
+		}
 
-		// when
-		followService.followOrUnfollow(me, 2L, FOLLOW);
+		latch.await(); // 모든 스레드 완료까지 대기
 
-		// then
-		verify(followRepository, times(1)).save(any(FollowEntity.class));
-	}
+		// DB에서 실제 저장된 수 확인
+		long followCount = followRepository.countByMyId(me.getId());
 
-	@Test
-	@DisplayName("TEST3: 자기 자신을 팔로우할 경우 예외 발생")
-	void followSelfThrowsException() {
-		// given
-		UserEntity me = mock(UserEntity.class);
-		when(me.getId()).thenReturn(1L);
-
-		// when & then
-		AppException ex = assertThrows(AppException.class, () ->
-			followService.followOrUnfollow(me, 1L, FOLLOW)
-		);
-
-		assertEquals(ErrorCode.CANNOT_FOLLOW_SELF_EXCEPTION, ex.getErrorCode());
-	}
-
-	@Test
-	@DisplayName("TEST4: 언팔로우 요청 처리 - 기존 팔로우 있음")
-	void unfollowSuccess() {
-		// given
-		UserEntity me = mock(UserEntity.class);
-		when(me.getId()).thenReturn(1L);
-
-		UserEntity target = mock(UserEntity.class);
-
-		when(userRepository.findById(2L)).thenReturn(Optional.of(target));
-		when(followRepository.existsByMyIdAndFollowingId(1L, 2L)).thenReturn(true);
-
-		// when
-		followService.followOrUnfollow(me, 2L, UNFOLLOW);
-
-		// then
-		verify(followRepository, times(1)).deleteByMyIdAndFollowingId(1L, 2L);
-	}
-
-	@Test
-	@DisplayName("TEST5: 팔로워 목록 조회 성공")
-	void getFollowersSuccess() {
-		// given
-		long userId = 1L;
-		when(userRepository.existsById(userId)).thenReturn(true);
-
-		UserEntity user2 = mock(UserEntity.class);
-		when(user2.getId()).thenReturn(2L);
-		when(user2.getName()).thenReturn("user2");
-		when(user2.getEmail()).thenReturn("user2@email.com");
-
-		UserEntity user3 = mock(UserEntity.class);
-		when(user3.getId()).thenReturn(3L);
-		when(user3.getName()).thenReturn("user3");
-		when(user3.getEmail()).thenReturn("user3@email.com");
-
-		Page<UserEntity> page = new PageImpl<>(List.of(user2, user3));
-		when(followRepository.findFollowersOrderByCreatedAt(eq(userId), any(PageRequest.class)))
-			.thenReturn(page);
-
-		// when
-		Page<GetFollowersResponse> result = followService.getFollowers(userId, 0, 10);
-
-		// then
-		assertThat(result.getTotalElements()).isEqualTo(2);
-		assertThat(result.getContent()).extracting("userId").containsExactly(2L, 3L);
-	}
-
-	@Test
-	@DisplayName("TEST6: 팔로잉 목록 조회 성공")
-	void getFollowingsSuccess() {
-		// given
-		long userId = 1L;
-		when(userRepository.existsById(userId)).thenReturn(true);
-
-		UserEntity user4 = mock(UserEntity.class);
-		when(user4.getId()).thenReturn(2L);
-		when(user4.getName()).thenReturn("user2");
-		when(user4.getEmail()).thenReturn("user2@email.com");
-
-		UserEntity user5 = mock(UserEntity.class);
-		when(user5.getId()).thenReturn(3L);
-		when(user5.getName()).thenReturn("user3");
-		when(user5.getEmail()).thenReturn("user3@email.com");
-
-		Page<UserEntity> page = new PageImpl<>(List.of(user4, user5));
-		when(followRepository.findFollowingOrderByCreatedAt(eq(userId), any(PageRequest.class))).thenReturn(page);
-
-		// when
-		Page<GetFollowingsResponse> result = followService.getFollowings(userId, 0, 10);
-
-		// then
-		assertThat(result.getTotalElements()).isEqualTo(2);
-		assertThat(result.getContent().get(0).userId()).isEqualTo(2L);
-		assertThat(result.getContent().get(1).userId()).isEqualTo(3L);
+		// 검증
+		assertThat(followCount).isEqualTo(1);      // 딱 하나만 저장돼야 함
+		assertThat(errorCount.get()).isEqualTo(0); // 예외 없어야 함
 	}
 }

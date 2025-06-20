@@ -40,13 +40,9 @@ public class FollowService {
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 
 		// 팔로우 요청 및 기존 팔로우 존재 여부에 따라 팔로우, 언팔로우 처리
-		boolean exists = followRepository.existsByMyIdAndFollowingId(me.getId(), targetId);
-		if (type == FOLLOW && !exists) {
-			followRepository.save(FollowEntity.builder()
-				.me(me)
-				.following(target)
-				.build());
-		} else if (type == UNFOLLOW && exists) {
+		if (type == FOLLOW) {
+			followRepository.insertFollowIfExist(me.getId(), target.getId());
+		} else if (type == UNFOLLOW) {
 			followRepository.deleteByMyIdAndFollowingId(me.getId(), targetId);
 		}
 	}

@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.follow.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -36,4 +37,12 @@ public interface FollowEntityRepository extends JpaRepository<FollowEntity, Long
 		    ORDER BY f.createAt DESC
 		""")
 	Page<UserEntity> findFollowingOrderByCreatedAt(@Param("followingId") Long followingId, Pageable pageable);
+
+	@Modifying
+	@Query(
+		value = "INSERT IGNORE " +
+			"INTO follows (my_id, following_id, create_at, update_at) " +
+			"VALUES (:myId, :followingId, now(), now())",
+		nativeQuery = true)
+	void insertFollowIfExist(@Param("myId") Long myId, @Param("followingId") Long followingId);
 }
