@@ -14,7 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// Todo: 추후 GRAPHQL로 변경 예정
+// Todo: 추후 GRAPHDB로 변경 예정
 @Entity
 @Table(name = "follows",
 	uniqueConstraints = {@UniqueConstraint(columnNames = {"my_id", "following_id"})})
