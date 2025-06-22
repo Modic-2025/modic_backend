@@ -3,11 +3,9 @@ package hanium.modic.backend.web.profile.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
@@ -21,18 +19,10 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 
-	// 현재 인증된 유저 정보를 SecurityContext에서 가져오기
-	private UserEntity getCurrentUser() {
-		return (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-	}
-
 	@Test
 	@DisplayName("TEST1: 내 프로필 조회 성공")
 	@WithCustomUser(email = "me@test.com")
 	void getMyProfileSuccess() throws Exception {
-		// given: 로그인된 사용자 저장
-		userEntityRepository.save(getCurrentUser());
-
 		// when: 내 프로필 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles/me"));
 
@@ -72,9 +62,6 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("TEST3: 내 게시글 목록 조회 성공")
 	@WithCustomUser(email = "poster@test.com")
 	void getMyPostsSuccess() throws Exception {
-		// given: 사용자 저장
-		userEntityRepository.save(getCurrentUser());
-
 		// when: 내 게시글 목록 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles/me/posts")
 			.param("page", "0")

@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayInputStream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.base.login.ContextHolderUtils;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -124,7 +124,7 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	public void createImageUrlCallbackFail() throws Exception {
 		// given
-		UserEntity user1 = userEntityRepository.save(getCurrentUser());
+		UserEntity user1 = ContextHolderUtils.getCurrentUser();
 
 		PostEntity post = PostFactory.createMockPostWithId(1L, user1);
 		PostImageEntity savedPostImage = ImageFactory.createMockPostImage(post);

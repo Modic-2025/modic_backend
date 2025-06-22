@@ -27,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
-import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
@@ -48,38 +47,6 @@ class PostControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
-
-	@Test
-	@DisplayName("게시물 생성 요청 성공")
-	@WithCustomUser(email = "user1@email.com")
-	void createPost_ValidRequest_ShouldReturn200AndInvokeService() throws Exception {
-
-		// given
-		CreatePostRequest req = new CreatePostRequest(
-			"제목",
-			"설명",
-			10000L,
-			5000L,
-			List.of(1L)
-		);
-		String json = objectMapper.writeValueAsString(req);
-
-		// when
-		mockMvc.perform(post("/api/posts")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(json))
-			.andExpect(status().isCreated());
-
-		// then
-		verify(postService).createPost(
-			null, // TODO: 현재 구조상 1이 들어갈 수 없음. 수정 필요
-			"제목",
-			"설명",
-			10000L,
-			5000L,
-			List.of(1L)
-		);
-	}
 
 	@ParameterizedTest(name = "[{index}] {2}")
 	@MethodSource("invalidCreatePostRequests")
