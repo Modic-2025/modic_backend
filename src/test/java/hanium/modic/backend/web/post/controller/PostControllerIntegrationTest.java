@@ -18,7 +18,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
-import hanium.modic.backend.base.login.ContextHolderUtils;
+import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
@@ -54,7 +54,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void createPost_ValidRequest_ShouldReturn200AndPersistData() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		// PostImage 미리 저장
 		PostImageEntity image1 = postImageEntityRepository.save(PostImageEntity.builder()
@@ -109,7 +109,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void deletePost_ValidRequest_ShouldReturn200AndDeleteData() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));
 		postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
@@ -128,7 +128,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void updatePost_ValidRequest_ShouldReturn200AndUpdateData() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));
 		final List<Long> postImageIds = postImageEntityRepository.saveAll(ImageFactory.createMockPostImages(post, 2))
@@ -166,7 +166,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void updatePost_ValidRequest_ShouldReturn400AndThrowException() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		UserEntity user2 = userEntityRepository.save(UserFactory.createMockUserWithoutId("user2"));
 
 		// 다른 사람의 게시글
@@ -204,7 +204,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		// 특정 포스트에 2개의 이미지가 존재할 때, 하나만 남기면 나머지가 삭제되는지 테스트
 
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		// 기존에 존재하느 포스트
 		PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));

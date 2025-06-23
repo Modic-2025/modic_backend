@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
-import hanium.modic.backend.base.login.ContextHolderUtils;
+import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.entity.FollowEntity;
@@ -42,7 +42,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void followSuccess() throws Exception {
 		// given: 인증된 사용자(user1)와 팔로우 대상(user2) 생성
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		UserEntity user2 = saveUser("User2");
 
 		// when: user1이 user2를 팔로우
@@ -64,7 +64,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void unfollowSuccess() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		UserEntity user2 = saveUser("User2");
 
 		// 먼저 팔로우 관계 DB에 저장
@@ -90,7 +90,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void followTwiceNoError() throws Exception {
 		// given: user1이 user2를 이미 팔로우한 상태
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		UserEntity user2 = saveUser("User2");
 		followEntityRepository.save(FollowEntity.builder().me(user1).following(user2).build());
 
@@ -113,7 +113,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void followSelfFail() throws Exception {
 		// given: user1이 로그인된 상태
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		// when: user1이 자기 자신을 팔로우 요청
 		ResultActions result = mockMvc.perform(post("/api/follows")
@@ -129,7 +129,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("TEST5: 존재하지 않는 유저 팔로우 시 예외 발생")
 	@WithCustomUser(email = "user1@test.com")
 	void followNonExistentUser() throws Exception {
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		// when: 존재하지 않는 유저 ID로 팔로우 요청
 		ResultActions result = mockMvc.perform(post("/api/follows")
@@ -146,7 +146,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void getMyFollowingsPaginationSuccess() throws Exception {
 		// given: user1이 3명의 유저를 팔로우한 상태
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		List<UserEntity> followedUsers = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {
 			UserEntity u = saveUser("Followed" + i);
@@ -173,7 +173,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	void getMyFollowersPaginationSuccess() throws Exception {
 		// given: 3명의 유저가 user1을 팔로우함
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		List<UserEntity> followers = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {
 			UserEntity follower = saveUser("Follower" + i);
@@ -232,7 +232,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "viewer@test.com")
 	void getFollowersOfOtherUserSuccess() throws Exception {
 		// given: 유저 생성
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		// given: 3명의 유저가 targetUser를 팔로우함
 		UserEntity targetUser = saveUser("TargetUser");
@@ -264,7 +264,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "viewer@test.com")
 	void getFollowingsOfOtherUserSuccess() throws Exception {
 		// given: targetUser가 3명을 팔로우함
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 		UserEntity targetUser = saveUser("TargetUser");
 		List<UserEntity> followed = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {

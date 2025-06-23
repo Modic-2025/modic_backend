@@ -18,7 +18,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
-import hanium.modic.backend.base.login.ContextHolderUtils;
+import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -124,7 +124,7 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "user1@test.com")
 	public void createImageUrlCallbackFail() throws Exception {
 		// given
-		UserEntity user1 = ContextHolderUtils.getCurrentUser();
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
 
 		PostEntity post = PostFactory.createMockPostWithId(1L, user1);
 		PostImageEntity savedPostImage = ImageFactory.createMockPostImage(post);
