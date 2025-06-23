@@ -27,11 +27,6 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private JwtTokenProvider jwtTokenProvider;
 
-	@BeforeEach
-	void setUp() {
-		userEntityRepository.deleteAll();
-	}
-
 	@Test
 	@DisplayName("회원가입 API 테스트")
 	void createUserApiTest() throws Exception {

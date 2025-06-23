@@ -8,12 +8,12 @@
 	import com.fasterxml.jackson.databind.ObjectMapper;
 
 	@TestComponent
-	public class TestUtils {
+	public class TestUtil {
 
 		private final ObjectMapper objectMapper;
 
 		@Autowired
-		public TestUtils(ObjectMapper objectMapper) {
+		public TestUtil(ObjectMapper objectMapper) {
 			this.objectMapper = objectMapper;
 		}
 
