@@ -107,7 +107,7 @@ public class PostReviewService {
 				// 회원 탈퇴 시 soft 탈퇴이므로 회원은 반드시 존재
 				final String userName = userEntityRepository.findById(postReview.getUserId())
 					.map(UserEntity::getName)
-					.orElse("익명");
+					.orElse(UserConstant.ANONYMOUS.getName());
 				final List<String> imageUrls = postReviewImageRepository.findAllByPostReviewId(postReview.getId())
 					.stream()
 					.map(postReviewImage -> postReviewImageService.createImageGetUrl(postReviewImage.getId()))
