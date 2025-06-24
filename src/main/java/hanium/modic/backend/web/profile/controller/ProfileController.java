@@ -66,7 +66,7 @@ public class ProfileController {
 
 	@GetMapping("/posts")
 	@Operation(
-		summary = "내 게시글 목록 조회",
+		summary = "게시글 목록 조회",
 		description = "로그인한 사용자의 게시글 목록을 조회합니다. 페이지네이션을 지원합니다."
 	)
 	public ResponseEntity<AppResponse<PageResponse<GetSimplePostsResponse>>> getPosts(

@@ -157,7 +157,7 @@ public class PostService {
 		final long postUserId
 	) {
 		if (userId != postUserId) {
-			throw new AppException(POST_NOT_FOUND_EXCEPTION);
+			throw new AppException(POST_ROLE_EXCEPTION);
 		}
 	}
 
