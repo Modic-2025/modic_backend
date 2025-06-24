@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public enum ImagePrefix {
 	PROFILE("profile"),
+	POST_REVIEW("post-review"),
 	AI_REQUEST("ai-request"),
 	AI_RESPONSE("ai-response"),
 	POST("post"),
