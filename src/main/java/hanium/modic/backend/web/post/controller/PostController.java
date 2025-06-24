@@ -24,6 +24,8 @@ import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -39,6 +41,14 @@ public class PostController {
 	private final PostService postService;
 
 	@PostMapping
+	@Operation(
+		summary = "게시글 작성 API",
+		description = "게시글을 작성합니다. 작성자는 인증된 사용자여야 합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]")
+		}
+	)
 	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(
 		@AuthenticationPrincipal UserEntity user,
 		@RequestBody @Valid CreatePostRequest request
@@ -60,12 +70,26 @@ public class PostController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(
+		summary = "게시글 조회 API",
+		description = "게시글을 조회합니다. 게시글 ID를 입력받습니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<GetPostResponse>> getPost(@PathVariable Long id) {
 		GetPostResponse response = postService.getPost(id);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@GetMapping("/list")
+	@Operation(
+		summary = "게시글 목록 조회 API",
+		description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
@@ -78,6 +102,14 @@ public class PostController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Operation(
+		summary = "게시글 삭제 API",
+		description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.",
+		responses = {
+			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<Void>> deletePost(
 		@AuthenticationPrincipal UserEntity user,
 		@PathVariable Long id
@@ -87,6 +119,15 @@ public class PostController {
 	}
 
 	@PutMapping("/{id}")
+	@Operation(
+		summary = "게시글 삭제 API",
+		description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<Void>> updatePost(
 		@AuthenticationPrincipal UserEntity user,
 		@PathVariable long id,

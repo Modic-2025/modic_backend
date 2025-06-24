@@ -23,6 +23,7 @@ import hanium.modic.backend.web.common.image.dto.response.CreateImageGetUrlRespo
 import hanium.modic.backend.web.common.image.dto.response.CreateImageSaveUrlResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,15 @@ public class AiImageController {
 
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
-	@Operation(summary = "AI 요청 이미지 저장 URL 생성", description = "AI 요청을 위한 이미지 저장 URL을 생성합니다.")
+	@Operation(
+		summary = "AI 요청 이미지 저장 URL 생성",
+		description = "사용자가 AI 생성을 위해 이미지를 업로드할 수 있도록 S3에 대한 Presigned URL을 생성합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 이름입니다.[I-003]"),
+			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
+			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@Parameter(description = "이미지 저장 요청 정보", required = true)
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
@@ -57,7 +66,12 @@ public class AiImageController {
 	@PostMapping("/requests")
 	@Operation(
 		summary = "AI 이미지 생성 요청",
-		description = "AI 이미지 생성을 요청합니다. 요청이 성공하면 요청한 이미지(사용자 입력)의 imageId와 requestId를 반환합니다."
+		description = "사용자가 업로드한 이미지를 기반으로 AI 이미지 생성을 요청합니다. 참조 이미지(Post ID)와 함께 전송되며, 요청 ID를 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
+			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
+			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]")
+		}
 	)
 	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request) {
@@ -75,7 +89,15 @@ public class AiImageController {
 
 	// AI 요청 이미지 URL 조회
 	@GetMapping("/{imageId}/get-url")
-	@Operation(summary = "요청 AI 이미지(사용자 입력) 조회 URL 생성", description = "요청할 AI 이미지 조회 URL을 생성합니다.")
+	@Operation(
+		summary = "요청 AI 이미지 조회 URL 생성",
+		description = "사용자가 업로드한 요청 이미지를 임시로 확인할 수 있는 S3 Presigned URL을 반환합니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]"),
+			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
+			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
+		}
+	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId) {
 		/*
@@ -89,8 +111,13 @@ public class AiImageController {
 	// 생성된 AI 이미지 조회 URL 생성
 	@GetMapping("/requests/{requestId}/get-url")
 	@Operation(
-		summary = "생성된 AI 이미지(생성된 화풍 이미지) 조회 URL 생성",
-		description = "생성된 AI 이미지 조회 URL을 생성합니다. 이 API 호출 전 AI 이미지 생성 상태 확인 필요"
+		summary = "생성된 AI 이미지 조회 URL 생성",
+		description = "AI가 생성한 최종 이미지를 확인할 수 있는 URL을 반환합니다. 사전에 생성 상태를 조회해야 합니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "생성된 AI 이미지를 찾을 수 없습니다.[A-002]"),
+			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
+			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
+		}
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
 		@PathVariable String requestId) {
@@ -106,7 +133,10 @@ public class AiImageController {
 	@GetMapping("/requests/{requestId}/status")
 	@Operation(
 		summary = "AI 이미지 생성 상태 조회",
-		description = "AI 이미지 생성 요청의 상태를 조회합니다. requestId(UUID)를 통해 상태를 확인할 수 있습니다."
+		description = "AI 이미지 생성 요청에 대한 현재 상태를 조회합니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 AI 요청을 찾을 수 없습니다.[A-001]")
+		}
 	)
 	public ResponseEntity<AppResponse<AiRequestStatusResponse>> getAiRequestStatus(
 		@PathVariable String requestId) {
