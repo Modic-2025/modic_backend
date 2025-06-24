@@ -17,6 +17,7 @@ import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
 import hanium.modic.backend.domain.postReview.entity.PostReviewImageEntity;
 import hanium.modic.backend.domain.postReview.repository.PostReviewImageRepository;
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
+import hanium.modic.backend.domain.user.entity.UserConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewDetailResponse;
@@ -32,6 +33,7 @@ public class PostReviewService {
 	private final PostEntityRepository postEntityRepository;
 	private final UserEntityRepository userEntityRepository;
 
+	// 포스트 리뷰 생성
 	@Transactional
 	public void createPostReview(
 		final Long postId,
@@ -55,20 +57,21 @@ public class PostReviewService {
 			});
 	}
 
+	// 포스트 리뷰 삭제
 	@Transactional
 	public void deletePostReview(final Long reviewId, final UserEntity user) {
 		final PostReviewEntity postReview = postReviewRepository.findById(reviewId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
 
 		// 권한 체크, 내가 생성한 게시물
-		// Todo: 추후에 Filter나 AOP를 사용하여 변경할 예정
-		validatePostReviewExists(user.getId(), postReview.getPostId());
+		validateMyPostReview(user.getId(), postReview.getPostId());
 
 		List<PostReviewImageEntity> images = postReviewImageRepository.findAllByPostReviewId(reviewId);
 		postReviewImageService.deleteImages(images);
 		postReviewRepository.delete(postReview);
 	}
 
+	// 포스트 리뷰 수정
 	@Transactional
 	public void updatePostReview(
 		final Long reviewId,
@@ -80,8 +83,7 @@ public class PostReviewService {
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
 
 		// 권한 체크, 내가 생성한 게시물
-		// Todo: 추후에 Filter나 AOP를 사용하여 변경할 예정
-		validatePostReviewExists(user.getId(), postReview.getPostId());
+		validateMyPostReview(user.getId(), postReview.getPostId());
 
 		postReview.updateDescription(description);
 
@@ -98,12 +100,13 @@ public class PostReviewService {
 			.forEach(postImageEntity -> postImageEntity.updatePostReview(postReview));
 	}
 
+	// 포스트 리뷰 목록 조회
 	public Page<PostReviewDetailResponse> getPostReviews(final Long postId, final int page, final int size) {
 		return postReviewRepository.findAllByPostId(postId, PageRequest.of(page, size))
 			.map(postReview -> {
+				// 회원 탈퇴 시 soft 탈퇴이므로 회원은 반드시 존재
 				final String userName = userEntityRepository.findById(postReview.getUserId())
 					.map(UserEntity::getName)
-					// Todo : 이름 전역 처리 필요
 					.orElse("익명");
 				final List<String> imageUrls = postReviewImageRepository.findAllByPostReviewId(postReview.getId())
 					.stream()
@@ -120,7 +123,8 @@ public class PostReviewService {
 			});
 	}
 
-	private void validatePostReviewExists(final Long newUserId, final Long postId) {
+	// 자신이 작성한 리뷰인지 확인
+	private void validateMyPostReview(final Long newUserId, final Long postId) {
 		final Long postUserId = postReviewRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION))
 			.getId();
