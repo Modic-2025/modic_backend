@@ -1,5 +1,6 @@
 package hanium.modic.backend.base;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Disabled
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles({"test"})
-@Import(TestUtils.class)
+@Import(TestUtil.class)
 public class BaseIntegrationTest {
 
 	@Autowired
@@ -22,5 +23,12 @@ public class BaseIntegrationTest {
 	@Autowired
 	protected ObjectMapper objectMapper;
 	@Autowired
-	protected TestUtils testUtils;
+	protected TestUtil testUtil;
+	@Autowired
+	protected DatabaseCleanUp databaseCleanUp;
+
+	@AfterEach
+	public void cleanUp() {
+		databaseCleanUp.execute(); // 각 테스트 후 데이터베이스 정리
+	}
 }

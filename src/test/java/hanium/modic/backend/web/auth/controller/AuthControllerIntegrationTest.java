@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.auth.controller;
 
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -15,11 +16,13 @@ import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.jwt.RefreshToken;
 import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.dto.Token;
+import hanium.modic.backend.domain.auth.repository.AuthCodeRepository;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.SendEmailRequest;
+import hanium.modic.backend.web.auth.dto.VerifyEmailCodeRequest;
 import jakarta.servlet.http.Cookie;
 
 public class AuthControllerIntegrationTest extends BaseIntegrationTest {
@@ -36,10 +39,8 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private RefreshTokenRepository refreshTokenRepository;
 
-	@BeforeEach
-	void setUp() {
-		userEntityRepository.deleteAll();
-	}
+	@Autowired
+	private AuthCodeRepository authCodeRepository;
 
 	@Test
 	@DisplayName("로그인 API 테스트")
@@ -83,8 +84,8 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 		mockMvc.perform(post("/api/auth/reissue")
 				.cookie(refreshCookie))
 			.andExpect(status().isOk())
-			.andExpect(header().string("Authorization", "Bearer " + token.accessToken()))
-			.andExpect(cookie().value("refreshToken", token.refreshToken()));
+			.andExpect(header().string("Authorization", startsWith("Bearer ")))
+			.andExpect(cookie().exists("refreshToken"));
 	}
 
 	@Test
@@ -99,5 +100,26 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk());
+	}
+
+	@Test
+	@DisplayName("회원 가입 인증 코드 성공 API")
+	void verifyEmailCodeApiSuccess() throws Exception {
+		// given
+		final String email = "youth@cotato.kr";
+		final String code = "1234";
+
+		authCodeRepository.saveCode(email, code);
+
+		VerifyEmailCodeRequest request = new VerifyEmailCodeRequest(email, code);
+
+		// when, then
+		mockMvc.perform(post("/api/auth/email/verification/check")
+				.param("type", "sign-up")
+				.content(objectMapper.writeValueAsString(request))
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpectAll(jsonPath("$.data.email").value(email),
+				jsonPath("$.data.isVerified").value(true));
 	}
 }

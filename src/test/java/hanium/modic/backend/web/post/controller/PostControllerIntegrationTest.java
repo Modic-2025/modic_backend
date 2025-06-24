@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.base.login.ContextHolderUtil;
+import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
@@ -29,6 +30,9 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 
@@ -42,17 +46,16 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	private PostEntityRepository postEntityRepository;
 	@Autowired
 	private PostImageEntityRepository postImageEntityRepository;
-
-	@BeforeEach
-	void setUp() {
-		postEntityRepository.deleteAll();
-		postImageEntityRepository.deleteAll();
-	}
+	@Autowired
+	private UserEntityRepository userEntityRepository;
 
 	@Test
 	@DisplayName("게시물 등록 요청 API")
+	@WithCustomUser(email = "user1@test.com")
 	void createPost_ValidRequest_ShouldReturn200AndPersistData() throws Exception {
 		// given
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
 		// PostImage 미리 저장
 		PostImageEntity image1 = postImageEntityRepository.save(PostImageEntity.builder()
 			.imagePath("imagePath1")
@@ -103,9 +106,12 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("게시글 삭제 요청 API")
+	@WithCustomUser(email = "user1@test.com")
 	void deletePost_ValidRequest_ShouldReturn200AndDeleteData() throws Exception {
 		// given
-		PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
+		PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));
 		postImageEntityRepository.save(ImageFactory.createMockPostImage(post));
 
 		// when
@@ -119,9 +125,12 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("게시글 수정 요청 API")
+	@WithCustomUser(email = "user1@test.com")
 	void updatePost_ValidRequest_ShouldReturn200AndUpdateData() throws Exception {
 		// given
-		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
+		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));
 		final List<Long> postImageIds = postImageEntityRepository.saveAll(ImageFactory.createMockPostImages(post, 2))
 			.stream()
 			.map(PostImageEntity::getId)
@@ -154,15 +163,19 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("게시글 수정 요청 API - 남의 Image를 도용하면 에러")
+	@WithCustomUser(email = "user1@test.com")
 	void updatePost_ValidRequest_ShouldReturn400AndThrowException() throws Exception {
 		// given
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+		UserEntity user2 = userEntityRepository.save(UserFactory.createMockUserWithoutId("user2"));
+
 		// 다른 사람의 게시글
-		PostEntity otherPersonsPost = postEntityRepository.save(PostFactory.createMockPost());
+		PostEntity otherPersonsPost = postEntityRepository.save(PostFactory.createMockPost(user2));
 		PostImageEntity otherPersonsImage = postImageEntityRepository
 			.save(ImageFactory.createMockPostImage(otherPersonsPost));
 
 		// 내 게시글
-		PostEntity myPost = postEntityRepository.save(PostFactory.createMockPost());
+		PostEntity myPost = postEntityRepository.save(PostFactory.createMockPost(user1));
 
 		UpdatePostRequest request = new UpdatePostRequest(
 			"수정된 제목",
@@ -186,12 +199,15 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("게시글 수정 요청 API - 없어진 이미지는 삭제")
+	@WithCustomUser(email = "user1@test.com")
 	void updatePost_ValidRequest_ShouldReturn200AndDeleteImage() throws Exception {
 		// 특정 포스트에 2개의 이미지가 존재할 때, 하나만 남기면 나머지가 삭제되는지 테스트
 
 		// given
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
 		// 기존에 존재하느 포스트
-		PostEntity post = postEntityRepository.save(PostFactory.createMockPost());
+		PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user1));
 
 		// 기존에 존재하는 포스트 이미지
 		final int imageCount = 3;

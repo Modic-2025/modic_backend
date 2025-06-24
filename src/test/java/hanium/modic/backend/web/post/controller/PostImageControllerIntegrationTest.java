@@ -7,17 +7,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayInputStream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.ResultActions;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.base.login.ContextHolderUtil;
+import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
@@ -27,8 +29,10 @@ import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.PostImageService;
-import hanium.modic.backend.web.post.dto.request.CallbackImageSaveUrlRequest;
-import hanium.modic.backend.web.post.dto.request.CreateImageSaveUrlRequest;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
+import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 
 public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -42,11 +46,12 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	private PostImageEntityRepository postImageEntityRepository;
 	@Autowired
 	private PostEntityRepository postEntityRepository;
+	@Autowired
+	private UserEntityRepository userEntityRepository;
 
-	@BeforeEach
-	void setUp() {
-		postImageEntityRepository.deleteAll();
-		postEntityRepository.deleteAll();
+	// 컨텍스트에서 유저 정보 조회
+	private UserEntity getCurrentUser() {
+		return (UserEntity)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 	}
 
 	@Test
@@ -116,9 +121,12 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("이미지 저장 콜백 실패 : 이미지 경로 중복")
+	@WithCustomUser(email = "user1@test.com")
 	public void createImageUrlCallbackFail() throws Exception {
 		// given
-		PostEntity post = PostFactory.createMockPostWithId(1L);
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
+		PostEntity post = PostFactory.createMockPostWithId(1L, user1);
 		PostImageEntity savedPostImage = ImageFactory.createMockPostImage(post);
 
 		CallbackImageSaveUrlRequest request = new CallbackImageSaveUrlRequest(

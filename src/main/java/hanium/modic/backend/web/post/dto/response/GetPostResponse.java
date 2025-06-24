@@ -9,20 +9,31 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public record GetPostResponse(
+	String userName,
+	String userEmail,
 	Long id,
+	Long userId,
 	String title,
 	String description,
 	Long commercialPrice,
 	Long nonCommercialPrice,
 	List<ImageDto> images
 ) {
-	public static GetPostResponse from(PostEntity postEntity, List<PostImageEntity> images) {
+	public static GetPostResponse of(
+		String userName,
+		String userEmail,
+		PostEntity postEntity,
+		List<PostImageEntity> images
+	) {
 		List<ImageDto> imageDtos = images.stream()
 			.map(image -> new ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
 
 		return new GetPostResponse(
+			userName,
+			userEmail,
 			postEntity.getId(),
+			postEntity.getUserId(),
 			postEntity.getTitle(),
 			postEntity.getDescription(),
 			postEntity.getCommercialPrice(),

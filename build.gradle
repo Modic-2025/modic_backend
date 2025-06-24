@@ -33,7 +33,11 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
+    implementation 'com.google.guava:guava:30.1.1-jre'
+
+    // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     //s3
@@ -51,6 +55,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // Amqp
+    implementation 'org.springframework.boot:spring-boot-starter-amqp:3.4.2'
 }
 
 tasks.named('test') {

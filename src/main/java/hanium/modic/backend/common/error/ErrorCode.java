@@ -20,14 +20,17 @@ public enum ErrorCode {
 
 	// Auth
 	EMAIL_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "A-001", "이메일 전송 중 에러가 발생하였습니다."),
+	EMAIL_CODE_MISMATCH_EXCEPTION(HttpStatus.BAD_REQUEST, "A-002", "이메일 인증 코드가 일치하지 않습니다."),
 
 	// User
 	USER_EMAIL_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "U-001", "이미 사용중인 이메일입니다."),
 	USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-002", "해당 유저를 찾을 수 없습니다."),
 	USER_PASSWORD_MISMATCH_EXCEPTION(HttpStatus.UNAUTHORIZED, "U-003", "비밀번호가 일치하지 않습니다."),
+	USER_COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "U-004", "코인이 부족합니다."),
 
 	// Post
 	POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "P-001", "해당 포스트를 찾을 수 없습니다."),
+	POST_ROLE_EXCEPTION(HttpStatus.FORBIDDEN, "P-002", "포스트에 대한 권한이 없습니다."),
 
 	// Post Review
 	POST_REVIEW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PR-001", "해당 포스트 리뷰를 찾을 수 없습니다."),
@@ -40,9 +43,17 @@ public enum ErrorCode {
 	IMAGE_PATH_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "I-005", "이미지 경로가 중복되었습니다."),
 	IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION(HttpStatus.BAD_REQUEST, "I-006", "이미지를 훔칠 수 없습니다."),
 
+	// Follow
+	CANNOT_FOLLOW_SELF_EXCEPTION(HttpStatus.BAD_REQUEST, "F-001", "자기 자신을 팔로우할 수 없습니다."),
+	FOLLOW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "F-002", "해당 팔로우를 찾을 수 없습니다."),
+
 	// Server
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-001", "서버 내부에서 에러가 발생하였습니다."),
 	S3_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-002", "S3 서버에서 에러가 발생하였습니다."),
+
+	// AI
+	AI_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "A-001", "해당 AI 요청을 찾을 수 없습니다."),
+	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "A-002", "생성된 AI 이미지를 찾을 수 없습니다."),
 	;
 
 	private final HttpStatus status;

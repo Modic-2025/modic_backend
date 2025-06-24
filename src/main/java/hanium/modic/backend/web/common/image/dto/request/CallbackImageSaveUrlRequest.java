@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.post.dto.request;
+package hanium.modic.backend.web.common.image.dto.request;
 
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import jakarta.validation.constraints.NotBlank;

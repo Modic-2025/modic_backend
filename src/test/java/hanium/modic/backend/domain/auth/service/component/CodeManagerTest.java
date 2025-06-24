@@ -34,4 +34,19 @@ class CodeManagerTest {
 		assertThat(code).hasSize(4).matches("\\d{4}");
 		verify(authCodeRepository).saveCode(email, code);
 	}
+
+	@Test
+	@DisplayName("회원가입 이메일 인증 코드 검증 성공")
+	void checkSignupCode() {
+		// given
+		final String email = "test@email.com";
+		final String code = "1234";
+		when(authCodeRepository.getCode(email)).thenReturn(code);
+
+		// when
+		Boolean result = codeManager.checkSignupCode(email, code);
+
+		// then
+		assertThat(result).isTrue();
+	}
 }
