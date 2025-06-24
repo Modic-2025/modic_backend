@@ -32,7 +32,7 @@ public class PostReviewController {
 
 	private final PostReviewService postReviewService;
 
-	@PostMapping("/{postId}")
+	@PostMapping
 	@Operation(
 		summary = "포스트 리뷰 생성",
 		description = "지정된 포스트에 대해 리뷰를 생성합니다. 본문과 이미지 ID 목록을 입력해야 합니다.",
@@ -44,7 +44,7 @@ public class PostReviewController {
 		}
 	)
 	public ResponseEntity<Void> createPostReview(
-		@PathVariable Long postId,
+		@RequestParam long postId,
 		@RequestBody @Valid CreatePostReviewRequest request,
 		@AuthenticationPrincipal UserEntity user
 	) {
@@ -64,7 +64,7 @@ public class PostReviewController {
 		}
 	)
 	public ResponseEntity<Void> deletePostReview(
-		@PathVariable Long reviewId,
+		@PathVariable long reviewId,
 		@AuthenticationPrincipal UserEntity user
 	) {
 		postReviewService.deletePostReview(reviewId, user);
@@ -85,7 +85,7 @@ public class PostReviewController {
 		}
 	)
 	public ResponseEntity<Void> updatePostReview(
-		@PathVariable Long reviewId,
+		@PathVariable long reviewId,
 		@RequestBody @Valid UpdatePostReviewRequest request,
 		@AuthenticationPrincipal UserEntity user
 	) {
@@ -94,7 +94,7 @@ public class PostReviewController {
 		return ResponseEntity.ok().build();
 	}
 
-	@GetMapping("/{postId}")
+	@GetMapping
 	@Operation(
 		summary = "포스트 리뷰 목록 조회",
 		description = "특정 포스트에 작성된 리뷰를 페이지 단위로 조회합니다. 리뷰 작성자의 이름, 작성일, 이미지 URL 등이 포함됩니다.",
@@ -102,7 +102,8 @@ public class PostReviewController {
 			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]")
 		}
 	)
-	public ResponseEntity<AppResponse<PageResponse<PostReviewDetailResponse>>> getPostReviews(@PathVariable Long postId,
+	public ResponseEntity<AppResponse<PageResponse<PostReviewDetailResponse>>> getPostReviews(
+		@RequestParam long postId,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") @Max(30) int size
 	) {
