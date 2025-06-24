@@ -127,9 +127,9 @@ public class PostReviewService {
 	private void validateMyPostReview(final Long newUserId, final Long postId) {
 		final Long postUserId = postReviewRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION))
-			.getId();
+			.getUserId();
 
-		if (Objects.equals(newUserId, postUserId)) {
+		if (!Objects.equals(newUserId, postUserId)) {
 			throw new AppException(USER_ROLE_EXCEPTION);
 		}
 	}
