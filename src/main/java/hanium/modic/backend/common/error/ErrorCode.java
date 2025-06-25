@@ -27,6 +27,8 @@ public enum ErrorCode {
 	USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-002", "해당 유저를 찾을 수 없습니다."),
 	USER_PASSWORD_MISMATCH_EXCEPTION(HttpStatus.UNAUTHORIZED, "U-003", "비밀번호가 일치하지 않습니다."),
 	USER_COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "U-004", "코인이 부족합니다."),
+	USER_COIN_TRANSFER_SAME_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "U-005", "자신에게 코인을 송금할 수 업습니다."),
+	UESR_COIN_TRANSFER_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "U-006", "코인 송금에 실패하였습니다."),
 
 	// Post
 	POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "P-001", "해당 포스트를 찾을 수 없습니다."),
