@@ -15,8 +15,7 @@ public record CreatePostReviewRequest(
 	String description,
 
 	@NotNull(message = "이미지는 필수입니다.")
-	@Size(min = 1, message = "이미지는 최소 1개 이상이어야 합니다.")
-	@Size(max = 8, message = "이미지는 최대 8개까지 업로드 가능합니다.")
+	@Size(min = 1, max = 8, message = "이미지는 최소 1개 이상, 최대 8개까지 업로드 가능합니다.")
 	List<Long> postReviewImageIds
 ) {
 }
