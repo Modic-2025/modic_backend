@@ -58,9 +58,9 @@ class PostReviewControllerTest extends BaseControllerTest {
 		return Stream.of(
 			Arguments.of(new CreatePostReviewRequest("", List.of(1L)), "포스트 리뷰 내용은 필수입니다.", "내용 누락"),
 			Arguments.of(new CreatePostReviewRequest("설명", null), "이미지는 필수입니다.", "이미지 null"),
-			Arguments.of(new CreatePostReviewRequest("설명", Collections.emptyList()), "이미지는 최소 1개 이상이어야 합니다.",
+			Arguments.of(new CreatePostReviewRequest("설명", Collections.emptyList()), "이미지는 최소 1개 이상, 최대 8개까지 업로드 가능합니다.",
 				"이미지 최소 실패"),
-			Arguments.of(new CreatePostReviewRequest("설명", Collections.nCopies(9, 1L)), "이미지는 최대 8개까지 업로드 가능합니다.",
+			Arguments.of(new CreatePostReviewRequest("설명", Collections.nCopies(9, 1L)), "이미지는 최소 1개 이상, 최대 8개까지 업로드 가능합니다.",
 				"이미지 개수 초과")
 		);
 	}
@@ -85,9 +85,9 @@ class PostReviewControllerTest extends BaseControllerTest {
 		return Stream.of(
 			Arguments.of(new UpdatePostReviewRequest("", List.of(1L)), "포스트 리뷰 내용은 필수입니다.", "내용 누락"),
 			Arguments.of(new UpdatePostReviewRequest("설명", null), "이미지는 필수입니다.", "이미지 null"),
-			Arguments.of(new UpdatePostReviewRequest("설명", Collections.emptyList()), "이미지는 최소 1개 이상이어야 합니다.",
+			Arguments.of(new UpdatePostReviewRequest("설명", Collections.emptyList()), "이미지는 최소 1개 이상, 최대 8개까지 업로드 가능합니다.",
 				"이미지 최소 실패"),
-			Arguments.of(new UpdatePostReviewRequest("설명", Collections.nCopies(9, 1L)), "이미지는 최대 8개까지 업로드 가능합니다.",
+			Arguments.of(new UpdatePostReviewRequest("설명", Collections.nCopies(9, 1L)), "이미지는 최소 1개 이상, 최대 8개까지 업로드 가능합니다.",
 				"이미지 개수 초과")
 		);
 	}
