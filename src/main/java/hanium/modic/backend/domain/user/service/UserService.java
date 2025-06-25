@@ -61,7 +61,7 @@ public class UserService {
 	public void chargeCoin(final long userId, final long coin) {
 		try {
 			lockManager.userLock(userId, () -> {
-				addCoin(userId, -coin);
+				addCoin(userId, coin);
 			});
 		} catch (LockException e) {
 			// Todo: 추후 결제 포함될 시, 결제 취소 로직 필요
