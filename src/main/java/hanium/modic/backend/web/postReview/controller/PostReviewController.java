@@ -2,6 +2,7 @@ package hanium.modic.backend.web.postReview.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,11 +24,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/post-reviews")
 @RequiredArgsConstructor
+@Validated
 public class PostReviewController {
 
 	private final PostReviewService postReviewService;
@@ -104,8 +107,8 @@ public class PostReviewController {
 	)
 	public ResponseEntity<AppResponse<PageResponse<PostReviewDetailResponse>>> getPostReviews(
 		@RequestParam long postId,
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") @Max(30) int size
+		@RequestParam(defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(defaultValue = "10") @Max(value = 30, message = "크기는 최대 30까지 허용됩니다.") @Min(value = 10, message = "크기는 최소 10이어야 합니다.") int size
 	) {
 		PageResponse<PostReviewDetailResponse> response = PageResponse.of(
 			postReviewService.getPostReviews(postId, page, size)
