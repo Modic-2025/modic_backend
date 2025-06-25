@@ -1,7 +1,5 @@
 package hanium.modic.backend.common.redis.distributedLock;
 
-import java.util.function.Consumer;
-
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
