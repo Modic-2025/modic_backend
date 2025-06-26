@@ -70,7 +70,6 @@ public class UserService {
 	}
 
 	// 코인 양도
-	// Todo: 양도자, 수신자 모두 락거는 기능 필요
 	public void transferCoin(final long fromUserId, final long toUserId, long coin) throws AppException {
 		if (fromUserId == toUserId) {
 			throw new AppException(USER_COIN_TRANSFER_SAME_USER_EXCEPTION);
