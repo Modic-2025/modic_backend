@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService userService;
+	private final UserCoinService userCoinService;
 
 	@PostMapping
 	@Operation(
@@ -65,7 +67,7 @@ public class UserController {
 		@AuthenticationPrincipal UserEntity user,
 		@RequestBody @Valid TransferCoinsRequest request
 	) {
-		userService.transferCoin(user.getId(), request.toUserId(), request.coin());
+		userCoinService.transferCoin(user.getId(), request.toUserId(), request.coin());
 
 		return ResponseEntity.ok().build();
 	}

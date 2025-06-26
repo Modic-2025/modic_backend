@@ -16,13 +16,13 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 
-class UserServiceIntegrationTest extends BaseIntegrationTest {
+class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	UserEntityRepository userRepository;
 
 	@Autowired
-	UserService userService;
+	UserCoinService userCoinService;
 
 	private UserEntity userA;
 	private UserEntity userB;
@@ -44,7 +44,7 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executor.execute(() -> {
 				try {
-					userService.chargeCoin(userA.getId(), 100);
+					userCoinService.chargeCoin(userA.getId(), 100);
 				} finally {
 					latch.countDown();
 				}
@@ -65,7 +65,7 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				userService.chargeCoin(userA.getId(), 200);
+				userCoinService.chargeCoin(userA.getId(), 200);
 			} finally {
 				latch.countDown();
 			}
@@ -73,7 +73,7 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				userService.transferCoin(userA.getId(), userB.getId(), 100);
+				userCoinService.transferCoin(userA.getId(), userB.getId(), 100);
 			} finally {
 				latch.countDown();
 			}
@@ -91,7 +91,7 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("TEST3: 동시에 코인 소비가 되면 차례대로 처리된다")
 	void coinConsumeConcurrencyTest() throws InterruptedException {
 		// 사전 충전
-		userService.chargeCoin(userA.getId(), 500);
+		userCoinService.chargeCoin(userA.getId(), 500);
 
 		int threadCount = 5;
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -100,7 +100,7 @@ class UserServiceIntegrationTest extends BaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executor.execute(() -> {
 				try {
-					userService.consumeCoin(userA.getId(), 50);
+					userCoinService.consumeCoin(userA.getId(), 50);
 				} finally {
 					latch.countDown();
 				}
