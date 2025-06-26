@@ -64,7 +64,7 @@ public class PostReviewService {
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
 
 		// 권한 체크, 내가 생성한 게시물
-		validateMyPostReview(user.getId(), postReview.getPostId());
+		validateMyPostReview(user.getId(), postReview.getUserId());
 
 		List<PostReviewImageEntity> images = postReviewImageRepository.findAllByPostReviewId(reviewId);
 		postReviewImageService.deleteImages(images);
@@ -83,7 +83,7 @@ public class PostReviewService {
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
 
 		// 권한 체크, 내가 생성한 게시물
-		validateMyPostReview(user.getId(), postReview.getPostId());
+		validateMyPostReview(user.getId(), postReview.getUserId());
 
 		postReview.updateDescription(description);
 
@@ -124,12 +124,8 @@ public class PostReviewService {
 	}
 
 	// 자신이 작성한 리뷰인지 확인
-	private void validateMyPostReview(final Long newUserId, final Long postId) {
-		final Long postUserId = postReviewRepository.findById(postId)
-			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION))
-			.getUserId();
-
-		if (!Objects.equals(newUserId, postUserId)) {
+	private void validateMyPostReview(final Long newUserId, final Long postReviewUserId) {
+		if (!Objects.equals(newUserId, postReviewUserId)) {
 			throw new AppException(USER_ROLE_EXCEPTION);
 		}
 	}
