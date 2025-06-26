@@ -20,6 +20,7 @@ public class UserService {
 
 	private final BCryptPasswordEncoder passwordEncoder;
 
+	// 회원가입
 	@Transactional
 	public UserCreateResponse createUser(final String email, final String password, final String name) {
 		checkDuplicateEmail(email);
@@ -36,12 +37,14 @@ public class UserService {
 		return UserCreateResponse.from(user);
 	}
 
+	// 이메일 중복 검사
 	private void checkDuplicateEmail(final String email) {
 		if (userEntityRepository.existsByEmail(email)) {
 			throw new AppException(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
 		}
 	}
 
+	// 회원 정보 조회
 	public UserInfoResponse getUserInfo(UserEntity user) {
 		return UserInfoResponse.from(user);
 	}

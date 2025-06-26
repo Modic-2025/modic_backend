@@ -28,6 +28,7 @@ import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
+import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
@@ -38,6 +39,8 @@ class UserControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private UserService userService;
+	@MockitoBean
+	private UserCoinService userCoinService;
 
 	@Autowired
 	private MockMvc mockMvc;
