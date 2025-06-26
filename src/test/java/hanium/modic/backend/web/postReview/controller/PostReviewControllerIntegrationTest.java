@@ -41,6 +41,7 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private PostReviewRepository postReviewRepository;
+
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 
