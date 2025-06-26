@@ -51,7 +51,7 @@ public class UserController {
 		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
 	}
 
-	@PostMapping("/{userId}/coins/transfer")
+	@PostMapping("/coins/transfer")
 	@Operation(
 		summary = "코인 송금 API",
 		description = "유저가 다른 유저에게 코인을 송금합니다.",
