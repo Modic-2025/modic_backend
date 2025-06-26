@@ -65,7 +65,7 @@ public class UserService {
 			});
 		} catch (LockException e) {
 			// Todo: 추후 결제 포함될 시, 결제 취소 로직 필요
-			throw new AppException(UESR_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 	}
 
@@ -84,7 +84,7 @@ public class UserService {
 				addCoin(toUserId, coin);
 			});
 		} catch (LockException e) {
-			throw new AppException(UESR_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 
 	}
@@ -96,7 +96,7 @@ public class UserService {
 				addCoin(userId, -coin);
 			});
 		} catch (LockException e) {
-			throw new AppException(UESR_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 
 	}
