@@ -5,7 +5,6 @@ import org.hibernate.validator.constraints.Length;
 import hanium.modic.backend.common.validator.Password;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
 
 public record UserCreateRequest(
 	@Email(message = "이메일 형식으로 요청해주세요.")
