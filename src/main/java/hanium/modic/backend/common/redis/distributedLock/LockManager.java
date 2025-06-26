@@ -40,7 +40,7 @@ public class LockManager {
 		try {
 			boolean available = rLock.tryLock(waitTime, leaseTime, timeUnit);
 			if (!available) {
-				throw new LockException(new InterruptedException("멀티 락 획득 실패"));
+				throw new LockException(new InterruptedException("단일 락 획득 실패"));
 			}
 
 			aopForTransaction.proceed(block); // lock 범위 안에서 트랜잭션 적용 후 로직 처리
