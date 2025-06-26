@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
+import hanium.modic.backend.web.user.dto.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService userService;
+	private final UserCoinService userCoinService;
 
 	@PostMapping
 	@Operation(
@@ -48,5 +51,24 @@ public class UserController {
 	)
 	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@AuthenticationPrincipal UserEntity user) {
 		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
+	}
+
+	@PostMapping("/coins/transfer")
+	@Operation(
+		summary = "코인 송금 API",
+		description = "유저가 다른 유저에게 코인을 송금합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "코인이 부족합니다.[U-004]"),
+			@ApiResponse(responseCode = "400", description = "자신에게 코인을 송금할 수 없습니다.[U-005]"),
+			@ApiResponse(responseCode = "500", description = "코인 송금에 실패하였습니다.[U-006]")
+		}
+	)
+	public ResponseEntity<AppResponse<Void>> transferCoins(
+		@AuthenticationPrincipal UserEntity user,
+		@RequestBody @Valid TransferCoinsRequest request
+	) {
+		userCoinService.transferCoin(user.getId(), request.toUserId(), request.coin());
+
+		return ResponseEntity.ok().build();
 	}
 }

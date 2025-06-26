@@ -2,7 +2,6 @@ package hanium.modic.backend.domain.user.entity;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
-import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,13 +42,9 @@ public class UserEntity {
 	}
 
 	public void addCoin(Long coin) {
-		this.coin += coin;
-	}
-
-	public void subtractCoin(Long coin) {
-		if (this.coin < coin) {
+		if (this.coin + coin < 0) {
 			throw new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION);
 		}
-		this.coin -= coin;
+		this.coin += coin;
 	}
 }

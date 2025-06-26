@@ -57,6 +57,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     // Amqp
     implementation 'org.springframework.boot:spring-boot-starter-amqp:3.4.2'
+    // Redisson(Redis Client)
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
 }
 
 tasks.named('test') {
