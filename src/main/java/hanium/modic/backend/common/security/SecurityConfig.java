@@ -11,6 +11,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import hanium.modic.backend.common.jwt.JwtAuthenticationEntryPoint;
 import hanium.modic.backend.common.jwt.JwtAuthenticationFilter;
+import hanium.modic.backend.common.oauth.CustomOAuth2UserService;
+import hanium.modic.backend.common.oauth.OAuthSuccessHandler;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -23,6 +25,10 @@ public class SecurityConfig {
 
 	private final CorsConfigurationSource corsConfigurationSource;
 
+	private final CustomOAuth2UserService customOAuth2UserService;
+
+	private final OAuthSuccessHandler OAuthSuccessHandler;
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http.csrf(AbstractHttpConfigurer::disable)
@@ -34,6 +40,10 @@ public class SecurityConfig {
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+			.oauth2Login(oauth2 -> oauth2
+				.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+				.successHandler(OAuthSuccessHandler)
+			)
 			.build();
 	}
 }
