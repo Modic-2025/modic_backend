@@ -1,13 +1,25 @@
 package hanium.modic.backend.base.login;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import hanium.modic.backend.common.oauth.CustomOAuth2User;
+import hanium.modic.backend.common.security.principal.UserPrincipal;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 
 public class ContextHolderUtil {
 
-	// 현재 인증된 유저 정보를 SecurityContext에서 가져오기
 	public static UserEntity getCurrentUser() {
-		return (UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+		Object principal = authentication.getPrincipal();
+
+		if (principal instanceof UserPrincipal userPrincipal) {
+			return userPrincipal.getUser();
+		} else if (principal instanceof CustomOAuth2User customOAuth2User) {
+			return customOAuth2User.getUserEntity();
+		} else {
+			throw new IllegalStateException("Principal is not a supported type: " + principal.getClass());
+		}
 	}
 }
