@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import hanium.modic.backend.common.jwt.BlackListRepository;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
@@ -132,4 +133,96 @@ class JwtTokenProviderTest {
 		assertThat(user.getId()).isEqualTo(1L);
 		assertThat(user.getEmail()).isEqualTo("test1@example.com");
 	}
+
+	@Test
+	@DisplayName("토큰 타입이 ACCESS_TOKEN이 아닐 때 BadCredentialsException 발생")
+	void getAuthenticatedUser_invalidTokenType_throwsBadCredentialsException() {
+		// given
+		final Long userId = 1L;
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String invalidTypeToken = Jwts.builder()
+			.claim("id", String.valueOf(userId))
+			.claim("type", "REFRESH_TOKEN") // ACCESS_TOKEN이 아닌 타입
+			.claim("userType", "GENERAL")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(invalidTypeToken))
+			.isInstanceOf(BadCredentialsException.class)
+			.hasMessage("Type is not access token");
+	}
+
+	@Test
+	@DisplayName("GENERAL 사용자가 존재하지 않을 때 BadCredentialsException 발생")
+	void getAuthenticatedUser_generalUserNotFound_throwsBadCredentialsException() {
+		// given
+		final Long userId = 999L;
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", String.valueOf(userId))
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "GENERAL")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(userEntityRepository.findById(userId)).thenReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(BadCredentialsException.class)
+			.hasMessage("User not found for id: " + userId);
+
+		verify(userEntityRepository).findById(userId);
+	}
+
+	@Test
+	@DisplayName("OAUTH 사용자가 존재하지 않을 때 BadCredentialsException 발생")
+	void getAuthenticatedUser_oauthUserNotFound_throwsBadCredentialsException() {
+		// given
+		final String uniqueId = "oauth_user_123";
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", uniqueId)
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "OAUTH")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(userEntityRepository.findByUniqueId(uniqueId)).thenReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(BadCredentialsException.class)
+			.hasMessage("User not found for uniqueId: " + uniqueId);
+
+		verify(userEntityRepository).findByUniqueId(uniqueId);
+	}
+
+	@Test
+	@DisplayName("유효하지 않은 userType일 때 BadCredentialsException 발생")
+	void getAuthenticatedUser_invalidUserType_throwsBadCredentialsException() {
+		// given
+		final String userId = "123";
+		final String invalidUserType = "INVALID_TYPE";
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", userId)
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", invalidUserType)
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(BadCredentialsException.class)
+			.hasMessage("Invalid user type in token");
+
+		verifyNoInteractions(userEntityRepository);
+	}
+
 }
