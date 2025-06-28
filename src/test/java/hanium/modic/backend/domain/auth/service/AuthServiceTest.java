@@ -63,7 +63,7 @@ class AuthServiceTest {
 		UserEntity user = mock(UserEntity.class);
 
 		when(userEntityRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-		when(jwtTokenProvider.createToken(any())).thenReturn(new Token("accessToken", "refreshToken"));
+		when(jwtTokenProvider.createToken((UserEntity)any())).thenReturn(new Token("accessToken", "refreshToken"));
 		when(passwordEncoder.matches(any(), any())).thenReturn(true);
 
 		// when
@@ -121,7 +121,7 @@ class AuthServiceTest {
 		when(blackListRepository.existsById(any())).thenReturn(false);
 		when(jwtTokenProvider.getUser(oldRefreshToken)).thenReturn(Optional.of(user));
 		when(refreshTokenRepository.findById(any())).thenReturn(Optional.of(refreshToken));
-		when(jwtTokenProvider.createToken(any())).thenReturn(new Token(newAccessToken, newRefreshToken));
+		when(jwtTokenProvider.createToken((UserEntity)any())).thenReturn(new Token(newAccessToken, newRefreshToken));
 
 		// when
 		var reissueResponse = authService.reissue(oldRefreshToken);
