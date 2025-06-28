@@ -7,13 +7,14 @@ import java.util.Map;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @RequiredArgsConstructor
 @Slf4j
-public class CustomOAuth2User implements OAuth2User {
+public class CustomOAuth2User implements OAuth2User, AuthenticatedUser {
 
 	private final UserEntity userEntity;
 
@@ -35,12 +36,18 @@ public class CustomOAuth2User implements OAuth2User {
 		return null;
 	}
 
-	public String getUniqueId() {
+	@Override
+	public String getName() {
+		return userEntity.getName();
+	}
+
+	@Override
+	public String getId() {
 		return userEntity.getUniqueId();
 	}
 
 	@Override
-	public String getName() {
-		return userEntity.getName();
+	public String getUserType() {
+		return "OAUTH";
 	}
 }

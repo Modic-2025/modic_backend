@@ -10,7 +10,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import lombok.Data;
 
 @Data
-public class UserPrincipal implements UserDetails {
+public class UserPrincipal implements UserDetails, AuthenticatedUser {
 
 	private final UserEntity user;
 
@@ -30,7 +30,7 @@ public class UserPrincipal implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return user.getEmail();
+		return user.getName();
 	}
 
 	@Override
@@ -51,5 +51,15 @@ public class UserPrincipal implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return true;
+	}
+
+	@Override
+	public String getId() {
+		return String.valueOf(user.getId());
+	}
+
+	@Override
+	public String getUserType() {
+		return "GENERAL";
 	}
 }
