@@ -10,6 +10,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
 import hanium.modic.backend.common.property.property.TokenProperty;
+import hanium.modic.backend.common.security.principal.AuthenticatedUser;
+import hanium.modic.backend.common.security.principal.UserPrincipal;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -18,9 +20,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenProvider {
 
 	private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
@@ -33,16 +37,22 @@ public class JwtTokenProvider {
 
 	private final UserEntityRepository userEntityRepository;
 
-	public Token createToken(final UserEntity user) {
+	public Token createToken(final AuthenticatedUser user) {
 		return new Token(
 			generateAccessToken(user),
 			generateRefreshToken(user)
 		);
 	}
 
-	private String generateAccessToken(final UserEntity user) {
+	public Token createToken(final UserEntity user) {
+		AuthenticatedUser authenticatedUser = new UserPrincipal(user);
+		return createToken(authenticatedUser);
+	}
+
+	private String generateAccessToken(final AuthenticatedUser user) {
 		Claims claims = Jwts.claims();
 		claims.put("id", user.getId());
+		claims.put("userType", user.getUserType());
 		claims.put("type", ACCESS_TOKEN);
 
 		SecretKey key = Keys.hmacShaKeyFor(tokenProperty.getSecretKey().getBytes(StandardCharsets.UTF_8));
@@ -55,9 +65,10 @@ public class JwtTokenProvider {
 			.compact();
 	}
 
-	private String generateRefreshToken(final UserEntity user) {
+	private String generateRefreshToken(final AuthenticatedUser user) {
 		Claims claims = Jwts.claims();
 		claims.put("id", user.getId());
+		claims.put("userType", user.getUserType());
 		claims.put("type", REFRESH_TOKEN);
 
 		SecretKey key = Keys.hmacShaKeyFor(tokenProperty.getSecretKey().getBytes(StandardCharsets.UTF_8));
@@ -96,14 +107,49 @@ public class JwtTokenProvider {
 			.parseClaimsJws(token)
 			.getBody();
 
-		final Long userId = claims.get("id", Long.class);
+		final String id = claims.get("id", String.class);
+		final String userType = claims.get("userType", String.class);
 
-		return userEntityRepository.findById(userId);
+		if (userType.equals("GENERAL")) {
+			log.info("User type is GENERAL, id: {}", id);
+			return userEntityRepository.findById(Long.parseLong(id));
+		} else if (userType.equals("OAUTH")) {
+			return userEntityRepository.findByUniqueId(id);
+		}
+		throw new BadCredentialsException("Invalid user type in token");
 	}
 
 	public void setBlackList(final String refreshToken) {
 		BlackList blackList = BlackList.builder().id(refreshToken)
 			.build();
 		blackListRepository.save(blackList);
+	}
+
+	public AuthenticatedUser getAuthenticatedUser(final String accessToken) {
+		Claims claims = Jwts.parserBuilder()
+			.setSigningKey(Keys.hmacShaKeyFor(tokenProperty.getSecretKey().getBytes(StandardCharsets.UTF_8)))
+			.build()
+			.parseClaimsJws(accessToken)
+			.getBody();
+
+		String id = claims.get("id", String.class);
+		String userType = claims.get("userType", String.class);
+		String type = claims.get("type", String.class);
+		if (!type.equals(ACCESS_TOKEN)) {
+			throw new BadCredentialsException("Type is not access token");
+		}
+
+		if (userType.equals("GENERAL")) {
+			UserEntity userEntity = userEntityRepository.findById(Long.parseLong(id))
+				.orElseThrow(() -> new BadCredentialsException("User not found for id: " + id));
+			return new UserPrincipal(userEntity);
+		} else if (userType.equals("OAUTH")) {
+			UserEntity userEntity = userEntityRepository.findByUniqueId(id)
+				.orElseThrow(() -> new BadCredentialsException("User not found for uniqueId: " + id));
+			return new UserPrincipal(userEntity);
+		} else {
+			log.info("Invalid user type in token: {}", userType);
+			throw new BadCredentialsException("Invalid user type in token");
+		}
 	}
 }

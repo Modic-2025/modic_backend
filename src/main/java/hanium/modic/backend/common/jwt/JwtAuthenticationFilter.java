@@ -13,8 +13,8 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import hanium.modic.backend.common.property.property.SecurityProperties;
+import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
-import hanium.modic.backend.domain.user.entity.UserEntity;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
 
 	private final SecurityProperties securityProperties;
 	private final JwtTokenProvider jwtTokenProvider;
@@ -41,18 +40,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 			jwtTokenProvider.validateToken(bearerToken);
 			setAuthentication(bearerToken);
-
 			filterChain.doFilter(request, response);
 		} catch (BadCredentialsException | JwtException e) {
 			jwtAuthenticationEntryPoint.commence(request, response,
-				new BadCredentialsException("Invalid JWT token", e));
+				new BadCredentialsException(e.getMessage(), e));
 		}
 	}
 
 	private void setAuthentication(String accessToken) {
-		UserEntity user = jwtTokenProvider.getUser(accessToken)
-			.orElseThrow(() -> new BadCredentialsException("Invalid JWT token: User not found"));
-		Authentication authenticationToken = new UsernamePasswordAuthenticationToken(user, "", List.of());
+		AuthenticatedUser authenticatedUser = jwtTokenProvider.getAuthenticatedUser(accessToken);
+		// UserEntity user = jwtTokenProvider.getUser(accessToken)
+		// 	.orElseThrow(() -> new BadCredentialsException("Invalid JWT token: User not found"));
+		Authentication authenticationToken = new UsernamePasswordAuthenticationToken(authenticatedUser, "", List.of());
 		SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 	}
 
