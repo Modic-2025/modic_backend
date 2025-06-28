@@ -3,8 +3,6 @@ package hanium.modic.backend.common.jwt;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +17,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import hanium.modic.backend.common.security.principal.UserPrincipal;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -59,8 +58,10 @@ class JwtAuthenticationFilterTest {
 			.password("encrypted-password")
 			.build();
 
+		UserPrincipal userPrincipal = new UserPrincipal(user);
+		when(jwtTokenProvider.getAuthenticatedUser(token)).thenReturn(userPrincipal);
+
 		doNothing().when(jwtTokenProvider).validateToken(token);
-		when(jwtTokenProvider.getUser(token)).thenReturn(Optional.of(user));
 
 		// when
 		jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
@@ -68,7 +69,7 @@ class JwtAuthenticationFilterTest {
 		// then
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		assertThat(auth).isNotNull();
-		assertThat(auth.getPrincipal()).isEqualTo(user);
+		assertThat(auth.getPrincipal()).isEqualTo(userPrincipal);
 		assertThat(auth.isAuthenticated()).isTrue();
 	}
 

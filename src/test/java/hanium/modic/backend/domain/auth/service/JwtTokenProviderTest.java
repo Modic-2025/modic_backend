@@ -117,8 +117,9 @@ class JwtTokenProviderTest {
 		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
 		final String validAccessToken = Jwts.builder()
-			.claim("id", userId)
+			.claim("id", String.valueOf(userId))
 			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "GENERAL")
 			.signWith(key, SignatureAlgorithm.HS256)
 			.compact();
 
