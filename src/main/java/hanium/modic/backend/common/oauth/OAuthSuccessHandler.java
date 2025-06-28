@@ -1,11 +1,8 @@
 package hanium.modic.backend.common.oauth;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,8 +13,6 @@ import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
-import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,7 +26,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RefreshTokenRepository refreshTokenRepository;
-	private final UserEntityRepository userEntityRepository;
 
 	@Override
 	@Transactional
@@ -39,24 +33,11 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 		Authentication authentication) throws IOException {
 
 		final CustomOAuth2User customOAuth2User = (CustomOAuth2User)authentication.getPrincipal();
-		log.info("OAuth2 authentication successful for user: {}", customOAuth2User.getName());
-
-		final String uniqueId = customOAuth2User.getId();
-		final String username = customOAuth2User.getName();
-		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-		Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-		GrantedAuthority auth = iterator.next();
-		String role = auth.getAuthority();
-
 		final Token token = jwtTokenProvider.createToken(customOAuth2User);
 
 		// 리프레시 토큰 저장
-		// Todo: userRepository에서 조회하지 않는 로직으로 변경
-		UserEntity userEntity = userEntityRepository.findByUniqueId(uniqueId)
-			.orElseThrow(() -> new IllegalArgumentException("User not found with uniqueId: " + uniqueId));
-
 		RefreshToken refreshToken = RefreshToken.builder()
-			.userId(userEntity.getId())
+			.userId(customOAuth2User.getUserEntity().getId())
 			.refreshToken(token.refreshToken())
 			.build();
 		refreshTokenRepository.save(refreshToken);
@@ -65,6 +46,8 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + token.accessToken());
 		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(token.refreshToken());
 		response.addCookie(refreshTokenCookie);
+
+		// Todo: 리다이렉트 URL을 환경 변수로 관리
 		response.sendRedirect("http://localhost:3000");
 	}
 }
