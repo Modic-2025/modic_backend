@@ -1,7 +1,6 @@
 package hanium.modic.backend.web.postReview.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.postReview.service.PostReviewService;
@@ -49,7 +49,7 @@ public class PostReviewController {
 	public ResponseEntity<Void> createPostReview(
 		@RequestParam long postId,
 		@RequestBody @Valid CreatePostReviewRequest request,
-		@AuthenticationPrincipal UserEntity user
+		@CurrentUser UserEntity user
 	) {
 		postReviewService.createPostReview(postId, request.description(), request.postReviewImageIds(), user);
 
@@ -68,7 +68,7 @@ public class PostReviewController {
 	)
 	public ResponseEntity<Void> deletePostReview(
 		@PathVariable long reviewId,
-		@AuthenticationPrincipal UserEntity user
+		@CurrentUser UserEntity user
 	) {
 		postReviewService.deletePostReview(reviewId, user);
 
@@ -90,7 +90,7 @@ public class PostReviewController {
 	public ResponseEntity<Void> updatePostReview(
 		@PathVariable long reviewId,
 		@RequestBody @Valid UpdatePostReviewRequest request,
-		@AuthenticationPrincipal UserEntity user
+		@CurrentUser UserEntity user
 	) {
 		postReviewService.updatePostReview(reviewId, request.description(), request.postReviewImageIds(), user);
 

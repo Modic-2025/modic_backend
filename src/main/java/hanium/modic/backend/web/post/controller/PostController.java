@@ -3,7 +3,6 @@ package hanium.modic.backend.web.post.controller;
 import static org.springframework.http.HttpStatus.*;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
@@ -50,7 +50,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@RequestBody @Valid CreatePostRequest request
 	) {
 
@@ -111,7 +111,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> deletePost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@PathVariable Long id
 	) {
 		postService.deletePost(user.getId(), id);
@@ -129,7 +129,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> updatePost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@PathVariable long id,
 		@RequestBody @Valid UpdatePostRequest request
 	) {
