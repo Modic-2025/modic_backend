@@ -8,11 +8,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
+import hanium.modic.backend.common.jwt.RefreshToken;
+import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,8 +30,11 @@ import lombok.extern.slf4j.Slf4j;
 public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final JwtTokenProvider jwtTokenProvider;
+	private final RefreshTokenRepository refreshTokenRepository;
+	private final UserEntityRepository userEntityRepository;
 
 	@Override
+	@Transactional
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 		Authentication authentication) throws IOException {
 
@@ -41,6 +49,17 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 		String role = auth.getAuthority();
 
 		final Token token = jwtTokenProvider.createToken(customOAuth2User);
+
+		// 리프레시 토큰 저장
+		// Todo: userRepository에서 조회하지 않는 로직으로 변경
+		UserEntity userEntity = userEntityRepository.findByUniqueId(uniqueId)
+			.orElseThrow(() -> new IllegalArgumentException("User not found with uniqueId: " + uniqueId));
+
+		RefreshToken refreshToken = RefreshToken.builder()
+			.userId(userEntity.getId())
+			.refreshToken(token.refreshToken())
+			.build();
+		refreshTokenRepository.save(refreshToken);
 
 		// 엑세스 토큰과 리프레시 토큰을 응답 헤더와 쿠키에 설정
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + token.accessToken());
