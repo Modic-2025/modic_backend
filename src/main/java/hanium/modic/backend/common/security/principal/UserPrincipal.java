@@ -62,4 +62,9 @@ public class UserPrincipal implements UserDetails, AuthenticatedUser {
 	public String getUserType() {
 		return "GENERAL";
 	}
+
+	@Override
+	public UserEntity getUserEntity() {
+		return user;
+	}
 }

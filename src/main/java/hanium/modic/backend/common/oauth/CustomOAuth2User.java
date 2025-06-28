@@ -50,4 +50,9 @@ public class CustomOAuth2User implements OAuth2User, AuthenticatedUser {
 	public String getUserType() {
 		return "OAUTH";
 	}
+
+	@Override
+	public UserEntity getUserEntity() {
+		return userEntity;
+	}
 }
