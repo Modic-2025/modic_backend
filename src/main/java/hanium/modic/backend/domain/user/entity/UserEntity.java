@@ -31,7 +31,6 @@ public class UserEntity extends BaseEntity {
 	@Column(unique = true, nullable = false)
 	private String email;
 
-	@Column(nullable = false)
 	private String password;
 
 	private String name;
@@ -64,5 +63,6 @@ public class UserEntity extends BaseEntity {
 	public UserEntity update(String email, String name) {
 		this.email = email;
 		this.name = name;
+		return this;
 	}
 }
