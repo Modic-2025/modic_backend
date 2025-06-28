@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,6 +35,11 @@ class PostImageControllerTest extends BaseControllerTest {
 	private PostImageService postImageService;
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@BeforeEach
+	void setup() {
+		setupCurrentUserMocking();
+	}
 
 	@ParameterizedTest
 	@DisplayName("이미지 Url 생성 실패 - 필수값 누락 시 400 응답")

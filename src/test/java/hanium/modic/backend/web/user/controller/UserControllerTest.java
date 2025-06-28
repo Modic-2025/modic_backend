@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
+import hanium.modic.backend.common.security.principal.UserPrincipal;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
@@ -49,6 +51,11 @@ class UserControllerTest extends BaseControllerTest {
 	private JwtTokenProvider jwtTokenProvider;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	@BeforeEach
+	void setup() {
+		setupCurrentUserMocking();
+	}
 
 	@Test
 	@DisplayName("유저 회원가입 컨트롤러 테스트")
@@ -118,8 +125,9 @@ class UserControllerTest extends BaseControllerTest {
 		// given
 		final Long userId = 1L;
 		UserEntity mockUser = UserFactory.createMockUser(userId);
+		UserPrincipal userPrincipal = new UserPrincipal(mockUser);
 
-		Authentication authentication = new UsernamePasswordAuthenticationToken(mockUser, null, List.of());
+		Authentication authentication = new UsernamePasswordAuthenticationToken(userPrincipal, null, List.of());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		UserInfoResponse mockResponse = UserInfoResponse.from(mockUser);

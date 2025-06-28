@@ -15,6 +15,8 @@ import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlReq
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 import hanium.modic.backend.web.postReview.controller.PostReviewController;
 import hanium.modic.backend.web.postReview.controller.PostReviewImageController;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -42,6 +44,11 @@ class PostReviewImageControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	@BeforeEach
+	void setup() {
+		setupCurrentUserMocking();
+	}
 
 	@ParameterizedTest(name = "[{index}] {2}")
 	@MethodSource("invalidCreateImageSaveUrlRequests")
