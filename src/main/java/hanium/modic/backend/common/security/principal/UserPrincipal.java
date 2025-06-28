@@ -1,7 +1,7 @@
 package hanium.modic.backend.common.security.principal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +20,15 @@ public class UserPrincipal implements UserDetails, AuthenticatedUser {
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return Collections.emptyList();
+		Collection<GrantedAuthority> collection = new ArrayList<>();
+
+		collection.add(new GrantedAuthority() {
+			@Override
+			public String getAuthority() {
+				return user.getUserRole().name();
+			}
+		});
+		return collection;
 	}
 
 	@Override

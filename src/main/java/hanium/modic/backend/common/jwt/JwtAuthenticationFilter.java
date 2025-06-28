@@ -49,8 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private void setAuthentication(String accessToken) {
 		AuthenticatedUser authenticatedUser = jwtTokenProvider.getAuthenticatedUser(accessToken);
-		// UserEntity user = jwtTokenProvider.getUser(accessToken)
-		// 	.orElseThrow(() -> new BadCredentialsException("Invalid JWT token: User not found"));
 		Authentication authenticationToken = new UsernamePasswordAuthenticationToken(authenticatedUser, "", List.of());
 		SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 	}

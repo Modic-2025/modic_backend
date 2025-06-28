@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
+import hanium.modic.backend.common.oauth.CustomOAuth2User;
 import hanium.modic.backend.common.property.property.TokenProperty;
 import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.common.security.principal.UserPrincipal;
@@ -139,6 +140,12 @@ public class JwtTokenProvider {
 			throw new BadCredentialsException("Type is not access token");
 		}
 
+		// 타입 별로 사용자 조회하여 리턴
+		return getAuthenticatedUser(userType, id);
+	}
+
+	private AuthenticatedUser getAuthenticatedUser(String userType, String id) {
+		// 일반 로그인 사용자, OAuth 사용자 분류
 		if (userType.equals("GENERAL")) {
 			UserEntity userEntity = userEntityRepository.findById(Long.parseLong(id))
 				.orElseThrow(() -> new BadCredentialsException("User not found for id: " + id));
@@ -146,7 +153,7 @@ public class JwtTokenProvider {
 		} else if (userType.equals("OAUTH")) {
 			UserEntity userEntity = userEntityRepository.findByUniqueId(id)
 				.orElseThrow(() -> new BadCredentialsException("User not found for uniqueId: " + id));
-			return new UserPrincipal(userEntity);
+			return new CustomOAuth2User(userEntity);
 		} else {
 			log.info("Invalid user type in token: {}", userType);
 			throw new BadCredentialsException("Invalid user type in token");
