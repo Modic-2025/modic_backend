@@ -43,7 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 		} catch (BadCredentialsException | JwtException e) {
 			jwtAuthenticationEntryPoint.commence(request, response,
-				new BadCredentialsException(e.getMessage(), e));
+				new BadCredentialsException("Invalid JWT token", e));
 		}
 	}
 
