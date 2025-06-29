@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.postReview.entity;
 
-import hanium.modic.backend.common.baseEntity.BaseEntity;
+import hanium.modic.backend.common.entity.BaseEntity;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import jakarta.persistence.Column;
