@@ -13,6 +13,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import hanium.modic.backend.common.property.property.SecurityProperties;
+import hanium.modic.backend.common.security.noLoginUrl.PermitUrlMatcher;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import io.jsonwebtoken.JwtException;
@@ -27,9 +28,9 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
-	private final SecurityProperties securityProperties;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+	private final PermitUrlMatcher permitUrlMatcher;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -65,10 +66,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		final AntPathMatcher matcher = new AntPathMatcher();
-		final String uri = request.getRequestURI();
-
-		return Arrays.stream(securityProperties.getPermitUrls())
-			.anyMatch(permitUrl -> matcher.match(permitUrl, uri));
+		return permitUrlMatcher.matches(request);
 	}
 }
