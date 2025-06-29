@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.post.entity;
 
-import hanium.modic.backend.common.baseEntity.BaseEntity;
+import hanium.modic.backend.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

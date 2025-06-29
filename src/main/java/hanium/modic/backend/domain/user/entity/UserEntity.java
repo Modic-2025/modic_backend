@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.user.entity;
 
-import hanium.modic.backend.common.baseEntity.BaseEntity;
+import hanium.modic.backend.common.entity.BaseEntity;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import hanium.modic.backend.common.error.exception.AppException;
