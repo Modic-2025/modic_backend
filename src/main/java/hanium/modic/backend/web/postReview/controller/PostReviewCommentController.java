@@ -62,7 +62,7 @@ public class PostReviewCommentController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PutMapping("/{commentId}")
+	@PatchMapping("/{commentId}")
 	@Operation(
 		summary = "포스트 리뷰 댓글 수정",
 		description = "댓글 작성자가 본인의 댓글을 수정합니다.",
