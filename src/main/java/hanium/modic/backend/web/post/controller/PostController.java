@@ -82,7 +82,7 @@ public class PostController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
-	@GetMapping("/list")
+	@GetMapping
 	@Operation(
 		summary = "게시글 목록 조회 API",
 		description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.",
@@ -120,8 +120,8 @@ public class PostController {
 
 	@PutMapping("/{id}")
 	@Operation(
-		summary = "게시글 삭제 API",
-		description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.",
+		summary = "게시글 수정 API",
+		description = "게시글을 수정합니다. 작성자만 수정할 수 있습니다.",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
