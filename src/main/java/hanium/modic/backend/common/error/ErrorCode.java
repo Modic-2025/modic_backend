@@ -37,6 +37,9 @@ public enum ErrorCode {
 	// Post Review
 	POST_REVIEW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PR-001", "해당 포스트 리뷰를 찾을 수 없습니다."),
 
+	// Post Review Comment
+	POST_REVIEW_COMMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PRC-001", "해당 포스트 리뷰 댓글을 찾을 수 없습니다."),
+
 	// Image
 	IMAGE_NOT_STORE_EXCEPTION(HttpStatus.BAD_REQUEST, "I-001", "이미지가 저장되지 않았습니다."),
 	IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "I-002", "해당 이미지를 찾을 수 없습니다."),
