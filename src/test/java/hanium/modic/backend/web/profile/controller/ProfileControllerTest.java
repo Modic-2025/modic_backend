@@ -3,7 +3,6 @@ package hanium.modic.backend.web.profile.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +28,6 @@ class ProfileControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private PostService postService;
-
-	@BeforeEach
-	void setup() {
-		setupCurrentUserMocking();
-	}
 
 	@Test
 	@DisplayName("내 게시글 목록 조회 실패 - 유효하지 않은 페이지 사이즈")

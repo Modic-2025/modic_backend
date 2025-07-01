@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,11 +30,6 @@ class FollowControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private FollowService followService;
-
-	@BeforeEach
-	void setup() {
-		setupCurrentUserMocking();
-	}
 
 	@ParameterizedTest
 	@DisplayName("팔로우 요청 실패 - 필수 파라미터 누락 시 400 반환")

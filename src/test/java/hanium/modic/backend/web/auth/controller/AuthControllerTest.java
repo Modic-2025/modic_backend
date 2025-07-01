@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,11 +47,6 @@ class AuthControllerTest extends BaseControllerTest {
 	private AuthService authService;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
-
-	@BeforeEach
-	void setup() {
-		setupCurrentUserMocking();
-	}
 
 	@Test
 	@DisplayName("로그인 컨트롤러 테스트")

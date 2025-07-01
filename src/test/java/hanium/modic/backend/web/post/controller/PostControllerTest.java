@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,11 +47,6 @@ class PostControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
-
-	@BeforeEach
-	void setup() {
-		setupCurrentUserMocking();
-	}
 
 	@ParameterizedTest(name = "[{index}] {2}")
 	@MethodSource("invalidCreatePostRequests")

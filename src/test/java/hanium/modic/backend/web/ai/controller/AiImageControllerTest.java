@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,11 +41,6 @@ class AiImageControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 	@Autowired
 	private ObjectMapper objectMapper;
-
-	@BeforeEach
-	void setup() {
-		setupCurrentUserMocking();
-	}
 
 	@ParameterizedTest
 	@DisplayName("AI 요청 이미지 Url 생성 실패 - 필수값 누락 시 400 응답")
