@@ -4,7 +4,7 @@ import static jakarta.persistence.EnumType.*;
 
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import hanium.modic.backend.common.baseEntity.BaseEntity;
+import hanium.modic.backend.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Enumerated;

@@ -2,7 +2,7 @@ package hanium.modic.backend.domain.user.entity;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
-import hanium.modic.backend.common.baseEntity.BaseEntity;
+import hanium.modic.backend.common.entity.BaseEntity;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.enums.UserRole;
 import jakarta.persistence.Column;
