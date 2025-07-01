@@ -84,7 +84,10 @@ public class JwtTokenProvider {
 	}
 
 	public void validateToken(final String accessToken) {
-		if (accessToken == null || !getType(accessToken).equals(ACCESS_TOKEN)) {
+		if (accessToken == null || accessToken.isEmpty()) {
+			throw new AppException(ErrorCode.MALFORMED_TOKEN_EXCEPTION);
+		}
+		if (!getType(accessToken).equals(ACCESS_TOKEN)) {
 			throw new AppException(ErrorCode.INVALID_TOKEN_TYPE);
 		}
 		if (blackListRepository.existsById(accessToken)) {
