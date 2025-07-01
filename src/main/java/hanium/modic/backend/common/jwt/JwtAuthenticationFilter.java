@@ -1,19 +1,16 @@
 package hanium.modic.backend.common.jwt;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.property.property.SecurityProperties;
 import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import jakarta.servlet.FilterChain;
@@ -26,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-	private final SecurityProperties securityProperties;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final PermitUrlMatcher permitUrlMatcher;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -57,10 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
-		final AntPathMatcher matcher = new AntPathMatcher();
-		final String uri = request.getRequestURI();
-
-		return Arrays.stream(securityProperties.getPermitUrls())
-			.anyMatch(permitUrl -> matcher.match(permitUrl, uri));
+		return permitUrlMatcher.matches(request);
 	}
 }

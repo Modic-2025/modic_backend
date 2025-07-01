@@ -184,7 +184,7 @@ class PostControllerTest extends BaseControllerTest {
 		when(postService.getPosts(any(String.class), anyInt(), anyInt())).thenReturn(pageResponse);
 
 		// when & then
-		mockMvc.perform(get("/api/posts/list")
+		mockMvc.perform(get("/api/posts")
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.content").isArray())
@@ -211,7 +211,7 @@ class PostControllerTest extends BaseControllerTest {
 		when(postService.getPosts(sort, pageNumber, size)).thenReturn(pageResponse);
 
 		// when & then
-		mockMvc.perform(get("/api/posts/list")
+		mockMvc.perform(get("/api/posts")
 				.param("sort", sort)
 				.param("page", String.valueOf(pageNumber))
 				.param("size", String.valueOf(size))
@@ -238,7 +238,7 @@ class PostControllerTest extends BaseControllerTest {
 	@MethodSource("provideInvalidPagingParameters")
 	void getPosts_InvalidPagingParam(String paramName, String paramValue) throws Exception {
 		// when & then
-		mockMvc.perform(get("/api/posts/list")
+		mockMvc.perform(get("/api/posts")
 				.param(paramName, paramValue)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isBadRequest())
