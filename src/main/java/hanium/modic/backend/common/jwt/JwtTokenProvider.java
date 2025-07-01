@@ -6,9 +6,10 @@ import java.util.Optional;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.oauth.CustomOAuth2User;
 import hanium.modic.backend.common.property.property.TokenProperty;
 import hanium.modic.backend.common.security.principal.AuthenticatedUser;
@@ -84,10 +85,10 @@ public class JwtTokenProvider {
 
 	public void validateToken(final String accessToken) {
 		if (accessToken == null || !getType(accessToken).equals(ACCESS_TOKEN)) {
-			throw new BadCredentialsException("Type is not access token");
+			throw new AppException(ErrorCode.INVALID_TOKEN_TYPE);
 		}
 		if (blackListRepository.existsById(accessToken)) {
-			throw new BadCredentialsException("Token is blacklisted");
+			throw new AppException(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);
 		}
 	}
 
@@ -117,7 +118,7 @@ public class JwtTokenProvider {
 		} else if (userType.equals("OAUTH")) {
 			return userEntityRepository.findByUniqueId(id);
 		}
-		throw new BadCredentialsException("Invalid user type in token");
+		throw new AppException(ErrorCode.INVALID_USER_TYPE_EXCEPTION);
 	}
 
 	public void setBlackList(final String refreshToken) {
@@ -137,7 +138,7 @@ public class JwtTokenProvider {
 		String userType = claims.get("userType", String.class);
 		String type = claims.get("type", String.class);
 		if (!type.equals(ACCESS_TOKEN)) {
-			throw new BadCredentialsException("Type is not access token");
+			throw new AppException(ErrorCode.INVALID_TOKEN_TYPE);
 		}
 
 		// 타입 별로 사용자 조회하여 리턴
@@ -148,15 +149,15 @@ public class JwtTokenProvider {
 		// 일반 로그인 사용자, OAuth 사용자 분류
 		if (userType.equals("GENERAL")) {
 			UserEntity userEntity = userEntityRepository.findById(Long.parseLong(id))
-				.orElseThrow(() -> new BadCredentialsException("User not found for id: " + id));
+				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 			return new UserPrincipal(userEntity);
 		} else if (userType.equals("OAUTH")) {
 			UserEntity userEntity = userEntityRepository.findByUniqueId(id)
-				.orElseThrow(() -> new BadCredentialsException("User not found for uniqueId: " + id));
+				.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 			return new CustomOAuth2User(userEntity);
 		} else {
 			log.info("Invalid user type in token: {}", userType);
-			throw new BadCredentialsException("Invalid user type in token");
+			throw new AppException(ErrorCode.INVALID_USER_TYPE_EXCEPTION);
 		}
 	}
 }
