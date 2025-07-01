@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.crypto.SecretKey;
 
@@ -12,8 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.ErrorCode;
@@ -51,7 +54,8 @@ class JwtTokenProviderTest {
 
 	@BeforeEach
 	void setUp() {
-		when(tokenProperty.getSecretKey()).thenReturn(SECRET_KEY);
+		// 불필요한 stub 경고 때문에 lenient 설정을 사용
+		lenient().when(tokenProperty.getSecretKey()).thenReturn(SECRET_KEY);
 	}
 
 	@Test
@@ -87,6 +91,67 @@ class JwtTokenProviderTest {
 		// when & then
 		assertThatCode(() -> jwtTokenProvider.validateToken(validAccessToken))
 			.doesNotThrowAnyException();
+	}
+
+	@Test
+	@DisplayName("null 토큰일 때 AppException 발생")
+	void validateToken_nullToken_throwsAppException() {
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(null))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.MALFORMED_TOKEN_EXCEPTION.getMessage());
+	}
+
+	@Test
+	@DisplayName("빈 문자열 토큰일 때 AppException 발생")
+	void validateToken_emptyToken_throwsAppException() {
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(""))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.MALFORMED_TOKEN_EXCEPTION.getMessage());
+	}
+
+	@Test
+	@DisplayName("REFRESH_TOKEN 타입일 때 AppException 발생")
+	void validateToken_refreshTokenType_throwsAppException() {
+		// given
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+		final String refreshToken = Jwts.builder()
+			.claim("type", "REFRESH_TOKEN")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(refreshToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_TOKEN_TYPE.getMessage());
+	}
+
+	@Test
+	@DisplayName("블랙리스트된 토큰일 때 AppException 발생")
+	void validateToken_blacklistedToken_throwsAppException() {
+		// given
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+		final String blacklistedToken = Jwts.builder()
+			.claim("type", "ACCESS_TOKEN")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(blackListRepository.existsById(blacklistedToken)).thenReturn(true);
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(blacklistedToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION.getMessage());
+	}
+
+	private static Stream<Arguments> provideInvalidTokensForValidation() {
+		return Stream.of(
+			Arguments.of(null, ErrorCode.MALFORMED_TOKEN_EXCEPTION, "null 토큰"),
+			Arguments.of("", ErrorCode.MALFORMED_TOKEN_EXCEPTION, "빈 문자열 토큰"),
+			Arguments.of("REFRESH_TOKEN_PLACEHOLDER", ErrorCode.INVALID_TOKEN_TYPE, "REFRESH_TOKEN 타입"),
+			Arguments.of("BLACKLISTED_TOKEN_PLACEHOLDER", ErrorCode.TOKEN_BLACKLISTED_EXCEPTION, "블랙리스트된 토큰")
+		);
 	}
 
 	@Test
