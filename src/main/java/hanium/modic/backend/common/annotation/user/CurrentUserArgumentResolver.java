@@ -39,7 +39,9 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 	) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-		if (authentication == null || !authentication.isAuthenticated()) {
+		// 인증 정보가 없거나 익명 사용자인 경우(사용자 정보가 없는 경우 anonymousUser로 처리됨)
+		if (authentication == null || !authentication.isAuthenticated() ||
+			"anonymousUser".equals(authentication.getPrincipal())) { //
 			throw new AppException(ErrorCode.USER_NOT_AUTHENTICATED_EXCEPTION);
 		}
 

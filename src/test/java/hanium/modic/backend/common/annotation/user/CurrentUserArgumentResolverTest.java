@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -138,6 +141,24 @@ class CurrentUserArgumentResolverTest {
 				// when & then
 				assertThatThrownBy(() -> currentUserArgumentResolver.resolveArgument(
 					methodParameter, mavContainer, webRequest, binderFactory))
+					.isInstanceOf(AppException.class)
+					.hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_AUTHENTICATED_EXCEPTION);
+			}
+
+			@Test
+			@DisplayName("익명 사용자인 경우 USER_NOT_AUTHENTICATED_EXCEPTION 예외가 발생한다")
+			void resolveArgument_WithAnonymousUser_ThrowsUserNotAuthenticatedException() {
+				// given
+				AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
+					"anonymousUser",
+					"anonymousUser",
+					List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+				);
+				when(securityContext.getAuthentication()).thenReturn(anonymousToken);
+
+				// when & then
+				assertThatThrownBy(() -> currentUserArgumentResolver.resolveArgument(
+					methodParameter, mavContainer, webRequest, null))
 					.isInstanceOf(AppException.class)
 					.hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_AUTHENTICATED_EXCEPTION);
 			}
