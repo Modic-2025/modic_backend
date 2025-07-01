@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.jwt.BlackListRepository;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.property.property.TokenProperty;
@@ -150,8 +152,8 @@ class JwtTokenProviderTest {
 
 		// when & then
 		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(invalidTypeToken))
-			.isInstanceOf(BadCredentialsException.class)
-			.hasMessage("Type is not access token");
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_TOKEN_TYPE.getMessage());
 	}
 
 	@Test
@@ -172,8 +174,8 @@ class JwtTokenProviderTest {
 
 		// when & then
 		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
-			.isInstanceOf(BadCredentialsException.class)
-			.hasMessage("User not found for id: " + userId);
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.USER_NOT_FOUND_EXCEPTION.getMessage());
 
 		verify(userEntityRepository).findById(userId);
 	}
@@ -196,8 +198,8 @@ class JwtTokenProviderTest {
 
 		// when & then
 		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
-			.isInstanceOf(BadCredentialsException.class)
-			.hasMessage("User not found for uniqueId: " + uniqueId);
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.USER_NOT_FOUND_EXCEPTION.getMessage());
 
 		verify(userEntityRepository).findByUniqueId(uniqueId);
 	}
@@ -219,8 +221,8 @@ class JwtTokenProviderTest {
 
 		// when & then
 		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
-			.isInstanceOf(BadCredentialsException.class)
-			.hasMessage("Invalid user type in token");
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_USER_TYPE_EXCEPTION.getMessage());
 
 		verifyNoInteractions(userEntityRepository);
 	}
