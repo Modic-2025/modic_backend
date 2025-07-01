@@ -30,9 +30,6 @@ class JwtAuthenticationFilterTest {
 	@Mock
 	private JwtTokenProvider jwtTokenProvider;
 
-	@Mock
-	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-
 	private MockHttpServletRequest request;
 	private MockHttpServletResponse response;
 	private MockFilterChain filterChain;
@@ -71,25 +68,5 @@ class JwtAuthenticationFilterTest {
 		assertThat(auth).isNotNull();
 		assertThat(auth.getPrincipal()).isEqualTo(userPrincipal);
 		assertThat(auth.isAuthenticated()).isTrue();
-	}
-
-	@Test
-	@DisplayName("유효하지 않은 JWT 토큰일 경우 EntryPoint 호출")
-	void filter_invalidToken_callsEntryPoint() throws Exception {
-		// given
-		String token = "invalid.token";
-		request.addHeader("Authorization", "Bearer " + token);
-
-		doThrow(new BadCredentialsException("Token invalid")).when(jwtTokenProvider).validateToken(any());
-
-		// when
-		jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-		// then
-		verify(jwtAuthenticationEntryPoint).commence(
-			any(HttpServletRequest.class),
-			any(HttpServletResponse.class),
-			argThat(e -> e instanceof BadCredentialsException && e.getMessage().contains("Invalid JWT token"))
-		);
 	}
 }

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import hanium.modic.backend.common.annotation.user.CurrentUserArgumentResolver;
-import hanium.modic.backend.common.jwt.JwtAuthenticationEntryPoint;
 import hanium.modic.backend.common.jwt.JwtAuthenticationFilter;
 import hanium.modic.backend.common.property.property.SecurityProperties;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -18,9 +17,6 @@ public class BaseControllerTest {
 
 	@MockitoBean
 	private SecurityProperties securityProperties;
-
-	@MockitoBean
-	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
 	@MockitoBean
 	private CurrentUserArgumentResolver currentUserArgumentResolver;
