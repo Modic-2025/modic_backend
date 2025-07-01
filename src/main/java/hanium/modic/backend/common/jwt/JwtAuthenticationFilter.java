@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.security.noLoginUrl.PermitUrlMatcher;
 import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import jakarta.servlet.FilterChain;
