@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.BadCredentialsException;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
@@ -137,8 +136,8 @@ class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("토큰 타입이 ACCESS_TOKEN이 아닐 때 BadCredentialsException 발생")
-	void getAuthenticatedUser_invalidTokenType_throwsBadCredentialsException() {
+	@DisplayName("토큰 타입이 ACCESS_TOKEN이 아닐 때 AppException 발생")
+	void getAuthenticatedUser_invalidTokenType_throwsAppException() {
 		// given
 		final Long userId = 1L;
 		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -157,8 +156,8 @@ class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("GENERAL 사용자가 존재하지 않을 때 BadCredentialsException 발생")
-	void getAuthenticatedUser_generalUserNotFound_throwsBadCredentialsException() {
+	@DisplayName("GENERAL 사용자가 존재하지 않을 때 AppException 발생")
+	void getAuthenticatedUser_generalUserNotFound_throwsAppException() {
 		// given
 		final Long userId = 999L;
 		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -181,8 +180,8 @@ class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("OAUTH 사용자가 존재하지 않을 때 BadCredentialsException 발생")
-	void getAuthenticatedUser_oauthUserNotFound_throwsBadCredentialsException() {
+	@DisplayName("OAUTH 사용자가 존재하지 않을 때 AppException 발생")
+	void getAuthenticatedUser_oauthUserNotFound_throwsAppException() {
 		// given
 		final String uniqueId = "oauth_user_123";
 		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -205,8 +204,8 @@ class JwtTokenProviderTest {
 	}
 
 	@Test
-	@DisplayName("유효하지 않은 userType일 때 BadCredentialsException 발생")
-	void getAuthenticatedUser_invalidUserType_throwsBadCredentialsException() {
+	@DisplayName("유효하지 않은 userType일 때 AppException 발생")
+	void getAuthenticatedUser_invalidUserType_throwsAppException() {
 		// given
 		final String userId = "123";
 		final String invalidUserType = "INVALID_TYPE";
