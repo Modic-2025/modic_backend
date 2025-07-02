@@ -58,6 +58,4 @@ public interface AiImagePermissionRepository extends JpaRepository<AiImagePermis
 	 */
 	@Query("SELECT COUNT(p) > 0 FROM AiImagePermissionEntity p WHERE p.userId = :userId AND p.postId = :postId AND p.isActive = true AND p.remainingGenerations > 0")
 	boolean existsValidPermissionByUserIdAndPostId(@Param("userId") Long userId, @Param("postId") Long postId);
-
-	boolean existsByUserIdAndImageId(Long userId, Long imageId);
 }
