@@ -21,17 +21,21 @@ public class BaseControllerTest {
 	@MockitoBean
 	private CurrentUserArgumentResolver currentUserArgumentResolver;
 
-	// 테스트용 사용자 생성 메서드
-	protected static UserEntity createTestUser() {
-		return UserEntity.builder()
-			.email("test@test.com")
-			.name("Test User")
-			.password("password")
-			.build();
-	}
+	@MockitoBean
+	protected UserEntity testUser;
 
 	protected void setupCurrentUserMocking() {
-		UserEntity testUser = createTestUser();
+		setupCurrentUserMocking(1L); // 기본값으로 1L 사용
+	}
+
+	protected void setupCurrentUserMocking(Long userId) {
+		// UserEntity를 mock으로 생성
+		testUser = mock(UserEntity.class);
+
+		// mock 객체의 메서드들을 모킹
+		when(testUser.getId()).thenReturn(userId);
+		when(testUser.getEmail()).thenReturn("test@test.com");
+		when(testUser.getName()).thenReturn("Test User");
 
 		when(currentUserArgumentResolver.supportsParameter(any())).thenReturn(true);
 		when(currentUserArgumentResolver.resolveArgument(any(), any(), any(), any()))
