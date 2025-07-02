@@ -128,7 +128,7 @@ class AiImageControllerTest extends BaseControllerTest {
 		// given
 		String requestId = "valid-request-id";
 		AiImageStatus expectedStatus = AiImageStatus.DONE;
-		given(aiImageGenerationService.getAiImageStatus(requestId)).willReturn(expectedStatus);
+		given(aiImageGenerationService.getAiImageStatus(testUser.getId(), requestId)).willReturn(expectedStatus);
 
 		// when + then
 		mockMvc.perform(get("/api/ai/images/requests/" + requestId + "/status")
