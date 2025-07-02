@@ -10,4 +10,8 @@ public interface AiRequestRepository extends JpaRepository<AiRequestEntity, Long
 	Optional<AiRequestEntity> findByRequestId(String requestId);
 
 	boolean existsByImagePath(String imagePath);
+
+	boolean existsByIdAndUserId(Long imageId, Long userId);
+
+	boolean existsByRequestIdAndUserId(String requestId, Long userId);
 }
