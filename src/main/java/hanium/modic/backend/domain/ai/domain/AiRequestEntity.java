@@ -38,6 +38,12 @@ public class AiRequestEntity extends Image {
 	@Column(nullable = false)
 	private AiImageStatus status = AiImageStatus.PENDING;
 
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
+
+	@Column(name = "post_id", nullable = false)
+	private Long postId;
+
 	@Builder
 	public AiRequestEntity(
 		String imagePath,
@@ -47,10 +53,14 @@ public class AiRequestEntity extends Image {
 		ImageExtension extension,
 		ImagePrefix imagePurpose,
 		String requestId,
-		AiImageStatus status) {
+		AiImageStatus status,
+		Long userId,
+		Long postId) {
 		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
 		this.requestId = requestId;
 		this.status = status != null ? status : AiImageStatus.PENDING;
+		this.userId = userId;
+		this.postId = postId;
 	}
 
 	public void updateStatus(AiImageStatus status) {

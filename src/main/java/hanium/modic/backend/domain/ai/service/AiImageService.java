@@ -11,6 +11,7 @@ import hanium.modic.backend.common.util.KeyGenerator;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
+import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.service.ImageService;
@@ -56,10 +57,19 @@ public class AiImageService extends ImageService {
 		imageUtil.deleteImage(image.getImagePath());
 	}
 
+	@Override
+	@Deprecated
+	// userId, postId를 포함하지 않는 이미지 저장 메서드(Deprecated)
+	public Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
+		throw new UnsupportedOperationException(
+			"Use saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath, Long userId, Long postId) instead.");
+	}
+
 	// AI 요청 이미지 저장
 	@Override
 	@Transactional
-	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
+	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath,
+		Long userId, Long postId) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
@@ -79,6 +89,8 @@ public class AiImageService extends ImageService {
 				.imagePath(imagePath)
 				.requestId(requestId)
 				.status(AiImageStatus.PENDING)
+				.userId(userId)
+				.postId(postId)
 				.build());
 	}
 

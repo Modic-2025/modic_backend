@@ -27,4 +27,11 @@ public abstract class ImageService {
 
 	// 이미지 저장
 	public abstract Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath);
+
+	// userId, postId를 포함한 이미지 저장 메서드
+	public Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath,
+		Long userId, Long postId) {
+		// 기본 구현: 기존 메서드 위임
+		return saveImage(imagePrefix, fullFileName, imagePath);
+	}
 }
