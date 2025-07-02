@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.validator;
+package hanium.modic.backend.common.annotation.validator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

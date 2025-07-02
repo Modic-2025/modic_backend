@@ -2,7 +2,6 @@ package hanium.modic.backend.web.follow.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.service.FollowService;
@@ -41,7 +41,7 @@ public class FollowController {
 			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
 		})
 	public ResponseEntity<AppResponse<Void>> followOrUnfollow(
-		@AuthenticationPrincipal UserEntity me,
+		@CurrentUser UserEntity me,
 		@RequestParam long userId,
 		@RequestParam FollowType type
 	) {
@@ -59,7 +59,7 @@ public class FollowController {
 		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowersResponse>>> getMyFollowers(
-		@AuthenticationPrincipal UserEntity me,
+		@CurrentUser UserEntity me,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
 		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
@@ -92,7 +92,7 @@ public class FollowController {
 		}
 	)
 	public ResponseEntity<AppResponse<Page<GetFollowingsResponse>>> getMyFollowing(
-		@AuthenticationPrincipal UserEntity me,
+		@CurrentUser UserEntity me,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
 		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {

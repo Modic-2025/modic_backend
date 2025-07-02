@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.crypto.SecretKey;
 
@@ -12,10 +13,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.jwt.BlackListRepository;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.property.property.TokenProperty;
@@ -49,7 +54,8 @@ class JwtTokenProviderTest {
 
 	@BeforeEach
 	void setUp() {
-		when(tokenProperty.getSecretKey()).thenReturn(SECRET_KEY);
+		// 불필요한 stub 경고 때문에 lenient 설정을 사용
+		lenient().when(tokenProperty.getSecretKey()).thenReturn(SECRET_KEY);
 	}
 
 	@Test
@@ -88,6 +94,67 @@ class JwtTokenProviderTest {
 	}
 
 	@Test
+	@DisplayName("null 토큰일 때 AppException 발생")
+	void validateToken_nullToken_throwsAppException() {
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(null))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.MALFORMED_TOKEN_EXCEPTION.getMessage());
+	}
+
+	@Test
+	@DisplayName("빈 문자열 토큰일 때 AppException 발생")
+	void validateToken_emptyToken_throwsAppException() {
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(""))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.MALFORMED_TOKEN_EXCEPTION.getMessage());
+	}
+
+	@Test
+	@DisplayName("REFRESH_TOKEN 타입일 때 AppException 발생")
+	void validateToken_refreshTokenType_throwsAppException() {
+		// given
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+		final String refreshToken = Jwts.builder()
+			.claim("type", "REFRESH_TOKEN")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(refreshToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_TOKEN_TYPE.getMessage());
+	}
+
+	@Test
+	@DisplayName("블랙리스트된 토큰일 때 AppException 발생")
+	void validateToken_blacklistedToken_throwsAppException() {
+		// given
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+		final String blacklistedToken = Jwts.builder()
+			.claim("type", "ACCESS_TOKEN")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(blackListRepository.existsById(blacklistedToken)).thenReturn(true);
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.validateToken(blacklistedToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION.getMessage());
+	}
+
+	private static Stream<Arguments> provideInvalidTokensForValidation() {
+		return Stream.of(
+			Arguments.of(null, ErrorCode.MALFORMED_TOKEN_EXCEPTION, "null 토큰"),
+			Arguments.of("", ErrorCode.MALFORMED_TOKEN_EXCEPTION, "빈 문자열 토큰"),
+			Arguments.of("REFRESH_TOKEN_PLACEHOLDER", ErrorCode.INVALID_TOKEN_TYPE, "REFRESH_TOKEN 타입"),
+			Arguments.of("BLACKLISTED_TOKEN_PLACEHOLDER", ErrorCode.TOKEN_BLACKLISTED_EXCEPTION, "블랙리스트된 토큰")
+		);
+	}
+
+	@Test
 	@DisplayName("토큰 타입 추출 성공")
 	void getType_success() {
 		// given
@@ -117,8 +184,9 @@ class JwtTokenProviderTest {
 		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
 		final String validAccessToken = Jwts.builder()
-			.claim("id", userId)
+			.claim("id", String.valueOf(userId))
 			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "GENERAL")
 			.signWith(key, SignatureAlgorithm.HS256)
 			.compact();
 
@@ -131,4 +199,96 @@ class JwtTokenProviderTest {
 		assertThat(user.getId()).isEqualTo(1L);
 		assertThat(user.getEmail()).isEqualTo("test1@example.com");
 	}
+
+	@Test
+	@DisplayName("토큰 타입이 ACCESS_TOKEN이 아닐 때 AppException 발생")
+	void getAuthenticatedUser_invalidTokenType_throwsAppException() {
+		// given
+		final Long userId = 1L;
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String invalidTypeToken = Jwts.builder()
+			.claim("id", String.valueOf(userId))
+			.claim("type", "REFRESH_TOKEN") // ACCESS_TOKEN이 아닌 타입
+			.claim("userType", "GENERAL")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(invalidTypeToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_TOKEN_TYPE.getMessage());
+	}
+
+	@Test
+	@DisplayName("GENERAL 사용자가 존재하지 않을 때 AppException 발생")
+	void getAuthenticatedUser_generalUserNotFound_throwsAppException() {
+		// given
+		final Long userId = 999L;
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", String.valueOf(userId))
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "GENERAL")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(userEntityRepository.findById(userId)).thenReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.USER_NOT_FOUND_EXCEPTION.getMessage());
+
+		verify(userEntityRepository).findById(userId);
+	}
+
+	@Test
+	@DisplayName("OAUTH 사용자가 존재하지 않을 때 AppException 발생")
+	void getAuthenticatedUser_oauthUserNotFound_throwsAppException() {
+		// given
+		final String uniqueId = "oauth_user_123";
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", uniqueId)
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", "OAUTH")
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		when(userEntityRepository.findByUniqueId(uniqueId)).thenReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.USER_NOT_FOUND_EXCEPTION.getMessage());
+
+		verify(userEntityRepository).findByUniqueId(uniqueId);
+	}
+
+	@Test
+	@DisplayName("유효하지 않은 userType일 때 AppException 발생")
+	void getAuthenticatedUser_invalidUserType_throwsAppException() {
+		// given
+		final String userId = "123";
+		final String invalidUserType = "INVALID_TYPE";
+		SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+		final String validToken = Jwts.builder()
+			.claim("id", userId)
+			.claim("type", "ACCESS_TOKEN")
+			.claim("userType", invalidUserType)
+			.signWith(key, SignatureAlgorithm.HS256)
+			.compact();
+
+		// when & then
+		assertThatThrownBy(() -> jwtTokenProvider.getAuthenticatedUser(validToken))
+			.isInstanceOf(AppException.class)
+			.hasMessage(ErrorCode.INVALID_USER_TYPE_EXCEPTION.getMessage());
+
+		verifyNoInteractions(userEntityRepository);
+	}
+
 }

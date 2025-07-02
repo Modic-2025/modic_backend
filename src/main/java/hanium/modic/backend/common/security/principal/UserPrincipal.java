@@ -1,7 +1,7 @@
 package hanium.modic.backend.common.security.principal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,7 +10,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import lombok.Data;
 
 @Data
-public class UserPrincipal implements UserDetails {
+public class UserPrincipal implements UserDetails, AuthenticatedUser {
 
 	private final UserEntity user;
 
@@ -20,7 +20,15 @@ public class UserPrincipal implements UserDetails {
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return Collections.emptyList();
+		Collection<GrantedAuthority> collection = new ArrayList<>();
+
+		collection.add(new GrantedAuthority() {
+			@Override
+			public String getAuthority() {
+				return user.getUserRole().name();
+			}
+		});
+		return collection;
 	}
 
 	@Override
@@ -30,7 +38,7 @@ public class UserPrincipal implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return user.getEmail();
+		return user.getName();
 	}
 
 	@Override
@@ -51,5 +59,20 @@ public class UserPrincipal implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return true;
+	}
+
+	@Override
+	public String getId() {
+		return String.valueOf(user.getId());
+	}
+
+	@Override
+	public String getUserType() {
+		return "GENERAL";
+	}
+
+	@Override
+	public UserEntity getUserEntity() {
+		return user;
 	}
 }

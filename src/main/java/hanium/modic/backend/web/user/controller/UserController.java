@@ -2,13 +2,13 @@ package hanium.modic.backend.web.user.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
@@ -49,7 +49,7 @@ public class UserController {
 		summary = "유저 정보 조회 API",
 		description = "로그인한 유저의 정보(id, email, 이름)를 조회합니다."
 	)
-	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@AuthenticationPrincipal UserEntity user) {
+	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@CurrentUser UserEntity user) {
 		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
 	}
 
@@ -64,7 +64,7 @@ public class UserController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> transferCoins(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@RequestBody @Valid TransferCoinsRequest request
 	) {
 		userCoinService.transferCoin(user.getId(), request.toUserId(), request.coin());

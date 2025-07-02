@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.validator;
+package hanium.modic.backend.common.annotation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

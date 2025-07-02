@@ -3,7 +3,6 @@ package hanium.modic.backend.web.post.controller;
 import static org.springframework.http.HttpStatus.*;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
@@ -50,7 +50,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@RequestBody @Valid CreatePostRequest request
 	) {
 
@@ -82,7 +82,7 @@ public class PostController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
-	@GetMapping("/list")
+	@GetMapping
 	@Operation(
 		summary = "게시글 목록 조회 API",
 		description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.",
@@ -111,7 +111,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> deletePost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@PathVariable Long id
 	) {
 		postService.deletePost(user.getId(), id);
@@ -120,8 +120,8 @@ public class PostController {
 
 	@PutMapping("/{id}")
 	@Operation(
-		summary = "게시글 삭제 API",
-		description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.",
+		summary = "게시글 수정 API",
+		description = "게시글을 수정합니다. 작성자만 수정할 수 있습니다.",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
@@ -129,7 +129,7 @@ public class PostController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> updatePost(
-		@AuthenticationPrincipal UserEntity user,
+		@CurrentUser UserEntity user,
 		@PathVariable long id,
 		@RequestBody @Valid UpdatePostRequest request
 	) {
