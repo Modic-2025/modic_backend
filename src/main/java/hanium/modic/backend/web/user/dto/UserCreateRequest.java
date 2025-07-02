@@ -2,7 +2,7 @@ package hanium.modic.backend.web.user.dto;
 
 import org.hibernate.validator.constraints.Length;
 
-import hanium.modic.backend.common.validator.Password;
+import hanium.modic.backend.common.annotation.validator.Password;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 

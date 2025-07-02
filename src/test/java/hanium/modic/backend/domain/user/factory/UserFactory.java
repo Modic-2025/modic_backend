@@ -15,7 +15,7 @@ public class UserFactory {
 			.password("password" + userId)
 			.build();
 		UserEntity spyUser = Mockito.spy(user);
-		when(spyUser.getId()).thenReturn(userId);
+		lenient().when(spyUser.getId()).thenReturn(userId);
 		return spyUser;
 	}
 

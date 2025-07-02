@@ -1,13 +1,13 @@
 package hanium.modic.backend.web.user.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
@@ -36,7 +36,7 @@ public class ProfileController {
 		summary = "내 프로필 조회",
 		description = "로그인한 사용자의 이메일, 닉네임, 프로필 이미지, 게시물 수, 팔로워 수, 팔로잉 수, 코인 수를 반환합니다."
 	)
-	public ResponseEntity<AppResponse<GetMyProfileResponse>> getMyProfile(@AuthenticationPrincipal UserEntity me) {
+	public ResponseEntity<AppResponse<GetMyProfileResponse>> getMyProfile(@CurrentUser UserEntity me) {
 		return ResponseEntity.ok(AppResponse.ok(profileService.getMyProfile(me)));
 	}
 
@@ -57,7 +57,7 @@ public class ProfileController {
 		description = "로그인한 사용자의 게시글 목록을 조회합니다. 페이지네이션을 지원합니다."
 	)
 	public ResponseEntity<AppResponse<PageResponse<GetSimplePostsResponse>>> getMyPosts(
-		@AuthenticationPrincipal UserEntity me,
+		@CurrentUser UserEntity me,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
 		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {

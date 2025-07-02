@@ -1,5 +1,7 @@
 package hanium.modic.backend.base.login;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -9,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithSecurityContextFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import hanium.modic.backend.common.security.principal.AuthenticatedUser;
+import hanium.modic.backend.common.security.principal.UserPrincipal;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 
@@ -28,7 +32,8 @@ public class WithCustomUserSecurityContextFactory implements WithSecurityContext
 			.password("password")
 			.name("Test User")
 			.build());
-		Authentication auth = new UsernamePasswordAuthenticationToken(user, "");
+		AuthenticatedUser authenticatedUser = new UserPrincipal(user);
+		Authentication auth = new UsernamePasswordAuthenticationToken(authenticatedUser, "", List.of());
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
 		context.setAuthentication(auth);
 		return context;
