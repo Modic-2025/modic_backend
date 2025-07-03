@@ -106,7 +106,7 @@ class AiImageGenerationServiceTest {
 	@DisplayName("createImageGetUrl - 성공: 정상적인 이미지 URL 생성")
 	void createImageGetUrl_Success() {
 		// given
-		when(aiRequestRepository.existsByIdAndUserId(TEST_USER_ID, TEST_IMAGE_ID)).thenReturn(true);
+		when(aiRequestRepository.existsByIdAndUserId(TEST_IMAGE_ID, TEST_USER_ID)).thenReturn(true);
 		when(aiImageService.createImageGetUrl(TEST_IMAGE_ID)).thenReturn(TEST_GENERATED_URL);
 
 		// when
@@ -121,7 +121,7 @@ class AiImageGenerationServiceTest {
 	@DisplayName("이미지 소유자 검증 실패 테스트 (imageId 기반)")
 	void validateImageOwner_ById_Fail(String testName, boolean existsResult) {
 		// given
-		when(aiRequestRepository.existsByIdAndUserId(TEST_USER_ID, TEST_IMAGE_ID)).thenReturn(existsResult);
+		when(aiRequestRepository.existsByIdAndUserId(TEST_IMAGE_ID, TEST_USER_ID)).thenReturn(existsResult);
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, () ->
