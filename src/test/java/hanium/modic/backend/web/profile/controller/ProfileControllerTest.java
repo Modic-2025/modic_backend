@@ -14,7 +14,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.profile.service.ProfileService;
-import hanium.modic.backend.web.user.controller.ProfileController;
 
 @WebMvcTest(controllers = ProfileController.class)
 @AutoConfigureMockMvc(addFilters = false)
