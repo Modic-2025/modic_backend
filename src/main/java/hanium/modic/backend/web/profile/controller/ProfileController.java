@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.controller;
+package hanium.modic.backend.web.profile.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
