@@ -11,33 +11,30 @@ import hanium.modic.backend.common.util.KeyGenerator;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
-import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.image.service.ImageService;
+import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
+import lombok.RequiredArgsConstructor;
 
 @Service
-public class AiImageService extends ImageService {
+@RequiredArgsConstructor
+public class AiImageService {
 
 	private final AiRequestRepository aiRequestRepository;
 	private final ImageValidationService imageValidationService;
 	private final KeyGenerator keyGenerator;
+	private final ImageUtil imageUtil;
 
-	@Autowired
-	public AiImageService(
-		ImageUtil imageUtil,
-		ImageValidationService imageValidationService,
-		AiRequestRepository aiRequestRepository, KeyGenerator keyGenerator) {
-		super(imageValidationService, imageUtil);
-		this.aiRequestRepository = aiRequestRepository;
-		this.imageValidationService = imageValidationService;
-		this.keyGenerator = keyGenerator;
+	// 이미지 저장 URL 생성
+	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
+		imageValidationService.validateFullFileName(fullFileName);
+
+		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
 	}
 
 	// AI 이미지 조회용 URL 생성
-	@Override
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(Long id) {
 		AiRequestEntity image = aiRequestRepository.findById(id)
@@ -47,7 +44,6 @@ public class AiImageService extends ImageService {
 	}
 
 	// 이미지 삭제
-	@Override
 	@Transactional
 	public void deleteImage(Long id) {
 		AiRequestEntity image = aiRequestRepository.findById(id)

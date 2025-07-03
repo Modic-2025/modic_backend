@@ -4,38 +4,35 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.image.service.ImageService;
+import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
-public class PostImageService extends ImageService {
+@RequiredArgsConstructor
+public class PostImageService {
 
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final ImageValidationService imageValidationService;
+	private final ImageUtil imageUtil;
 
-	@Autowired
-	public PostImageService(
-		ImageUtil imageUtil,
-		ImageValidationService imageValidationService,
-		PostImageEntityRepository postImageEntityRepository
-	) {
-		super(imageValidationService, imageUtil);
-		this.postImageEntityRepository = postImageEntityRepository;
-		this.imageValidationService = imageValidationService;
+	// 이미지 저장 URL 생성
+	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
+		imageValidationService.validateFullFileName(fullFileName);
+
+		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
 	}
 
 	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
-	@Override
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
@@ -44,7 +41,6 @@ public class PostImageService extends ImageService {
 	}
 
 	// 이미지 삭제
-	@Override
 	@Transactional
 	public void deleteImage(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
