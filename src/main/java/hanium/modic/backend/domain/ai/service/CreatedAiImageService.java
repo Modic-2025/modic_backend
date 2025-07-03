@@ -7,8 +7,6 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
-import hanium.modic.backend.domain.image.domain.Image;
-import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
@@ -40,11 +38,5 @@ public class CreatedAiImageService extends ImageService {
 
 		createdAiImageRepository.delete(createdAiImageEntity);
 		imageUtil.deleteImage(createdAiImageEntity.getImagePath());
-	}
-
-	// 사용되지 않는 메서드
-	@Override
-	public Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
-		return null;
 	}
 }

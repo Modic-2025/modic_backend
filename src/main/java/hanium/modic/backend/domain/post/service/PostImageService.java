@@ -73,7 +73,6 @@ public class PostImageService extends ImageService {
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
-	@Override
 	public PostImageEntity saveImage(final ImagePrefix imagePrefix, final String fullFileName, final String imagePath) {
 		imageValidationService.validateImageSaved(imagePath, imagePrefix);
 		imageValidationService.validateFullFileName(fullFileName);

@@ -72,7 +72,6 @@ public class PostReviewImageService extends ImageService {
 	}
 
 	// 이미지 저장
-	@Override
 	public PostReviewImageEntity saveImage(
 		final ImagePrefix imagePrefix,
 		final String fullFileName,

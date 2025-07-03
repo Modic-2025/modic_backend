@@ -57,16 +57,7 @@ public class AiImageService extends ImageService {
 		imageUtil.deleteImage(image.getImagePath());
 	}
 
-	@Override
-	@Deprecated
-	// userId, postId를 포함하지 않는 이미지 저장 메서드(Deprecated)
-	public Image saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath) {
-		throw new UnsupportedOperationException(
-			"Use saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath, Long userId, Long postId) instead.");
-	}
-
 	// AI 요청 이미지 저장
-	@Override
 	@Transactional
 	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath,
 		Long userId, Long postId) {
