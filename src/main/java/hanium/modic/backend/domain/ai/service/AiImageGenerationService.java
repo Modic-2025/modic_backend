@@ -10,6 +10,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
 import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
+import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -30,12 +31,13 @@ public class AiImageGenerationService {
 	private final AiRequestRepository aiRequestRepository;
 	private final CreatedAiImageRepository createdAiImageRepository;
 	private final CreatedAiImageService createdAiImageService;
+	private final AiImagePermissionRepository aiImagePermissionRepository;
 
 	@Transactional
 	public RequestAiImageGenerationResponse processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
-		String imagePath, Long postId) {
-		// ToDO: 인증 로직 추가되면 userId를 통해 검증 예정
-		// validateUserPermission(userId);
+		String imagePath, Long postId, Long userId) {
+		// 사용자 권한 검증
+		validateAiRequestPermission(userId, postId);
 
 		List<String> styleImageUrls = postImageEntityRepository.findAllByPostId(postId)
 			.stream()
@@ -43,7 +45,8 @@ public class AiImageGenerationService {
 			.toList();
 
 		// 이미지 저장 및 ID 반환
-		AiRequestEntity aiRequestEntity = aiImageService.saveImage(imageUsagePurpose, fileName, imagePath);
+		AiRequestEntity aiRequestEntity = aiImageService.saveImage(imageUsagePurpose, fileName, imagePath, userId,
+			postId);
 
 		// MQ에 이미지 생성 요청 전송
 		messageQueueService.sendImageGenerationRequest(
@@ -54,30 +57,47 @@ public class AiImageGenerationService {
 		return RequestAiImageGenerationResponse.from(aiRequestEntity);
 	}
 
-	public String createImageGetUrl(Long imageId) {
-		/**
-		 * ToDo: 이미지 조회 권한 검증
-		 */
+	public String createImageGetUrl(Long imageId, Long userId) {
+		// 생성 전 이미지 조회 권한 검증
+		validateImageOwnerByImageId(imageId, userId);
 		return aiImageService.createImageGetUrl(imageId);
 	}
 
-	public AiImageStatus getAiImageStatus(String requestId) {
+	public AiImageStatus getAiImageStatus(Long userId, String requestId) {
+		// AI 이미지 상태 조회 권한 검증
+		validateImageOwnerByRequestId(requestId, userId);
 		AiRequestEntity request = aiRequestRepository.findByRequestId(requestId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
 		return request.getStatus();
 	}
 
-	public String createAiImageGetUrl(String requestId) {
-		/**
-		 * ToDo: AI 이미지 조회 권한 검증
-		 */
+	public String createAiImageGetUrl(String requestId, Long userId) {
+		// 생성 후 AI 이미지 생성 조회 검증
+		validateImageOwnerByRequestId(requestId, userId);
 		CreatedAiImageEntity createdAiImageEntity = createdAiImageRepository.findByRequestId(requestId)
 			.orElseThrow(() -> new AppException(ErrorCode.CREATED_AI_IMAGE_NOT_FOUND));
 
 		return createdAiImageService.createImageGetUrl(createdAiImageEntity.getId());
 	}
 
-	private void validateUserPermission(Long userId) {
-		// 사용자 권한 검증 로직
+	// 해당 Post에 대한 AI 이미지 생성 권한 검증
+	private void validateAiRequestPermission(Long userId, Long postId) {
+		if (!aiImagePermissionRepository.existsByUserIdAndPostId(userId, postId)) {
+			throw new AppException(ErrorCode.AI_IMAGE_PERMISSION_NOT_FOUND);
+		}
+	}
+
+	// imageId를 통해 AI 이미지 소유자 검증(조회용)
+	private void validateImageOwnerByImageId(Long imageId, Long userId) {
+		if (!aiRequestRepository.existsByIdAndUserId(imageId, userId)) {
+			throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
+		}
+	}
+
+	// requestId를 통해 AI 이미지 소유자 검증(조회용)
+	private void validateImageOwnerByRequestId(String requestId, Long userId) {
+		if (!aiRequestRepository.existsByRequestIdAndUserId(requestId, userId)) {
+			throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
+		}
 	}
 }

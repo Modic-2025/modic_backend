@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
 import hanium.modic.backend.web.ai.dto.response.AiRequestStatusResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
@@ -51,9 +53,6 @@ public class AiImageController {
 	public ResponseEntity<AppResponse<CreateImageSaveUrlResponse>> createImageSaveUrl(
 		@Parameter(description = "이미지 저장 요청 정보", required = true)
 		@RequestBody @Valid CreateImageSaveUrlRequest request) {
-		/*
-		 * ToDo: AiImageGenerationService 에서 이미지 생성 권한 검증
-		 */
 		CreateImageSaveUrlDto dto = aiImageService.createImageSaveUrl(
 			request.imageUsagePurpose(),
 			request.fileName());
@@ -70,17 +69,20 @@ public class AiImageController {
 		responses = {
 			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
-			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]")
+			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]"),
+			@ApiResponse(responseCode = "403", description = "AI 이미지 생성 권한이 없습니다.[AI-003]"),
 		}
 	)
 	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
-		@RequestBody @Valid AiImageGenerationRequest request) {
+		@RequestBody @Valid AiImageGenerationRequest request,
+		@CurrentUser UserEntity userEntity) {
 
 		RequestAiImageGenerationResponse response = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
 			request.imagePath(),
-			request.postId()
+			request.postId(),
+			userEntity.getId()
 		);
 
 		return ResponseEntity.status(CREATED)
@@ -99,11 +101,9 @@ public class AiImageController {
 		}
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
-		@PathVariable Long imageId) {
-		/*
-		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
-		 */
-		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId);
+		@PathVariable Long imageId,
+		@CurrentUser UserEntity userEntity) {
+		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId, userEntity.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
@@ -120,11 +120,9 @@ public class AiImageController {
 		}
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
-		@PathVariable String requestId) {
-		/*
-		 * ToDo: AiImageGenerationService 에서 이미지 조회 권한 검증
-		 */
-		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId);
+		@PathVariable String requestId,
+		@CurrentUser UserEntity userEntity) {
+		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId, userEntity.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}
@@ -135,12 +133,14 @@ public class AiImageController {
 		summary = "AI 이미지 생성 상태 조회",
 		description = "AI 이미지 생성 요청에 대한 현재 상태를 조회합니다.",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 AI 요청을 찾을 수 없습니다.[A-001]")
+			@ApiResponse(responseCode = "404", description = "해당 AI 요청을 찾을 수 없습니다.[A-001]"),
+			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
 	)
 	public ResponseEntity<AppResponse<AiRequestStatusResponse>> getAiRequestStatus(
-		@PathVariable String requestId) {
-		AiImageStatus status = aiImageGenerationService.getAiImageStatus(requestId);
+		@PathVariable String requestId,
+		@CurrentUser UserEntity userEntity) {
+		AiImageStatus status = aiImageGenerationService.getAiImageStatus(userEntity.getId(), requestId);
 		return ResponseEntity.ok(AppResponse.ok(new AiRequestStatusResponse(status)));
 	}
 }
