@@ -119,7 +119,7 @@ class AiImageGenerationServiceTest {
 	@ParameterizedTest
 	@MethodSource("provideImageOwnerValidationTestCases")
 	@DisplayName("이미지 소유자 검증 실패 테스트 (imageId 기반)")
-	void validateImageOwner_ById_Fail(String testName, boolean existsResult) {
+	void validateImageOwnerByImageId_Fail(String testName, boolean existsResult) {
 		// given
 		when(aiRequestRepository.existsByIdAndUserId(TEST_IMAGE_ID, TEST_USER_ID)).thenReturn(existsResult);
 
@@ -149,7 +149,7 @@ class AiImageGenerationServiceTest {
 	@ParameterizedTest
 	@MethodSource("provideRequestIdOwnerValidationTestCases")
 	@DisplayName("이미지 소유자 검증 실패 테스트 (requestId 기반)")
-	void validateImageOwner_ByRequestId_Fail(String testName, boolean existsResult) {
+	void validateImageOwnerByRequestId_Fail(String testName, boolean existsResult) {
 		// given
 		when(aiRequestRepository.existsByRequestIdAndUserId(TEST_REQUEST_ID, TEST_USER_ID)).thenReturn(existsResult);
 

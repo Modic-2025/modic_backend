@@ -59,13 +59,13 @@ public class AiImageGenerationService {
 
 	public String createImageGetUrl(Long imageId, Long userId) {
 		// 생성 전 이미지 조회 권한 검증
-		validateImageOwner(imageId, userId);
+		validateImageOwnerByImageId(imageId, userId);
 		return aiImageService.createImageGetUrl(imageId);
 	}
 
 	public AiImageStatus getAiImageStatus(Long userId, String requestId) {
 		// AI 이미지 상태 조회 권한 검증
-		validateImageOwner(requestId, userId);
+		validateImageOwnerByRequestId(requestId, userId);
 		AiRequestEntity request = aiRequestRepository.findByRequestId(requestId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
 		return request.getStatus();
@@ -73,7 +73,7 @@ public class AiImageGenerationService {
 
 	public String createAiImageGetUrl(String requestId, Long userId) {
 		// 생성 후 AI 이미지 생성 조회 검증
-		validateImageOwner(requestId, userId);
+		validateImageOwnerByRequestId(requestId, userId);
 		CreatedAiImageEntity createdAiImageEntity = createdAiImageRepository.findByRequestId(requestId)
 			.orElseThrow(() -> new AppException(ErrorCode.CREATED_AI_IMAGE_NOT_FOUND));
 
@@ -88,14 +88,14 @@ public class AiImageGenerationService {
 	}
 
 	// imageId를 통해 AI 이미지 소유자 검증(조회용)
-	private void validateImageOwner(Long imageId, Long userId) {
+	private void validateImageOwnerByImageId(Long imageId, Long userId) {
 		if (!aiRequestRepository.existsByIdAndUserId(imageId, userId)) {
 			throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
 		}
 	}
 
 	// requestId를 통해 AI 이미지 소유자 검증(조회용)
-	private void validateImageOwner(String requestId, Long userId) {
+	private void validateImageOwnerByRequestId(String requestId, Long userId) {
 		if (!aiRequestRepository.existsByRequestIdAndUserId(requestId, userId)) {
 			throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
 		}
