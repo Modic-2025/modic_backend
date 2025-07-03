@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.dto.FollowType;
-import hanium.modic.backend.domain.follow.entity.FollowEntity;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -53,7 +52,11 @@ public class FollowService {
 		validateUserExists(userId);
 
 		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
-			.map(u -> new GetFollowersResponse(u.getId(), u.getName(), u.getEmail()));
+			.map(u -> {
+				final String userImageUrl = u.getUserImageUrl();
+				final boolean hasImage = userImageUrl != null;
+				return new GetFollowersResponse(u.getId(), hasImage, userImageUrl, u.getName(), u.getEmail());
+			});
 	}
 
 	// TODO : 정렬 기준 고려
@@ -62,7 +65,11 @@ public class FollowService {
 		validateUserExists(userId);
 
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
-			.map(u -> new GetFollowingsResponse(u.getId(), u.getName(), u.getEmail()));
+			.map(u -> {
+				final String userImageUrl = u.getUserImageUrl();
+				final boolean hasImage = userImageUrl != null;
+				return new GetFollowingsResponse(u.getId(), hasImage, userImageUrl, u.getName(), u.getEmail());
+			});
 	}
 
 	// 유저 존재 체크

@@ -140,7 +140,7 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			"이름", "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
+			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
 
 		when(postService.getPost(postId)).thenReturn(response);

@@ -30,7 +30,7 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 		result.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.email").value("me@test.com"))
 			.andExpect(jsonPath("$.data.nickname").exists())
-			.andExpect(jsonPath("$.data.profileImageUrl").exists())
+			.andExpect(jsonPath("$.data.profileImageUrl").doesNotExist()) // 프로필 저장 x
 			.andExpect(jsonPath("$.data.postCount").isNumber())
 			.andExpect(jsonPath("$.data.followerCount").isNumber())
 			.andExpect(jsonPath("$.data.followingCount").isNumber())
@@ -42,7 +42,9 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "viewer@test.com")
 	void getOtherProfileSuccess() throws Exception {
 		// given: 조회 대상 사용자 저장
-		UserEntity target = userEntityRepository.save(UserFactory.createMockUserWithoutId("Target"));
+		UserEntity target =UserFactory.createMockUserWithoutId("Target");
+		target.updateUserImage("url");
+		target = userEntityRepository.save(target);
 
 		// when: 타인의 프로필 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles")

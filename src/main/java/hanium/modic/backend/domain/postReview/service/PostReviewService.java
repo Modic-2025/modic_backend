@@ -101,13 +101,17 @@ public class PostReviewService {
 	}
 
 	// 포스트 리뷰 목록 조회
+	// TODO : 쿼리 최적화 필요.
 	public Page<PostReviewDetailResponse> getPostReviews(final Long postId, final int page, final int size) {
 		return postReviewRepository.findAllByPostId(postId, PageRequest.of(page, size))
 			.map(postReview -> {
 				// 회원 탈퇴 시 soft 탈퇴이므로 회원은 반드시 존재
-				final String userName = userEntityRepository.findById(postReview.getUserId())
-					.map(UserEntity::getName)
-					.orElse(UserConstant.ANONYMOUS.getName());
+				UserEntity user = userEntityRepository.findById(postReview.getUserId())
+					.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+
+				final String userName = user.getName();
+				final String userImageUrl = user.getUserImageUrl();
+				final boolean hasImage = userImageUrl != null;
 				final List<String> imageUrls = postReviewImageRepository.findAllByPostReviewId(postReview.getId())
 					.stream()
 					.map(postReviewImage -> postReviewImageService.createImageGetUrl(postReviewImage.getId()))
@@ -115,6 +119,8 @@ public class PostReviewService {
 
 				return new PostReviewDetailResponse(
 					userName,
+					hasImage,
+					userImageUrl,
 					postReview.getCreateAt(),
 					postReview.getId(),
 					postReview.getDescription(),

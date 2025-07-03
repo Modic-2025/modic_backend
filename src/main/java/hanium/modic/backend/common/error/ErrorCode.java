@@ -36,6 +36,7 @@ public enum ErrorCode {
 	USER_COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "U-004", "코인이 부족합니다."),
 	USER_COIN_TRANSFER_SAME_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "U-005", "자신에게 코인을 송금할 수 업습니다."),
 	USER_COIN_TRANSFER_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "U-006", "코인 송금에 실패하였습니다."),
+	USER_IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-007", "해당 유저의 프로필 이미지를 찾을 수 없습니다."),
 
 	// Post
 	POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "P-001", "해당 포스트를 찾을 수 없습니다."),

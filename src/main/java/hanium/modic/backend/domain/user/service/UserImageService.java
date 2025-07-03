@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.user.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,10 +36,9 @@ public class UserImageService {
 	}
 
 	// 이미지 URL 조회
-	public String createImageGetUrl(final long id) {
-		UserImageEntity image = userImageRepository.findById(id)
-			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-		return image.getImageUrl();
+	public Optional<String> createImageGetUrl(final long userId) {
+		return userImageRepository.findByUserId(userId)
+			.map(UserImageEntity::getImageUrl);
 	}
 
 	// 이미지 삭제
@@ -45,13 +46,18 @@ public class UserImageService {
 	public void deleteImage(final long userId, final long imageId) {
 		validateUserImageOwnership(userId, imageId);
 
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+
 		UserImageEntity image = userImageRepository.findById(imageId)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 		userImageRepository.delete(image);
 		imageUtil.deleteImage(image.getImagePath());
+		user.deleteUserImage();
 	}
 
 	// 이미지 저장
+	@Transactional
 	public UserImageEntity saveImage(
 		final long userId,
 		final ImagePrefix imagePrefix,
@@ -65,15 +71,17 @@ public class UserImageService {
 		final String[] fileNameParts = fullFileName.split("\\.");
 		final String fileName = fileNameParts[0];
 		final String fileExtension = fileNameParts[1];
+		final String imageUrl = imageUtil.createImageUrl(imagePrefix, imagePath);
 
 		UserEntity user = userEntityRepository.findById(userId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		user.updateUserImage(imageUrl);
 
 		return userImageRepository.save(
 			UserImageEntity.builder()
 				.user(user)
 				.imagePurpose(imagePrefix)
-				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
+				.imageUrl(imageUrl)
 				.fullImageName(fullFileName)
 				.imageName(fileName)
 				.extension(ImageExtension.from(fileExtension))

@@ -44,6 +44,8 @@ public class UserEntity extends BaseEntity {
 
 	private Long coin = 0L;
 
+	private String userImageUrl;
+
 	@Builder
 	private UserEntity(String email, String password, String name, String uniqueId) {
 		this.email = email;
@@ -64,5 +66,15 @@ public class UserEntity extends BaseEntity {
 		this.email = email;
 		this.name = name;
 		return this;
+	}
+
+	// 유저 이미지 URL 업데이트
+	public void updateUserImage(String userImageUrl) {
+		this.userImageUrl = userImageUrl;
+	}
+
+	// 유저 이미지 URL 삭제
+	public void deleteUserImage() {
+		this.userImageUrl = null;
 	}
 }
