@@ -17,7 +17,6 @@ import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
 import hanium.modic.backend.domain.postReview.entity.PostReviewImageEntity;
 import hanium.modic.backend.domain.postReview.repository.PostReviewImageRepository;
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
-import hanium.modic.backend.domain.user.entity.UserConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewDetailResponse;
@@ -111,7 +110,7 @@ public class PostReviewService {
 
 				final String userName = user.getName();
 				final String userImageUrl = user.getUserImageUrl();
-				final boolean hasImage = userImageUrl != null;
+				final boolean hasUserImage = userImageUrl != null;
 				final List<String> imageUrls = postReviewImageRepository.findAllByPostReviewId(postReview.getId())
 					.stream()
 					.map(postReviewImage -> postReviewImageService.createImageGetUrl(postReviewImage.getId()))
@@ -119,7 +118,7 @@ public class PostReviewService {
 
 				return new PostReviewDetailResponse(
 					userName,
-					hasImage,
+					hasUserImage,
 					userImageUrl,
 					postReview.getCreateAt(),
 					postReview.getId(),

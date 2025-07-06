@@ -77,12 +77,12 @@ public class PostService {
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		final String userName = userEntity.getName();
 		final String userImage = userEntity.getUserImageUrl();
-		final boolean hasImage = userImage != null;
+		final boolean hasUserImage = userImage != null;
 		final String userEmail = userEntity.getEmail();
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
-		return GetPostResponse.of(userName, hasImage, userImage, userEmail, postEntity, postImages);
+		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages);
 	}
 
 	@Transactional(readOnly = true)

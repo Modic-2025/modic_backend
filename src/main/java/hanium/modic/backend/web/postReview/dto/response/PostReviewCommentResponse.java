@@ -12,7 +12,7 @@ public record PostReviewCommentResponse(
 	String userName,
 	LocalDateTime createdAt,
 	String text,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String userImageUrl
 ) {
 }

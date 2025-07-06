@@ -54,8 +54,8 @@ public class FollowService {
 		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
 				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasImage = userImageUrl != null;
-				return new GetFollowersResponse(u.getId(), hasImage, userImageUrl, u.getName(), u.getEmail());
+				final boolean hasUserImage = userImageUrl != null;
+				return new GetFollowersResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
 			});
 	}
 
@@ -67,8 +67,8 @@ public class FollowService {
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
 				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasImage = userImageUrl != null;
-				return new GetFollowingsResponse(u.getId(), hasImage, userImageUrl, u.getName(), u.getEmail());
+				final boolean hasUserImage = userImageUrl != null;
+				return new GetFollowingsResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
 			});
 	}
 

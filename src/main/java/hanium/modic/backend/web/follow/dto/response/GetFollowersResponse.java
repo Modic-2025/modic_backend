@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(NON_NULL)
 public record GetFollowersResponse(
 	Long userId,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String userImageUrl,
 	String userName,
 	String userEmail

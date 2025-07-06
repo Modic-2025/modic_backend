@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(NON_NULL)
 public record PostReviewDetailResponse(
 	String userName,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String userImageUrl,
 	LocalDateTime createdAt,
 	Long postReviewId,

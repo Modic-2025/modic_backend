@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record GetProfileResponse(
 	String email,
 	String nickname,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String profileImageUrl,
 	long postCount,
 	long followerCount,

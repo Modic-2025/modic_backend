@@ -11,7 +11,7 @@ public record UserInfoResponse(
 	Long id,
 	String email,
 	String name,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String userImageUrl
 ) {
 	public static UserInfoResponse from(UserEntity user) {

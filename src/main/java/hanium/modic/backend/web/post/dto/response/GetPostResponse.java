@@ -15,7 +15,7 @@ import lombok.Getter;
 @JsonInclude(NON_NULL)
 public record GetPostResponse(
 	String userName,
-	boolean userImageExists,
+	boolean hasUserImage,
 	String userImageUrl,
 	String userEmail,
 	Long id,
@@ -28,7 +28,7 @@ public record GetPostResponse(
 ) {
 	public static GetPostResponse of(
 		String userName,
-		boolean userImageExists,
+		boolean hasUserImage,
 		String userImageUrl,
 		String userEmail,
 		PostEntity postEntity,
@@ -40,7 +40,7 @@ public record GetPostResponse(
 
 		return new GetPostResponse(
 			userName,
-			userImageExists,
+			hasUserImage,
 			userImageUrl,
 			userEmail,
 			postEntity.getId(),
