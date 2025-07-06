@@ -81,7 +81,7 @@ public class UserImageController {
 			.body(AppResponse.created(new CallbackImageSaveUrlResponse(id)));
 	}
 
-	@GetMapping("/{imageId}/get-url")
+	@GetMapping("/get-url")
 	@Operation(
 		summary = "사용자 이미지 조회 URL 생성 API",
 		description = "사용자 이미지는 public이므로 URL을 직접 반환합니다.",
@@ -90,9 +90,9 @@ public class UserImageController {
 		}
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
-		@PathVariable Long imageId
+		@CurrentUser UserEntity user
 	) {
-		String imageGetUrl = userImageService.createImageGetUrl(imageId)
+		String imageGetUrl = userImageService.createImageGetUrl(user.getId())
 			.orElseThrow(() -> new AppException(ErrorCode.USER_IMAGE_NOT_FOUND_EXCEPTION));
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
