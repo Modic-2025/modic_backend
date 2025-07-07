@@ -1,12 +1,19 @@
 package hanium.modic.backend.domain.user.entity;
 
-import org.springframework.stereotype.Indexed;
-
 import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Table(name = "user_image",
 	indexes = {
