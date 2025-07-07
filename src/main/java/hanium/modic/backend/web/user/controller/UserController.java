@@ -3,6 +3,7 @@ package hanium.modic.backend.web.user.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.TransferCoinsRequest;
+import hanium.modic.backend.web.user.dto.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
@@ -51,6 +53,23 @@ public class UserController {
 	)
 	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@CurrentUser UserEntity user) {
 		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
+	}
+
+	@PatchMapping("/name")
+	@Operation(
+		summary = "유저 이름 변경 API",
+		description = "로그인한 유저의 이름을 변경합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+		}
+	)
+	public ResponseEntity<AppResponse<Void>> updateUserName(
+		@CurrentUser UserEntity user,
+		@RequestBody @Valid UpdateUserNameRequest request
+	) {
+		userService.updateUserName(user.getId(), request.name());
+
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/coins/transfer")

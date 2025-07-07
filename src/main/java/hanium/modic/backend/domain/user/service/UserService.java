@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.user.service;
 
+import org.hibernate.validator.constraints.Length;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -47,5 +49,16 @@ public class UserService {
 	// 회원 정보 조회
 	public UserInfoResponse getUserInfo(UserEntity user) {
 		return UserInfoResponse.from(user);
+	}
+
+	// 유저 이름 변경
+	@Transactional
+	public void updateUserName(
+		final long id,
+		final String name
+	) {
+		UserEntity user = userEntityRepository.findById(id)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		user.updateName(name);
 	}
 }
