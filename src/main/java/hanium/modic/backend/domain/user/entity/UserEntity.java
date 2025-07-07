@@ -25,24 +25,31 @@ import lombok.NoArgsConstructor;
 public class UserEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(unique = true, nullable = false)
+	@Column(name = "email", unique = true, nullable = false)
 	private String email;
 
+	@Column(name = "password", nullable = false)
 	private String password;
 
+	@Column(name = "name", nullable = false)
 	private String name;
 
-	@Column(unique = true)
+	@Column(name = "unique_id", unique = true)
 	private String uniqueId;
 
-	@Column(nullable = false)
+	@Column(name = "user_role", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private UserRole userRole = UserRole.USER;
 
+	@Column(name = "coin", nullable = false)
 	private Long coin = 0L;
+
+	@Column(name = "user_image_url")
+	private String userImageUrl;
 
 	@Builder
 	private UserEntity(String email, String password, String name, String uniqueId) {
@@ -64,5 +71,15 @@ public class UserEntity extends BaseEntity {
 		this.email = email;
 		this.name = name;
 		return this;
+	}
+
+	// 유저 이미지 URL 업데이트
+	public void updateUserImage(String userImageUrl) {
+		this.userImageUrl = userImageUrl;
+	}
+
+	// 유저 이미지 URL 삭제
+	public void deleteUserImage() {
+		this.userImageUrl = null;
 	}
 }

@@ -14,7 +14,6 @@ import hanium.modic.backend.domain.postReview.entity.PostReviewCommentEntity;
 import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
 import hanium.modic.backend.domain.postReview.repository.PostReviewCommentRepository;
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
-import hanium.modic.backend.domain.user.entity.UserConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewCommentResponse;
@@ -29,20 +28,8 @@ public class PostReviewCommentService {
 	private final UserEntityRepository userEntityRepository;
 
 	// 게시글 리뷰 댓글 목록 조회
-	public Page<PostReviewCommentResponse> getComments(Long postReviewId, int page, int size) {
-		return commentRepository.findAllByPostReviewIdOrderByCreateAtDesc(postReviewId, PageRequest.of(page, size))
-			.map(comment -> {
-				String writerName = userEntityRepository.findById(comment.getUserId())
-					.map(UserEntity::getName)
-					.orElse(UserConstant.ANONYMOUS.getName()); // TODO: 프로필 이미지 URL 조회 방식에 따라 쿼리 최적화 필요
-				return new PostReviewCommentResponse(
-					comment.getUserId(),
-					writerName,
-					comment.getCreateAt(),
-					comment.getText(),
-					"" // TODO: 프로필 이미지 URL 구현 시 대체
-				);
-			});
+	public Page<PostReviewCommentResponse> getComments(final long postReviewId, final int page, final int size) {
+		return commentRepository.findAllByPostReviewIdOrderByCreateAtDesc(postReviewId, PageRequest.of(page, size));
 	}
 
 	// 게시글 리뷰 댓글 생성

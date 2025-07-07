@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 public class PostReviewCommentEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

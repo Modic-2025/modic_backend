@@ -49,11 +49,6 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 
-	// 컨텍스트에서 유저 정보 조회
-	private UserEntity getCurrentUser() {
-		return (UserEntity)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-	}
-
 	@Test
 	@DisplayName("이미지 저장 URL 생성 성공")
 	public void createImageUrlSuccess() throws Exception {

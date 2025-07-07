@@ -24,15 +24,17 @@ public class ProfileService {
 		final long postCount = postRepository.countByUserId(user.getId()); // TODO: 추후 개선 필요, count 쿼리 없애는 방법
 		final long followingCount = followRepository.countByMyId(user.getId()); // TODO: 추후 개선 필요
 		final long followerCount = followRepository.countByFollowingId(user.getId()); // TODO: 추후 개선 필요
+		final String userImageUrl = user.getUserImageUrl();
 
 		return new GetMyProfileResponse(
 			user.getEmail(),
 			user.getName(),
-			"프로필 이미지 url", // TODO: 프로필 이미지 URL을 실제로 가져오는 로직 추가 필요
+			userImageUrl != null,
+			userImageUrl,
 			postCount,
 			followerCount,
 			followingCount,
-			user.getCoin() // TODO: 코인에 대한 락 고려 필요
+			user.getCoin()
 		);
 	}
 
@@ -44,11 +46,13 @@ public class ProfileService {
 		final long postCount = postRepository.countByUserId(userId); // TODO: 추후 개선 필요, count 쿼리 없애는 방법
 		final long followingCount = followRepository.countByMyId(userId); // TODO: 추후 개선 필요
 		final long followerCount = followRepository.countByFollowingId(userId); // TODO: 추후 개선 필요
+		final String userImageUrl = user.getUserImageUrl();
 
 		return new GetProfileResponse(
 			user.getEmail(),
 			user.getName(),
-			"프로필 이미지 url", // TODO: 프로필 이미지 URL을 실제로 가져오는 로직 추가 필요
+			userImageUrl != null,
+			userImageUrl,
 			postCount,
 			followerCount,
 			followingCount

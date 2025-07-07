@@ -22,15 +22,19 @@ public class PostEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     private String description;
 
+    @Column(name = "commercial_price", nullable = false)
     private Long commercialPrice;
 
+    @Column(name = "non_commercial_price", nullable = false)
     private Long nonCommercialPrice;
 
     @Builder

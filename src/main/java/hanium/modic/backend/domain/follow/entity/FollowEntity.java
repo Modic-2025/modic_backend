@@ -5,6 +5,7 @@ import static lombok.AccessLevel.*;
 
 import hanium.modic.backend.common.entity.BaseEntity;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -23,11 +24,14 @@ import lombok.NoArgsConstructor;
 public class FollowEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = IDENTITY)
 	private Long id;
 
+	@Column(name = "my_id")
 	private Long myId;
 
+	@Column(name = "following_id")
 	private Long followingId;
 
 	@Builder
