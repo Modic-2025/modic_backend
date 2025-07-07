@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,5 +85,50 @@ class UserServiceTest {
 		assertThat(response.id()).isEqualTo(userId);
 		assertThat(response.email()).isEqualTo(user.getEmail());
 		assertThat(response.name()).isEqualTo(user.getName());
+	}
+
+	@Test
+	@DisplayName("유저 이름 변경 테스트")
+	void updateUserNameTest() {
+		// given
+		final Long userId = 1L;
+		String newName = "newName";
+		UserEntity user = UserFactory.createMockUser(userId);
+
+		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+
+		// when
+		userService.updateUserName(userId, newName);
+
+		// then
+		assertThat(user.getName()).isEqualTo(newName);
+		verify(userEntityRepository, times(1)).findById(userId);
+		verify(user, times(1)).updateName(newName);
+		Assertions.assertEquals(newName, user.getName());
+	}
+
+	@Test
+	@DisplayName("유저 패스워드 변경 테스트")
+	void updateUserPasswordTest() {
+		// given
+		final Long userId = 1L;
+		UserEntity user = UserFactory.createMockUser(userId);
+		final String oldPassword = "oldPassword";
+		final String encodedOldPassword = "encodedOldPassword";
+		final String newPassword = "newPassword";
+		user.updatePassword(encodedOldPassword);
+
+		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+		when(passwordEncoder.matches(oldPassword, user.getPassword())).thenReturn(true);
+		when(passwordEncoder.encode(newPassword)).thenReturn("encodedNewPassword");
+
+		// when
+		userService.updateUserPassword(userId, oldPassword, newPassword);
+
+		// then
+		assertThat(user.getPassword()).isEqualTo("encodedNewPassword");
+		verify(userEntityRepository, times(1)).findById(userId);
+		verify(passwordEncoder, times(1)).matches(oldPassword, encodedOldPassword); // 기존 비밀번호가 일치하는지 확인해야 한다.
+		verify(passwordEncoder, times(1)).encode(newPassword); // 유저 패스워드는 암호화해야 한다.
 	}
 }
