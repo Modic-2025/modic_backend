@@ -3,15 +3,18 @@ package hanium.modic.backend.web.ai.controller;
 import static org.springframework.http.HttpStatus.*;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
+import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
@@ -19,6 +22,7 @@ import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
 import hanium.modic.backend.web.ai.dto.response.AiRequestStatusResponse;
+import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
 import hanium.modic.backend.web.common.image.dto.response.CreateImageGetUrlResponse;
@@ -28,12 +32,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "AI 이미지 API", description = "AI 이미지 생성 및 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/ai/images")
+@Validated
 public class AiImageController {
 
 	private final AiImageService aiImageService;
@@ -142,5 +149,22 @@ public class AiImageController {
 		@CurrentUser UserEntity userEntity) {
 		AiImageStatus status = aiImageGenerationService.getAiImageStatus(userEntity.getId(), requestId);
 		return ResponseEntity.ok(AppResponse.ok(new AiRequestStatusResponse(status)));
+	}
+
+	// 내가 생성한 AI 이미지 목록 조회
+	@GetMapping("/my-generated")
+	@Operation(summary = "내가 생성한 AI 이미지 목록 조회", description = "현재 사용자가 생성 완료한 AI 이미지 목록을 페이지네이션으로 조회합니다. 최신순으로 정렬되어 반환됩니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		})
+	public ResponseEntity<AppResponse<PageResponse<MyGeneratedAiImageResponse>>> getMyGeneratedImages(
+		@RequestParam(defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") int size,
+		@CurrentUser UserEntity userEntity) {
+
+		PageResponse<MyGeneratedAiImageResponse> response = aiImageGenerationService.getMyGeneratedImages(
+			userEntity.getId(), page, size);
+
+		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 }
