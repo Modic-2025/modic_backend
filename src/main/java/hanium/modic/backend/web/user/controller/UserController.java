@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.user.controller;
 
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,6 +80,7 @@ public class UserController {
 		description = "로그인한 유저의 비밀번호를 변경합니다.",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+			@ApiResponse(responseCode = "400", description = "비밀번호가 일치하지 않습니다.[U-003]"),
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> updateUserPassword(
