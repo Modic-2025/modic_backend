@@ -111,6 +111,8 @@ public class AiImageGenerationService {
 		// 3. CreatedAiImage들 조회
 		List<CreatedAiImageEntity> createdImages = createdAiImageRepository.findAllByRequestIdIn(requestIds);
 
+		// Todo: 상업용/비상업용 구분 필드 추가 필요
+
 		// 4. requestId를 키로 하는 Map 생성 (빠른 조회를 위해)
 		Map<String, CreatedAiImageEntity> createdImageMap = createdImages.stream()
 			.collect(Collectors.toMap(CreatedAiImageEntity::getRequestId, entity -> entity));
@@ -121,8 +123,10 @@ public class AiImageGenerationService {
 
 			if (createdImage != null) {
 				// 6. 조회 URL 생성
+				// Todo: 이미지 조회 url 생성 로직을 배치로 처리하여 최적화
 				String imageUrl = createdAiImageService.createImageGetUrl(createdImage.getId());
 
+				// Todo: chatroomId도 응답에 포함(채팅 구현 되면)
 				return MyGeneratedAiImageResponse.of(createdImage, imageUrl, aiRequest.getPostId());
 			}
 
