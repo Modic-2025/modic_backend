@@ -25,25 +25,30 @@ import lombok.NoArgsConstructor;
 public class UserEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(unique = true, nullable = false)
+	@Column(name = "email", unique = true, nullable = false)
 	private String email;
 
+	@Column(name = "password", nullable = false)
 	private String password;
 
+	@Column(name = "name", nullable = false)
 	private String name;
 
-	@Column(unique = true)
+	@Column(name = "unique_id", unique = true)
 	private String uniqueId;
 
-	@Column(nullable = false)
+	@Column(name = "user_role", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private UserRole userRole = UserRole.USER;
 
+	@Column(name = "coin", nullable = false)
 	private Long coin = 0L;
 
+	@Column(name = "user_image_url")
 	private String userImageUrl;
 
 	@Builder

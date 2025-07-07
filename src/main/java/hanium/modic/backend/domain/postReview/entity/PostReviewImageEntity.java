@@ -32,6 +32,7 @@ import lombok.NoArgsConstructor;
 public class PostReviewImageEntity extends Image {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 

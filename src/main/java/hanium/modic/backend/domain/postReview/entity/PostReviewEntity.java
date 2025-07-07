@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 public class PostReviewEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -36,7 +37,7 @@ public class PostReviewEntity extends BaseEntity {
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
-	@Column(name = "description", length = 500)
+	@Column(name = "description", nullable = false, length = 500)
 	private String description;
 
 	@Builder

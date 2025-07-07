@@ -18,10 +18,11 @@ import lombok.*;
 public class UserImageEntity extends Image {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true) // 유저별로 이미지는 하나만 존재
+	@Column(name = "user_id", nullable = false, unique = true) // 유저별로 이미지는 하나만 존재
 	private Long userId;
 
 	@Builder
