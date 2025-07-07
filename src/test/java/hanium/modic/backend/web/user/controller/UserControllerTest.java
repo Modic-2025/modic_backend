@@ -30,6 +30,8 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
+import hanium.modic.backend.web.user.dto.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
 
@@ -132,5 +134,66 @@ class UserControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.email").value(mockUser.getEmail()));
 
 		SecurityContextHolder.clearContext();
+	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidNameRequests")
+	@DisplayName("이름 변경 유효성 검증 실패")
+	void updateUserName_validation_fail(String description, UpdateUserNameRequest request, String expectedMessage) throws Exception {
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/users/name")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedMessage));
+	}
+
+	static Stream<Arguments> invalidNameRequests() {
+		return Stream.of(
+			Arguments.of(
+				"이름이 null인 경우",
+				new UpdateUserNameRequest(null),
+				"이름은 필수입니다."
+			),
+			Arguments.of(
+				"이름이 빈 문자열인 경우",
+				new UpdateUserNameRequest(""),
+				"이름은 필수입니다."
+			),
+			Arguments.of(
+				"이름이 21자 이상인 경우",
+				new UpdateUserNameRequest("a".repeat(21)),
+				"이름은 2자 이상 20자 이하로 입력해주세요."
+			)
+		);
+	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidPasswordRequests")
+	@DisplayName("비밀번호 변경 유효성 검증 실패")
+	void updateUserPassword_validation_fail(String description, UpdateUserPasswordRequest request, String expectedMessage) throws Exception {
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/users/password")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason").value(expectedMessage));
+	}
+
+	static Stream<Arguments> invalidPasswordRequests() {
+		return Stream.of(
+			Arguments.of(
+				"기존 비밀번호가 null인 경우",
+				new UpdateUserPasswordRequest(null, "Valid123!"),
+				"비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+			),
+			Arguments.of(
+				"새 비밀번호가 형식에 맞지 않는 경우",
+				new UpdateUserPasswordRequest("Valid123!", "short"),
+				"비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+			)
+		);
 	}
 }
