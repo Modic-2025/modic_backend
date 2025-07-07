@@ -49,7 +49,7 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 		final String email = "test@test.kr";
 		final String originPassword = "qwer1234@#!";
 		String encoded = passwordEncoder.encode(originPassword);
-		UserEntity user = UserEntity.builder().email(email).password(encoded).build();
+		UserEntity user = UserEntity.builder().email(email).password(encoded).name("찬호").build();
 
 		userEntityRepository.save(user);
 
@@ -68,7 +68,7 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("토큰 재발급 API 테스트")
 	void reissueApiSuccess() throws Exception {
 		// given
-		UserEntity user = UserEntity.builder().email("youth@cotato.kr").password("password").build();
+		UserEntity user = UserEntity.builder().name("찬호").email("youth@cotato.kr").password("password").build();
 		userEntityRepository.save(user);
 
 		Token token = jwtTokenProvider.createToken(user);

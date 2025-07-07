@@ -8,19 +8,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "post_reviews")
+@Table(
+	name = "post_reviews",
+	indexes = {
+		@Index(name = "idx_post_review_post_id", columnList = "post_id")
+	}
+)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostReviewEntity extends BaseEntity {
 
 	@Id
+	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
@@ -30,7 +37,7 @@ public class PostReviewEntity extends BaseEntity {
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
 
-	@Column(name = "description", length = 500)
+	@Column(name = "description", nullable = false, length = 500)
 	private String description;
 
 	@Builder

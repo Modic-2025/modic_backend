@@ -75,12 +75,14 @@ public class PostService {
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-		final String userName = userEntity.getName(); // Todo: 탈퇴회원처리 필요
+		final String userName = userEntity.getName();
+		final String userImage = userEntity.getUserImageUrl();
+		final boolean hasUserImage = userImage != null;
 		final String userEmail = userEntity.getEmail();
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
-		return GetPostResponse.of(userName, userEmail, postEntity, postImages);
+		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages);
 	}
 
 	@Transactional(readOnly = true)

@@ -1,10 +1,5 @@
-package hanium.modic.backend.domain.postReview.entity;
+package hanium.modic.backend.domain.user.entity;
 
-import static hanium.modic.backend.common.error.ErrorCode.*;
-
-import java.util.Objects;
-
-import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -20,43 +15,34 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(
-	name = "post_review_image",
+@Table(name = "user_image",
 	indexes = {
-		@Index(name = "idx_post_review_image_post_review_id", columnList = "post_review_id")
-	}
-)
+		@Index(name = "idx_user_image_user_id", columnList = "user_id")
+	})
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostReviewImageEntity extends Image {
+public class UserImageEntity extends Image {
 
 	@Id
 	@Column(name = "id")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "post_review_id", nullable = true)
-	private Long postReviewId;
+	@Column(name = "user_id", nullable = false, unique = true) // 유저별로 이미지는 하나만 존재
+	private Long userId;
 
 	@Builder
-	private PostReviewImageEntity(
+	private UserImageEntity(
+		UserEntity user,
 		String imagePath,
 		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
-		ImagePrefix imagePurpose,
-		PostReviewEntity postReviewEntity
+		ImagePrefix imagePurpose
 	) {
 		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
-		this.postReviewId = (postReviewEntity == null) ? null : postReviewEntity.getId();
-	}
-
-	public void updatePostReview(PostReviewEntity postReview) {
-		if (postReviewId != null && !Objects.equals(this.postReviewId, postReview.getId())) {
-			throw new AppException(IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
-		}
-		this.postReviewId = postReview.getId();
+		this.userId = user.getId();
 	}
 }
