@@ -36,5 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
-### yml ###
-application-test.yml
+### Cursor ###
+.cursor/
+
+### Application Config Files ###
+application.yml
+application-*.yml
