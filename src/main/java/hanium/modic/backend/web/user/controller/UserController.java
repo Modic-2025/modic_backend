@@ -16,6 +16,7 @@ import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.UserInfoResponse;
@@ -68,6 +69,23 @@ public class UserController {
 		@RequestBody @Valid UpdateUserNameRequest request
 	) {
 		userService.updateUserName(user.getId(), request.name());
+
+		return ResponseEntity.ok().build();
+	}
+
+	@PatchMapping("/password")
+	@Operation(
+		summary = "유저 비밀번호 변경 API",
+		description = "로그인한 유저의 비밀번호를 변경합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+		}
+	)
+	public ResponseEntity<AppResponse<Void>> updateUserPassword(
+		@CurrentUser UserEntity user,
+		@RequestBody @Valid UpdateUserPasswordRequest request
+	) {
+		userService.updateUserPassword(user.getId(), request.oldPassword(), request.newPassword());
 
 		return ResponseEntity.ok().build();
 	}

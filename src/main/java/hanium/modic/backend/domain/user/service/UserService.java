@@ -61,4 +61,24 @@ public class UserService {
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 		user.updateName(name);
 	}
+
+	// 유저 비밀번호 변경
+	@Transactional
+	public void updateUserPassword(
+		final long id,
+		final String oldPassword,
+		final String newPassword
+	) {
+		UserEntity user = userEntityRepository.findById(id)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		// 기존 비밀번호 일치 확인
+		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
+		}
+
+		// 비밀번호 변경
+		final String encodedNewPassword = passwordEncoder.encode(newPassword);
+		user.updatePassword(encodedNewPassword);
+	}
 }
