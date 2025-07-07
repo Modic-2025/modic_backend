@@ -13,13 +13,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "post_review_image")
+@Table(
+	name = "post_review_image",
+	indexes = {
+		@Index(name = "idx_post_review_image_post_review_id", columnList = "post_review_id")
+	}
+)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

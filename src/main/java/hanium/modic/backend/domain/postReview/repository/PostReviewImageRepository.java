@@ -20,4 +20,6 @@ public interface PostReviewImageRepository extends JpaRepository<PostReviewImage
 
 	@Query("SELECT p FROM PostReviewImageEntity p WHERE p.id in :postReviewImageIds")
 	List<PostReviewImageEntity> findAllByPostReviewImageIds(List<Long> postReviewImageIds);
+
+	List<PostReviewImageEntity> findAllByPostReviewIdIn(List<Long> postReviewIds);
 }

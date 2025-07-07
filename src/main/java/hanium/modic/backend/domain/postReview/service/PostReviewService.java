@@ -3,7 +3,10 @@ package hanium.modic.backend.domain.postReview.service;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -100,32 +103,45 @@ public class PostReviewService {
 	}
 
 	// 포스트 리뷰 목록 조회
-	// TODO : 쿼리 최적화 필요.
 	public Page<PostReviewDetailResponse> getPostReviews(final Long postId, final int page, final int size) {
-		return postReviewRepository.findAllByPostId(postId, PageRequest.of(page, size))
-			.map(postReview -> {
-				// 회원 탈퇴 시 soft 탈퇴이므로 회원은 반드시 존재
-				UserEntity user = userEntityRepository.findById(postReview.getUserId())
-					.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		Page<PostReviewEntity> postReviews = postReviewRepository.findAllByPostId(postId, PageRequest.of(page, size));
 
-				final String userName = user.getName();
-				final String userImageUrl = user.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
-				final List<String> imageUrls = postReviewImageRepository.findAllByPostReviewId(postReview.getId())
-					.stream()
-					.map(postReviewImage -> postReviewImageService.createImageGetUrl(postReviewImage.getId()))
-					.toList();
+		// PostReview를 작성한 유저 정보 조회
+		List<Long> userIds = postReviews.stream()
+			.map(PostReviewEntity::getUserId)
+			.distinct()
+			.toList();
+		Map<Long, UserEntity> userMap = userEntityRepository.findAllById(userIds).stream()
+			.collect(Collectors.toMap(UserEntity::getId, Function.identity()));
 
-				return new PostReviewDetailResponse(
-					userName,
-					hasUserImage,
-					userImageUrl,
-					postReview.getCreateAt(),
-					postReview.getId(),
-					postReview.getDescription(),
-					imageUrls
-				);
-			});
+		// PostReview에 포함된 이미지들 조회
+		List<Long> postReviewIds = postReviews.stream()
+			.map(PostReviewEntity::getId)
+			.toList();
+		Map<Long, List<PostReviewImageEntity>> imageMap = postReviewImageRepository.findAllByPostReviewIdIn(postReviewIds).stream()
+			.collect(Collectors.groupingBy(PostReviewImageEntity::getPostReviewId));
+
+		return postReviews.map(postReview -> {
+			UserEntity user = userMap.get(postReview.getUserId());
+			if (user == null) throw new AppException(USER_NOT_FOUND_EXCEPTION);
+
+			String userImageUrl = user.getUserImageUrl();
+			boolean hasUserImage = userImageUrl != null;
+
+			List<String> imageUrls = imageMap.getOrDefault(postReview.getId(), List.of()).stream()
+				.map(image -> postReviewImageService.createImageGetUrl(image.getId()))
+				.toList();
+
+			return new PostReviewDetailResponse(
+				user.getName(),
+				hasUserImage,
+				userImageUrl,
+				postReview.getCreateAt(),
+				postReview.getId(),
+				postReview.getDescription(),
+				imageUrls
+			);
+		});
 	}
 
 	// 자신이 작성한 리뷰인지 확인
