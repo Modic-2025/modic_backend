@@ -103,6 +103,7 @@ public class PostReviewService {
 	}
 
 	// 포스트 리뷰 목록 조회
+	@Transactional(readOnly = true)
 	public Page<PostReviewDetailResponse> getPostReviews(final Long postId, final int page, final int size) {
 		Page<PostReviewEntity> postReviews = postReviewRepository.findAllByPostId(postId, PageRequest.of(page, size));
 
