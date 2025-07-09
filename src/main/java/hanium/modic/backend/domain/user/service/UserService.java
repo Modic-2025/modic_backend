@@ -7,7 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class UserService {
 	private final UserEntityRepository userEntityRepository;
 
 	private final BCryptPasswordEncoder passwordEncoder;
+	private final UserUpdateTokenRepository userUpdateTokenRepository;
 
 	// 회원가입
 	@Transactional
@@ -78,5 +81,35 @@ public class UserService {
 		// 비밀번호 변경
 		final String encodedNewPassword = passwordEncoder.encode(newPassword);
 		user.updatePassword(encodedNewPassword);
+	}
+
+	// 유저 업데이트 토큰 발급
+	public String getUserUpdateToken(final long userId, final String password) {
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		// 기존 비밀번호 일치 확인
+		if (!passwordEncoder.matches(password, user.getPassword())) {
+			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
+		}
+
+		// 토큰을 조회하며 없으면 발급
+		UserUpdateToken userUpdateToken = userUpdateTokenRepository.findById(userId)
+			.orElseGet(() -> {
+				String updateToken = generateUpdateToken();
+
+				return userUpdateTokenRepository.save(UserUpdateToken.builder()
+					.userId(userId)
+					.updateToken(updateToken)
+					.build()
+				);
+			});
+
+		return userUpdateToken.getUpdateToken();
+	}
+
+	private String generateUpdateToken() {
+		// 토큰 생성 로직 (예: UUID 사용)
+		return java.util.UUID.randomUUID().toString();
 	}
 }

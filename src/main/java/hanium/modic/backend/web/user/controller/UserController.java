@@ -1,6 +1,5 @@
 package hanium.modic.backend.web.user.controller;
 
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
+import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
 import hanium.modic.backend.web.user.dto.request.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.response.GetUserUpdateTokenResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,5 +111,18 @@ public class UserController {
 		userCoinService.transferCoin(user.getId(), request.toUserId(), request.coin());
 
 		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping("/update-token")
+	@Operation(
+		summary = "유저 정보 변경 토큰 발급 API",
+		description = "유저 정보 변경 토큰을 발급합니다."
+	)
+	public ResponseEntity<AppResponse<GetUserUpdateTokenResponse>> getUserUpdateToken(
+		@Valid @RequestBody GetUserUpdateTokenRequest request,
+		@CurrentUser UserEntity user
+	) {
+		String token = userService.getUserUpdateToken(user.getId(), request.password());
+		return ResponseEntity.ok(AppResponse.ok(new GetUserUpdateTokenResponse(token)));
 	}
 }
