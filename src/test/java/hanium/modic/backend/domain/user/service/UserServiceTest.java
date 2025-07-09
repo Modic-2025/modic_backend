@@ -18,8 +18,8 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.UserCreateResponse;
-import hanium.modic.backend.web.user.dto.UserInfoResponse;
+import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
+import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {

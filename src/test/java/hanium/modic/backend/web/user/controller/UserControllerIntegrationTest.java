@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.ResultActions;
@@ -16,14 +15,13 @@ import org.springframework.test.web.servlet.ResultActions;
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
-import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.UpdateUserNameRequest;
-import hanium.modic.backend.web.user.dto.UpdateUserPasswordRequest;
-import hanium.modic.backend.web.user.dto.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
+import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
 
 public class UserControllerIntegrationTest extends BaseIntegrationTest {
 

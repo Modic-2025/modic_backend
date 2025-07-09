@@ -1,6 +1,5 @@
 package hanium.modic.backend.domain.user.service;
 
-import org.hibernate.validator.constraints.Length;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,9 +8,8 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.UserCreateResponse;
-import hanium.modic.backend.web.user.dto.UserInfoResponse;
-import jakarta.validation.constraints.NotBlank;
+import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
+import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service

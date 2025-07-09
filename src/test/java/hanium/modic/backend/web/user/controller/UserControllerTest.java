@@ -30,10 +30,10 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
-import hanium.modic.backend.web.user.dto.UpdateUserNameRequest;
-import hanium.modic.backend.web.user.dto.UpdateUserPasswordRequest;
-import hanium.modic.backend.web.user.dto.UserCreateRequest;
-import hanium.modic.backend.web.user.dto.UserInfoResponse;
+import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
+import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
 @WebMvcTest(controllers = UserController.class)
 @AutoConfigureMockMvc(addFilters = false)

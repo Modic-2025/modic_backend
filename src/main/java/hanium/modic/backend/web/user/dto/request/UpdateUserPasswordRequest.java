@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.dto;
+package hanium.modic.backend.web.user.dto.request;
 
 import hanium.modic.backend.common.annotation.validator.Password;
 
