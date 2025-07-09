@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.user.entity;
+package hanium.modic.backend.domain.user.enums;
 
 import lombok.Getter;
 
