@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.ai.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CreatedAiImageService {
 
 	private final CreatedAiImageRepository createdAiImageRepository;
@@ -23,6 +25,7 @@ public class CreatedAiImageService {
 		return imageUtil.createImageGetUrl(createdAiImageEntity.getImagePath());
 	}
 
+	@Transactional
 	public void deleteImage(Long id) {
 		CreatedAiImageEntity createdAiImageEntity = createdAiImageRepository.findById(id)
 			.orElseThrow(() -> new AppException(ErrorCode.CREATED_AI_IMAGE_NOT_FOUND));
