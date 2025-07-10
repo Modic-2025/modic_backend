@@ -131,8 +131,9 @@ public class AiImageGenerationService {
 			}
 
 			// 데이터 일관성 오류: AI 요청이 DONE 상태인데 생성된 이미지가 없음
-			log.error("Data inconsistency detected: AiRequest status is DONE but CreatedAiImage not found. " +
-				"userId: {}, requestId: {}, aiRequestId: {}", userId, aiRequest.getRequestId(), aiRequest.getId());
+			log.error(
+				"데이터 일관성 오류: AI 요청이 DONE 상태인데 생성된 이미지가 없음. userId: {}, requestId: {}",
+				userId, aiRequest.getRequestId());
 			throw new AppException(ErrorCode.AI_IMAGE_DATA_INCONSISTENCY);
 		});
 
