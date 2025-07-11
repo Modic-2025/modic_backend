@@ -15,12 +15,21 @@ public record GetPostsResponse(
 	String description,
 	Long commercialPrice,
 	Long nonCommercialPrice,
-	List<ImageDto> images
-) {
+	List<ImageDto> images,
+	// 하트 수
+	long likeCount) {
+	// 기존 메서드 (하트 정보 없음 - 하위호환성)
 	public static GetPostsResponse of(
 		PostEntity postEntity,
-		List<PostImageEntity> images
-	) {
+		List<PostImageEntity> images) {
+		return of(postEntity, images, 0L);
+	}
+
+	// 하트 수 포함 메서드
+	public static GetPostsResponse of(
+		PostEntity postEntity,
+		List<PostImageEntity> images,
+		long likeCount) {
 		List<ImageDto> imageDtos = images.stream()
 			.map(image -> new ImageDto(image.getImageUrl(), image.getId()))
 			.toList();
@@ -32,8 +41,8 @@ public record GetPostsResponse(
 			postEntity.getDescription(),
 			postEntity.getCommercialPrice(),
 			postEntity.getNonCommercialPrice(),
-			imageDtos
-		);
+			imageDtos,
+			likeCount);
 	}
 
 	@Getter

@@ -4,6 +4,7 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,8 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
+import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
@@ -36,6 +39,10 @@ public class PostService {
 
 	private final UserEntityRepository userEntityRepository;
 
+	// 하트 기능 관련 의존성
+	private final PostLikeService postLikeService;
+	private final AsyncPostStatisticsService asyncPostStatisticsService;
+
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = DESC;
 
@@ -46,8 +53,7 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds
-	) {
+		final List<Long> imageIds) {
 		PostEntity postEntity = PostEntity.builder()
 			.userId(userId)
 			.title(title)
@@ -66,6 +72,9 @@ public class PostService {
 
 		postImageEntityRepository.saveAll(list);
 
+		// 게시글 통계 초기화 (비동기)
+		asyncPostStatisticsService.initializeStatistics(post.getId());
+
 		return post.getId();
 	}
 
@@ -82,7 +91,11 @@ public class PostService {
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
 
-		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages);
+		// 하트 수 조회 (통계 테이블 사용)
+		long likeCount = postLikeService.getLikeCount(id);
+
+		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
+			null);
 	}
 
 	@Transactional(readOnly = true)
@@ -97,10 +110,17 @@ public class PostService {
 			throw new AppException(POST_NOT_FOUND_EXCEPTION);
 		}
 
+		// 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
+		List<Long> postIds = posts.getContent().stream()
+			.map(PostEntity::getId)
+			.toList();
+		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
+
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
 			List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
+			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
 
-			return GetPostsResponse.of(post, postImages);
+			return GetPostsResponse.of(post, postImages, likeCount);
 		});
 
 		return PageResponse.of(responsePages);
