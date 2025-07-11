@@ -33,4 +33,9 @@ public interface PostStatisticsEntityRepository extends JpaRepository<PostStatis
 	 * 게시글별 하트 수 존재 여부 확인
 	 */
 	boolean existsByPostId(Long postId);
+
+	/**
+	 * 특정 게시글의 통계 정보 삭제
+	 */
+	void deleteByPostId(Long postId);
 }

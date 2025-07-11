@@ -100,8 +100,8 @@ public class PostLikeService {
 		return postStatisticsRepository.findByPostIdIn(postIds)
 			.stream()
 			.collect(Collectors.toMap(
-				stats -> stats.getPostId(),
-				stats -> stats.getLikeCount()));
+				PostStatisticsEntity::getPostId,
+				PostStatisticsEntity::getLikeCount));
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class PostLikeService {
 				postId, actualCount, statisticsCount);
 
 			// 기존 통계 삭제 후 새로 생성 (더 안전한 방법)
-			postStatisticsRepository.deleteById(postId);
+			postStatisticsRepository.deleteByPostId(postId);
 
 			PostStatisticsEntity correctedStats = PostStatisticsEntity.builder()
 				.postId(postId)

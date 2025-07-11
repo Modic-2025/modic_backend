@@ -5,6 +5,8 @@ import static lombok.AccessLevel.*;
 import hanium.modic.backend.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -23,7 +25,10 @@ import lombok.NoArgsConstructor;
 public class PostStatisticsEntity extends BaseEntity {
 
 	@Id
-	@Column(name = "post_id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(name = "post_id", unique = true, nullable = false)
 	private Long postId;
 
 	@Column(name = "like_count", nullable = false)
