@@ -34,6 +34,8 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
+import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -51,6 +53,10 @@ class PostServiceTest {
 	private PostImageService postImageService;
 	@Mock
 	private UserEntityRepository userEntityRepository;
+	@Mock
+	private PostLikeService postLikeService;
+	@Mock
+	private AsyncPostStatisticsService asyncPostStatisticsService;
 
 	@InjectMocks
 	private PostService postService;
@@ -102,11 +108,12 @@ class PostServiceTest {
 	}
 
 	@Test
-	@DisplayName("단일 게시글 조회 성공")
-	void getPost_Success() {
-		// Given
+	@DisplayName("단일 게시글 조회 성공 - 사용자가 좋아요한 경우")
+	void getPost_UserLikedPost_ShouldReturnPostWithLikeStatus() {
+		// given
 		UserEntity mockUser = UserFactory.createMockUser(1L);
 		Long postId = 1L;
+		Long currentUserId = 2L;
 		PostEntity mockPost = createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
@@ -116,39 +123,79 @@ class PostServiceTest {
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(postLikeService.getLikeCount(postId)).thenReturn(10L);
+		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(true);
 
-		// When
-		GetPostResponse response = postService.getPost(postId);
+		// when
+		GetPostResponse response = postService.getPost(postId, currentUserId);
 
-		// Then
+		// then
 		assertThat(response).isNotNull();
-		assertEquals(mockPost.getId(), response.id());
-		assertEquals(mockPost.getTitle(), response.title());
-		assertEquals(mockPost.getDescription(), response.description());
-		assertEquals(mockPost.getCommercialPrice(), response.commercialPrice());
-		assertEquals(mockPost.getNonCommercialPrice(), response.nonCommercialPrice());
+		assertThat(response.id()).isEqualTo(mockPost.getId());
+		assertThat(response.title()).isEqualTo(mockPost.getTitle());
+		assertThat(response.description()).isEqualTo(mockPost.getDescription());
+		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());
+		assertThat(response.nonCommercialPrice()).isEqualTo(mockPost.getNonCommercialPrice());
+		assertThat(response.likeCount()).isEqualTo(10L);
+		assertThat(response.isLikedByCurrentUser()).isTrue();
+		assertThat(response.images()).hasSize(expectedImages.size());
 		for (int i = 0; i < expectedImages.size(); i++) {
-			assertEquals(expectedImages.get(i).getImageUrl(), response.images().get(i).getImageUrl());
-			assertEquals(expectedImages.get(i).getImageId(), response.images().get(i).getImageId());
+			assertThat(response.images().get(i).getImageUrl()).isEqualTo(expectedImages.get(i).getImageUrl());
+			assertThat(response.images().get(i).getImageId()).isEqualTo(expectedImages.get(i).getImageId());
 		}
 
-		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		verify(postLikeService).isLikedByUser(currentUserId, postId);
 	}
 
 	@Test
-	@DisplayName("단일 게시글 조회 실패: 해당 id 게시글 없는 경우")
-	void getPost_NotFound() {
-		// Given
+	@DisplayName("단일 게시글 조회 성공 - 사용자가 좋아요하지 않은 경우")
+	void getPost_UserNotLikedPost_ShouldReturnPostWithoutLikeStatus() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long postId = 1L;
+		Long currentUserId = 2L;
+		PostEntity mockPost = createMockPostWithId(postId, mockUser);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(postLikeService.getLikeCount(postId)).thenReturn(5L);
+		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(false);
+
+		// when
+		GetPostResponse response = postService.getPost(postId, currentUserId);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.likeCount()).isEqualTo(5L);
+		assertThat(response.isLikedByCurrentUser()).isFalse();
+
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		verify(postLikeService).isLikedByUser(currentUserId, postId);
+	}
+
+	@Test
+	@DisplayName("단일 게시글 조회 실패 - 존재하지 않는 게시글 ID")
+	void getPost_NonExistentPostId_ShouldThrowPostNotFoundException() {
+		// given
 		Long nonExistentPostId = 99L;
+		Long currentUserId = 1L;
 		when(postEntityRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
 
-		// When & Then
+		// when & then
 		AppException exception = assertThrows(AppException.class,
-			() -> postService.getPost(nonExistentPostId)
-		);
-		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
-		verify(postEntityRepository, times(1)).findById(nonExistentPostId);
+			() -> postService.getPost(nonExistentPostId, currentUserId));
+
+		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+		verify(postEntityRepository).findById(nonExistentPostId);
 		verify(postImageEntityRepository, never()).findAllByPostId(any());
 	}
 
@@ -207,8 +254,7 @@ class PostServiceTest {
 
 		// When & Then
 		AppException exception = assertThrows(AppException.class,
-			() -> postService.getPosts(sort, page, size)
-		);
+			() -> postService.getPosts(sort, page, size));
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postEntityRepository, times(1)).findAll(any(Pageable.class));
