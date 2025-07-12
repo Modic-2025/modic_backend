@@ -20,7 +20,9 @@ import lombok.NoArgsConstructor;
 
 @Table(name = "ai_request",
 	indexes = {
-		@Index(name = "idx_ai_request_request_id", columnList = "request_id")
+		@Index(name = "idx_ai_request_request_id", columnList = "request_id"),
+		@Index(name = "idx_ai_request_user_id_status_request_id",
+			columnList = "user_id, status, request_id DESC"),
 	})
 @Entity
 @Getter
