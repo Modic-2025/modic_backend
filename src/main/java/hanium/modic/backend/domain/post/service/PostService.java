@@ -79,7 +79,7 @@ public class PostService {
 	}
 
 	@Transactional(readOnly = true)
-	public GetPostResponse getPost(final Long id) {
+	public GetPostResponse getPost(final Long id, final Long currentUserId) {
 		final PostEntity postEntity = postEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
@@ -94,8 +94,11 @@ public class PostService {
 		// 하트 수 조회 (통계 테이블 사용)
 		long likeCount = postLikeService.getLikeCount(id);
 
+		// 현재 인증된 사용자의 좋아요 여부 확인
+		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			null);
+			isLikedByCurrentUser);
 	}
 
 	@Transactional(readOnly = true)
@@ -146,8 +149,7 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds
-	) {
+		final List<Long> imageIds) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
@@ -176,8 +178,7 @@ public class PostService {
 	// Todo : 권한 검증 로직 개선 필요, AOP 등등
 	private void validatePostRole(
 		final long userId,
-		final long postUserId
-	) {
+		final long postUserId) {
 		if (userId != postUserId) {
 			throw new AppException(POST_ROLE_EXCEPTION);
 		}

@@ -41,109 +41,56 @@ public class PostController {
 	private final PostService postService;
 
 	@PostMapping
-	@Operation(
-		summary = "게시글 작성 API",
-		description = "게시글을 작성합니다. 작성자는 인증된 사용자여야 합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]")
-		}
-	)
-	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(
-		@CurrentUser UserEntity user,
-		@RequestBody @Valid CreatePostRequest request
-	) {
+	@Operation(summary = "게시글 작성 API", description = "게시글을 작성합니다. 작성자는 인증된 사용자여야 합니다.", responses = {
+		@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+		@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]")})
+	public ResponseEntity<AppResponse<CreatePostResponse>> createPost(@CurrentUser UserEntity user,
+		@RequestBody @Valid CreatePostRequest request) {
 
 		return ResponseEntity.status(CREATED)
-			.body(AppResponse.created(
-				CreatePostResponse.of(
-					postService.createPost(
-						user.getId(),
-						request.title(),
-						request.description(),
-						request.commercialPrice(),
-						request.nonCommercialPrice(),
-						request.imageIds()
-					)
-				)
-			));
+			.body(AppResponse.created(CreatePostResponse.of(
+				postService.createPost(user.getId(), request.title(), request.description(), request.commercialPrice(),
+					request.nonCommercialPrice(), request.imageIds()))));
 	}
 
 	@GetMapping("/{id}")
-	@Operation(
-		summary = "게시글 조회 API",
-		description = "게시글을 조회합니다. 게시글 ID를 입력받습니다.",
-		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
-		}
-	)
-	public ResponseEntity<AppResponse<GetPostResponse>> getPost(@PathVariable Long id) {
-		GetPostResponse response = postService.getPost(id);
+	@Operation(summary = "게시글 조회 API", description = "게시글을 조회합니다. 게시글 ID를 입력받습니다.", responses = {
+		@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")})
+	public ResponseEntity<AppResponse<GetPostResponse>> getPost(@PathVariable Long id, @CurrentUser UserEntity user) {
+		GetPostResponse response = postService.getPost(id, user.getId());
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@GetMapping
-	@Operation(
-		summary = "게시글 목록 조회 API",
-		description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
-		}
-	)
+	@Operation(summary = "게시글 목록 조회 API", description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.", responses = {
+		@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")})
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
-		@RequestParam(required = false, defaultValue = "10")
-		@Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.")
-		@Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
-	) {
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size) {
 		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@DeleteMapping("/{id}")
-	@Operation(
-		summary = "게시글 삭제 API",
-		description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.",
-		responses = {
-			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
-			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
-		}
-	)
-	public ResponseEntity<AppResponse<Void>> deletePost(
-		@CurrentUser UserEntity user,
-		@PathVariable Long id
-	) {
+	@Operation(summary = "게시글 삭제 API", description = "게시글을 삭제합니다. 작성자만 삭제할 수 있습니다.", responses = {
+		@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
+		@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")})
+	public ResponseEntity<AppResponse<Void>> deletePost(@CurrentUser UserEntity user, @PathVariable Long id) {
 		postService.deletePost(user.getId(), id);
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
 
 	@PutMapping("/{id}")
-	@Operation(
-		summary = "게시글 수정 API",
-		description = "게시글을 수정합니다. 작성자만 수정할 수 있습니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
-			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
-		}
-	)
-	public ResponseEntity<AppResponse<Void>> updatePost(
-		@CurrentUser UserEntity user,
-		@PathVariable long id,
-		@RequestBody @Valid UpdatePostRequest request
-	) {
-		postService.updatePost(
-			user.getId(),
-			id,
-			request.title(),
-			request.description(),
-			request.commercialPrice(),
-			request.nonCommercialPrice(),
-			request.imageIds()
-		);
+	@Operation(summary = "게시글 수정 API", description = "게시글을 수정합니다. 작성자만 수정할 수 있습니다.", responses = {
+		@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+		@ApiResponse(responseCode = "403", description = "포스트에 대한 권한이 없습니다.[P-002]"),
+		@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")})
+	public ResponseEntity<AppResponse<Void>> updatePost(@CurrentUser UserEntity user, @PathVariable long id,
+		@RequestBody @Valid UpdatePostRequest request) {
+		postService.updatePost(user.getId(), id, request.title(), request.description(), request.commercialPrice(),
+			request.nonCommercialPrice(), request.imageIds());
 
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
-
 }
