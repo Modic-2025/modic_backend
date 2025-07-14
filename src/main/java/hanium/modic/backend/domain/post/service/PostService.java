@@ -5,6 +5,7 @@ import static org.springframework.data.domain.Sort.Direction.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -113,14 +114,22 @@ public class PostService {
 			throw new AppException(POST_NOT_FOUND_EXCEPTION);
 		}
 
-		// 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
+		// 게시글 ID 목록 추출
 		List<Long> postIds = posts.getContent().stream()
 			.map(PostEntity::getId)
 			.toList();
+
+		// 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
 		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
+		// 배치로 모든 포스트 이미지 조회
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 그룹화
+		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
+			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
-			List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
+			List<PostImageEntity> postImages = imagesByPostId.getOrDefault(post.getId(), List.of());
 			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
 
 			return GetPostsResponse.of(post, postImages, likeCount);

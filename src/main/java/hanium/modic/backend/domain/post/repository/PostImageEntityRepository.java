@@ -1,14 +1,16 @@
 package hanium.modic.backend.domain.post.repository;
 
-import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import hanium.modic.backend.domain.post.entity.PostImageEntity;
+
 public interface PostImageEntityRepository extends JpaRepository<PostImageEntity, Long> {
-    List<PostImageEntity> findAllByPostId(Long postId);
+	List<PostImageEntity> findAllByPostId(Long postId);
 
 	boolean existsByImagePath(String imagePath);
 
@@ -18,4 +20,8 @@ public interface PostImageEntityRepository extends JpaRepository<PostImageEntity
 	@Modifying
 	@Query("DELETE FROM PostImageEntity i WHERE i.id IN :ids")
 	void deleteAllByIds(List<Long> ids);
+
+	@Query("SELECT pi FROM PostImageEntity pi WHERE pi.postId IN :postIds ORDER BY pi.postId, pi.id")
+	List<PostImageEntity> findAllByPostIdIn(@Param("postIds") List<Long> postIds);
+
 }
