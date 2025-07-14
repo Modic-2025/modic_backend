@@ -194,13 +194,33 @@ public class PostService {
 	}
 
 	// 단순 포스트 목록 조회
-	// TODO: 포스트 조회 순서
+	@Transactional(readOnly = true)
 	public Page<GetSimplePostsResponse> getSimplePosts(final long userId, final int page, final int size) {
-		return postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size))
-			.map(post -> {
-				// TODO: 쿼리 최적화 필요
-				List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(post.getId());
-				return new GetSimplePostsResponse(post.getId(), postImages.get(0).getImageUrl());
-			});
+		Page<PostEntity> posts = postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size));
+
+		if (posts.isEmpty()) {
+			return Page.empty();
+		}
+
+		// 게시글 ID 목록 추출
+		List<Long> postIds = posts.getContent().stream()
+			.map(PostEntity::getId)
+			.toList();
+
+		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL을 찾는 Map 생성
+		Map<Long, String> firstImageByPostId = allPostImages.stream()
+			.collect(Collectors.toMap(
+				PostImageEntity::getPostId,     // Key: postId
+				PostImageEntity::getImageUrl,   // Value: imageUrl
+				(existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
+			));
+
+		return posts.map(post -> {
+			String firstImageUrl = firstImageByPostId.get(post.getId());
+			return new GetSimplePostsResponse(post.getId(), firstImageUrl);
+		});
 	}
 }
