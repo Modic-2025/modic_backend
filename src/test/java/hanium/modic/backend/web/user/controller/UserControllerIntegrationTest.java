@@ -19,9 +19,12 @@ import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 
 public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -33,6 +36,9 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private UserService userService;
 
 	@Test
 	@DisplayName("회원가입 API 테스트")
@@ -107,7 +113,10 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 		user.updatePassword(passwordEncoder.encode(oldPassword));
 		userEntityRepository.save(user);
 
-		UpdateUserPasswordRequest request = new UpdateUserPasswordRequest(oldPassword, newPassword);
+		// 유저 토큰 발급
+		String userUpdateToken = userService.getUserUpdateToken(user.getId(), oldPassword);
+
+		UpdateUserPasswordRequest request = new UpdateUserPasswordRequest(newPassword, userUpdateToken);
 
 		// when
 		ResultActions result = mockMvc.perform(patch("/api/users/password")
@@ -122,31 +131,69 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("TEST3: 기존 비밀번호가 일치하지 않아 비밀번호 변경에 실패한다")
-	@WithCustomUser(email = "viewer@test.com")
-	void updateUserPasswordFailDueToWrongOldPassword() throws Exception {
-		// given
+	@DisplayName("유저 정보 변경 토큰 발급 API 테스트")
+	@WithCustomUser(email = "user@token.com")
+	void getUserUpdateTokenApiTest() throws Exception {
 		UserEntity user = ContextHolderUtil.getCurrentUser();
-		String actualOldPassword = "correctPassword1!";
-		String wrongOldPassword = "wrongPassword1!";
-		String newPassword = "newPassword1!";
-
-		user.updatePassword(passwordEncoder.encode(actualOldPassword));
+		String password = "originPassword1!";
+		user.updatePassword(passwordEncoder.encode(password));
 		userEntityRepository.save(user);
 
-		UpdateUserPasswordRequest request = new UpdateUserPasswordRequest(wrongOldPassword, newPassword);
+		GetUserUpdateTokenRequest request = new GetUserUpdateTokenRequest(password);
+		String json = objectMapper.writeValueAsString(request);
 
-		// when
-		ResultActions result = mockMvc.perform(patch("/api/users/password")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(objectMapper.writeValueAsString(request)));
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+	}
 
-		// then
-		result.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value(USER_PASSWORD_MISMATCH_EXCEPTION.getCode()));
+	@Test
+	@DisplayName("유저 이메일 변경 API 테스트 (토큰 기반)")
+	@WithCustomUser(email = "user@email.com")
+	void updateUserEmailApiTest() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String password = "originPassword2!";
+		user.updatePassword(passwordEncoder.encode(password));
+		userEntityRepository.save(user);
 
-		UserEntity updatedUser = userEntityRepository.findByEmail("viewer@test.com").orElseThrow();
-		assertThat(passwordEncoder.matches(newPassword, updatedUser.getPassword())).isFalse(); // 비밀번호가 변경되지 않아야 함
-		assertThat(passwordEncoder.matches(actualOldPassword, updatedUser.getPassword())).isTrue(); // 기존 비밀번호는 여전히 일치해야 함
+		// 토큰 발급
+		String updateToken = userService.getUserUpdateToken(user.getId(), password);
+
+		String newEmail = "changed@email.com";
+		UpdateUserEmailRequest emailRequest = new UpdateUserEmailRequest(newEmail, updateToken);
+
+		mockMvc.perform(patch("/api/users/email")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(emailRequest)))
+			.andExpect(status().isOk());
+
+		UserEntity updated = userEntityRepository.findById(user.getId()).orElseThrow();
+		assertThat(updated.getEmail()).isEqualTo(newEmail);
+	}
+
+	@Test
+	@DisplayName("유저 비밀번호 변경 API 테스트 (토큰 기반)")
+	@WithCustomUser(email = "user@pw.com")
+	void updateUserPasswordApiTest() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String oldPassword = "originPassword3!";
+		user.updatePassword(passwordEncoder.encode(oldPassword));
+		userEntityRepository.save(user);
+
+		// 토큰 발급
+		String updateToken = userService.getUserUpdateToken(user.getId(), oldPassword);
+
+		String newPassword = "changedPassword3!";
+		UpdateUserPasswordRequest pwRequest = new UpdateUserPasswordRequest(newPassword, updateToken);
+
+		mockMvc.perform(patch("/api/users/password")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(pwRequest)))
+			.andExpect(status().isOk());
+
+		UserEntity updated = userEntityRepository.findById(user.getId()).orElseThrow();
+		assertThat(passwordEncoder.matches(newPassword, updated.getPassword())).isTrue();
 	}
 }

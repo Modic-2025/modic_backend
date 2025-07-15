@@ -20,6 +20,8 @@ import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
+import hanium.modic.backend.domain.user.entity.UserUpdateToken;
+import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -32,6 +34,9 @@ class UserServiceTest {
 
 	@Mock
 	private BCryptPasswordEncoder passwordEncoder;
+
+	@Mock
+	private UserUpdateTokenRepository userUpdateTokenRepository;
 
 	@Test
 	@DisplayName("유저 회원가입 테스트")
@@ -108,27 +113,25 @@ class UserServiceTest {
 	}
 
 	@Test
-	@DisplayName("유저 패스워드 변경 테스트")
-	void updateUserPasswordTest() {
+	@DisplayName("유저 정보 변경 토큰 발급 성공")
+	void getUserUpdateToken_success() {
 		// given
-		final Long userId = 1L;
+		Long userId = 1L;
+		String password = "password1!";
+		String encodedPassword = "encodedPassword1!";
 		UserEntity user = UserFactory.createMockUser(userId);
-		final String oldPassword = "oldPassword";
-		final String encodedOldPassword = "encodedOldPassword";
-		final String newPassword = "newPassword";
-		user.updatePassword(encodedOldPassword);
+		user.updatePassword(encodedPassword);
 
 		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
-		when(passwordEncoder.matches(oldPassword, user.getPassword())).thenReturn(true);
-		when(passwordEncoder.encode(newPassword)).thenReturn("encodedNewPassword");
+		when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
+		when(userUpdateTokenRepository.findById(userId)).thenReturn(java.util.Optional.empty());
+		when(userUpdateTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
 		// when
-		userService.updateUserPassword(userId, oldPassword, newPassword);
+		String token = userService.getUserUpdateToken(userId, password);
 
 		// then
-		assertThat(user.getPassword()).isEqualTo("encodedNewPassword");
-		verify(userEntityRepository, times(1)).findById(userId);
-		verify(passwordEncoder, times(1)).matches(oldPassword, encodedOldPassword); // 기존 비밀번호가 일치하는지 확인해야 한다.
-		verify(passwordEncoder, times(1)).encode(newPassword); // 유저 패스워드는 암호화해야 한다.
+		assertThat(token).isNotBlank();
+		verify(userUpdateTokenRepository).save(any());
 	}
 }
