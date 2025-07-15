@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
 import hanium.modic.backend.web.user.dto.request.TransferCoinsRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
@@ -76,6 +76,24 @@ public class UserController {
 		return ResponseEntity.ok().build();
 	}
 
+	@PatchMapping("/email")
+	@Operation(
+		summary = "유저 이메일 변경 API",
+		description = "로그인한 유저의 이메일을 변경합니다. (토큰 필요)",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
+			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
+			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-007]")
+		}
+	)
+	public ResponseEntity<AppResponse<Void>> updateUserEmail(
+		@CurrentUser UserEntity user,
+		@RequestBody @Valid UpdateUserEmailRequest request
+	) {
+		userService.updateUserEmail(user.getId(), request.email(), request.updateToken());
+		return ResponseEntity.ok().build();
+	}
+
 	@PatchMapping("/password")
 	@Operation(
 		summary = "유저 비밀번호 변경 API",
@@ -83,14 +101,19 @@ public class UserController {
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "400", description = "비밀번호가 일치하지 않습니다.[U-003]"),
+			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-008]")
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> updateUserPassword(
 		@CurrentUser UserEntity user,
 		@RequestBody @Valid UpdateUserPasswordRequest request
 	) {
-		userService.updateUserPassword(user.getId(), request.oldPassword(), request.newPassword());
-
+		userService.updateUserPasswordWithToken(
+			user.getId(),
+			request.oldPassword(),
+			request.newPassword(),
+			request.updateToken()
+		);
 		return ResponseEntity.ok().build();
 	}
 

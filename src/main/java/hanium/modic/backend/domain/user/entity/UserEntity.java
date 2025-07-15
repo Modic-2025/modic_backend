@@ -94,9 +94,13 @@ public class UserEntity extends BaseEntity {
 
 	// 유저 비밀번호 업데이트
 	public void updatePassword(String encode) {
-	if (encode == null || encode.isBlank()) {
+		if (encode == null || encode.isBlank()) {
 			throw new AppException(USER_INPUT_EXCEPTION);
 		}
 		this.password = encode;
+	}
+
+	public void updateEmail(String email) {
+		this.email = email;
 	}
 }

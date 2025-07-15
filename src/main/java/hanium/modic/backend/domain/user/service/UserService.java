@@ -108,6 +108,48 @@ public class UserService {
 		return userUpdateToken.getUpdateToken();
 	}
 
+	// 유저 이메일 변경 (토큰 검증)
+	@Transactional
+	public void updateUserEmail(final long userId, final String newEmail, final String updateToken) {
+		validateUpdateToken(userId, updateToken);
+		checkDuplicateEmail(newEmail);
+
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		user.updateEmail(newEmail);
+	}
+
+	// 유저 비밀번호 변경 (토큰 검증)
+	@Transactional
+	public void updateUserPasswordWithToken(
+		final long userId,
+		final String oldPassword,
+		final String newPassword,
+		final String updateToken
+	) {
+		validateUpdateToken(userId, updateToken);
+
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
+		}
+
+		final String encodedNewPassword = passwordEncoder.encode(newPassword);
+		user.updatePassword(encodedNewPassword);
+	}
+
+	// 토큰 검증 메서드
+	private void validateUpdateToken(final long userId, final String updateToken) {
+		UserUpdateToken userUpdateToken = userUpdateTokenRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_UPDATE_TOKEN_INVALID_EXCEPTION));
+
+		if (!userUpdateToken.getUpdateToken().equals(updateToken)) {
+			throw new AppException(ErrorCode.USER_UPDATE_TOKEN_INVALID_EXCEPTION);
+		}
+	}
+
+	// 토큰 생성 메서드
 	private String generateUpdateToken() {
 		// 토큰 생성 로직 (예: UUID 사용)
 		return java.util.UUID.randomUUID().toString();
