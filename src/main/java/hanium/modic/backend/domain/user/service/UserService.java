@@ -63,20 +63,28 @@ public class UserService {
 		user.updateName(name);
 	}
 
-	// 유저 비밀번호 변경
+	// 유저 이메일 변경 (토큰 검증)
 	@Transactional
-	public void updateUserPassword(
-		final long id,
-		final String oldPassword,
-		final String newPassword
-	) {
-		UserEntity user = userEntityRepository.findById(id)
-			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+	public void updateUserEmail(final long userId, final String newEmail, final String updateToken) {
+		validateUpdateToken(userId, updateToken);
+		checkDuplicateEmail(newEmail);
 
-		// 기존 비밀번호 일치 확인
-		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
-		}
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		user.updateEmail(newEmail);
+	}
+
+	// 유저 비밀번호 변경 (토큰 검증)
+	@Transactional
+	public void updateUserPasswordWithToken(
+		final long userId,
+		final String newPassword,
+		final String updateToken
+	) {
+		validateUpdateToken(userId, updateToken);
+
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 
 		// 비밀번호 변경
 		final String encodedNewPassword = passwordEncoder.encode(newPassword);
@@ -106,37 +114,6 @@ public class UserService {
 			});
 
 		return userUpdateToken.getUpdateToken();
-	}
-
-	// 유저 이메일 변경 (토큰 검증)
-	@Transactional
-	public void updateUserEmail(final long userId, final String newEmail, final String updateToken) {
-		validateUpdateToken(userId, updateToken);
-		checkDuplicateEmail(newEmail);
-
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
-		user.updateEmail(newEmail);
-	}
-
-	// 유저 비밀번호 변경 (토큰 검증)
-	@Transactional
-	public void updateUserPasswordWithToken(
-		final long userId,
-		final String oldPassword,
-		final String newPassword,
-		final String updateToken
-	) {
-		validateUpdateToken(userId, updateToken);
-
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
-		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
-		}
-
-		final String encodedNewPassword = passwordEncoder.encode(newPassword);
-		user.updatePassword(encodedNewPassword);
 	}
 
 	// 토큰 검증 메서드
