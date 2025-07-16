@@ -109,7 +109,6 @@ class UserServiceTest {
 		assertThat(user.getName()).isEqualTo(newName);
 		verify(userEntityRepository, times(1)).findById(userId);
 		verify(user, times(1)).updateName(newName);
-		Assertions.assertEquals(newName, user.getName());
 	}
 
 	@Test
