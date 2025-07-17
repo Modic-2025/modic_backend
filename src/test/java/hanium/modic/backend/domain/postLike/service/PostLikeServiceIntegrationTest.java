@@ -77,6 +77,7 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 		}
 
 		latch.await();
+		executor.shutdown();
 
 		// 홀수 개의 요청이므로 최종적으로 좋아요가 존재해야 함
 		boolean isLiked = postLikeService.isLikedByUser(user2.getId(), post.getId());
@@ -112,7 +113,7 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 		});
 
 		latch.await();
-
+		executor.shutdown();
 		// 모든 사용자의 좋아요가 정상 저장되었는지 확인
 		assertThat(postLikeService.isLikedByUser(user2.getId(), post.getId())).isTrue();
 		assertThat(postLikeService.isLikedByUser(user3.getId(), post.getId())).isTrue();
@@ -168,6 +169,7 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 		});
 
 		latch.await();
+		executor.shutdown();
 
 		// 실제 좋아요 수 계산
 		long actualLikeCount = postLikeRepository.countByPostId(post.getId());
