@@ -83,7 +83,7 @@ public class UserController {
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
-			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-007]")
+			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-008]")
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> updateUserEmail(
