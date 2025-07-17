@@ -20,7 +20,6 @@ import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
 import hanium.modic.backend.domain.postReview.entityfactory.PostReviewFactory;
 import hanium.modic.backend.domain.postReview.repository.PostReviewCommentRepository;
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
-import hanium.modic.backend.domain.user.entity.UserConstant;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;

@@ -30,8 +30,12 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
-import hanium.modic.backend.web.user.dto.UserCreateRequest;
-import hanium.modic.backend.web.user.dto.UserInfoResponse;
+import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
+import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
+import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
 @WebMvcTest(controllers = UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -133,4 +137,162 @@ class UserControllerTest extends BaseControllerTest {
 
 		SecurityContextHolder.clearContext();
 	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidNameRequests")
+	@DisplayName("이름 변경 유효성 검증 실패")
+	void updateUserName_validation_fail(String description, UpdateUserNameRequest request, String expectedMessage) throws Exception {
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(patch("/api/users/name")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedMessage));
+	}
+
+	static Stream<Arguments> invalidNameRequests() {
+		return Stream.of(
+			Arguments.of(
+				"이름이 null인 경우",
+				new UpdateUserNameRequest(null),
+				"이름은 필수입니다."
+			),
+			Arguments.of(
+				"이름이 빈 문자열인 경우",
+				new UpdateUserNameRequest(""),
+				"이름은 2자 이상 20자 이하로 입력해주세요."
+			),
+			Arguments.of(
+				"이름이 21자 이상인 경우",
+				new UpdateUserNameRequest("a".repeat(21)),
+				"이름은 2자 이상 20자 이하로 입력해주세요."
+			)
+		);
+	}
+
+    @Test
+    @DisplayName("유저 정보 변경 토큰 발급 컨트롤러 테스트")
+    void getUserUpdateTokenControllerTest() throws Exception {
+        // given
+        Long userId = 1L;
+        String password = "password1!";
+        String token = "update-token-123";
+        GetUserUpdateTokenRequest request = new GetUserUpdateTokenRequest(password);
+        String json = objectMapper.writeValueAsString(request);
+        UserEntity mockUser = UserFactory.createMockUser(userId);
+
+        given(userService.getUserUpdateToken(anyLong(), eq(password))).willReturn(token);
+
+        // when & then
+        mockMvc.perform(post("/api/users/update-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.userUpdateToken").value(token));
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("invalidUpdateTokenRequests")
+    @DisplayName("유저 정보 변경 토큰 발급 유효성 검증 실패")
+    void getUserUpdateToken_validation_fail(String description, GetUserUpdateTokenRequest request, String expectedMessage) throws Exception {
+        String json = objectMapper.writeValueAsString(request);
+
+        mockMvc.perform(post("/api/users/update-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.reason").value(expectedMessage));
+    }
+
+    static Stream<Arguments> invalidUpdateTokenRequests() {
+        return Stream.of(
+            Arguments.of(
+                "비밀번호가 null인 경우",
+                new GetUserUpdateTokenRequest(null),
+                "비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+            ),
+            Arguments.of(
+                "비밀번호가 빈 문자열인 경우",
+                new GetUserUpdateTokenRequest(""),
+                "비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+            )
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("invalidEmailRequests")
+    @DisplayName("이메일 변경 유효성 검증 실패")
+    void updateUserEmail_validation_fail(String description, UpdateUserEmailRequest request, String expectedMessage) throws Exception {
+        String json = objectMapper.writeValueAsString(request);
+
+        mockMvc.perform(patch("/api/users/email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.reason").value(expectedMessage));
+    }
+
+    static Stream<Arguments> invalidEmailRequests() {
+        return Stream.of(
+            Arguments.of(
+                "이메일이 null인 경우",
+                new UpdateUserEmailRequest(null, "validToken"),
+                "이메일은 필수입니다."
+            ),
+            Arguments.of(
+                "이메일 형식이 올바르지 않은 경우",
+                new UpdateUserEmailRequest("invalid-email", "validToken"),
+                "이메일 형식이 올바르지 않습니다."
+            ),
+            Arguments.of(
+                "토큰이 null인 경우",
+                new UpdateUserEmailRequest("valid@email.com", null),
+                "토큰은 필수입니다."
+            ),
+            Arguments.of(
+                "토큰이 빈 문자열인 경우",
+                new UpdateUserEmailRequest("valid@email.com", ""),
+                "토큰은 필수입니다."
+            )
+        );
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("invalidPasswordRequests")
+    @DisplayName("비밀번호 변경 유효성 검증 실패")
+    void updateUserPassword_validation_fail(String description, UpdateUserPasswordRequest request, String expectedMessage) throws Exception {
+        String json = objectMapper.writeValueAsString(request);
+
+        mockMvc.perform(patch("/api/users/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.reason").value(expectedMessage));
+    }
+
+    static Stream<Arguments> invalidPasswordRequests() {
+        return Stream.of(
+            Arguments.of(
+                "비밀번호가 null인 경우",
+                new UpdateUserPasswordRequest(null, "validToken"),
+                "비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+            ),
+            Arguments.of(
+                "비밀번호가 형식에 맞지 않는 경우",
+                new UpdateUserPasswordRequest("short", "validToken"),
+                "비밀번호는 8자 이상 20자 이하, 영문, 숫자, 특수문자를 포함해야 합니다."
+            ),
+            Arguments.of(
+                "토큰이 null인 경우",
+                new UpdateUserPasswordRequest("ValidPassword1!", null),
+                "토큰은 필수입니다."
+            ),
+            Arguments.of(
+                "토큰이 빈 문자열인 경우",
+                new UpdateUserPasswordRequest("ValidPassword1!", ""),
+                "토큰은 필수입니다."
+            )
+        );
+    }
 }

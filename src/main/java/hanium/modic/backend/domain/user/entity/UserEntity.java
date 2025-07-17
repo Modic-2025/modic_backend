@@ -82,4 +82,28 @@ public class UserEntity extends BaseEntity {
 	public void deleteUserImage() {
 		this.userImageUrl = null;
 	}
+
+	// 유저 이름 업데이트
+	public void updateName(String name) {
+		if (name == null || name.isBlank()) {
+			throw new AppException(USER_INPUT_EXCEPTION);
+		}
+		this.name = name;
+
+	}
+
+	// 유저 비밀번호 업데이트
+	public void updatePassword(String encode) {
+		if (encode == null || encode.isBlank()) {
+			throw new AppException(USER_INPUT_EXCEPTION);
+		}
+		this.password = encode;
+	}
+
+	public void updateEmail(String email) {
+		if (email == null || email.isBlank()) {
+			throw new AppException(USER_INPUT_EXCEPTION);
+		}
+		this.email = email;
+	}
 }

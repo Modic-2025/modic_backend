@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.dto;
+package hanium.modic.backend.web.user.dto.response;
 
 import hanium.modic.backend.domain.user.entity.UserEntity;
 

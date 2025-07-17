@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.dto;
+package hanium.modic.backend.web.user.dto.response;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 

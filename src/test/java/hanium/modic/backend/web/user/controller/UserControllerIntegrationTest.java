@@ -1,23 +1,35 @@
 package hanium.modic.backend.web.user.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.concurrent.TimeUnit;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.base.login.ContextHolderUtil;
+import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.UserCreateRequest;
+import hanium.modic.backend.domain.user.service.UserService;
+import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
+import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 
-@AutoConfigureMockMvc(addFilters = true)
 public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
@@ -25,6 +37,15 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private JwtTokenProvider jwtTokenProvider;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
 
 	@Test
 	@DisplayName("회원가입 API 테스트")
@@ -49,10 +70,10 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("유저 정보 조회 API")
+	@WithCustomUser(email = "user@test.com")
 	void getUserInfoApiTest() throws Exception {
 		// given
-		UserEntity user = userEntityRepository.save(
-			UserEntity.builder().email("youth@youth.kr").name("youth").password("test-password").build());
+		UserEntity user = ContextHolderUtil.getCurrentUser();
 
 		Token token = jwtTokenProvider.createToken(user);
 
@@ -64,5 +85,170 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpectAll(jsonPath("$.data.id").value(user.getId()),
 				jsonPath("$.data.email").value(user.getEmail()),
 				jsonPath("$.data.name").value(user.getName()));
+	}
+
+	@Test
+	@DisplayName("TEST1: 이름 변경에 성공한다")
+	@WithCustomUser(email = "viewer@test.com")
+	void updateUserNameSuccess() throws Exception {
+		// given
+		String newName = "UpdatedViewer";
+		UpdateUserNameRequest request = new UpdateUserNameRequest(newName);
+
+		// when
+		ResultActions result = mockMvc.perform(patch("/api/users/name")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsString(request)));
+
+		// then
+		result.andExpect(status().isOk());
+
+		UserEntity user = userEntityRepository.findByEmail("viewer@test.com").orElseThrow();
+		assertThat(user.getName()).isEqualTo(newName);
+	}
+
+	@Test
+	@DisplayName("TEST2: 비밀번호 변경에 성공한다")
+	@WithCustomUser(email = "viewer@test.com")
+	void updateUserPasswordSuccess() throws Exception {
+		// given
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String oldPassword = "oldPassword1!";
+		String newPassword = "newPassword1!";
+
+		// 인코딩으로 인하여 비밀번호 세팅
+		user.updatePassword(passwordEncoder.encode(oldPassword));
+		userEntityRepository.save(user);
+
+		// 유저 토큰 발급
+		String userUpdateToken = userService.getUserUpdateToken(user.getId(), oldPassword);
+
+		UpdateUserPasswordRequest request = new UpdateUserPasswordRequest(newPassword, userUpdateToken);
+
+		// when
+		ResultActions result = mockMvc.perform(patch("/api/users/password")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsString(request)));
+
+		// then
+		result.andExpect(status().isOk());
+
+		UserEntity updatedUser = userEntityRepository.findByEmail("viewer@test.com").orElseThrow();
+		assertThat(passwordEncoder.matches(newPassword, updatedUser.getPassword())).isTrue(); // 비밀번호가 변경되어야 함
+	}
+
+	@Test
+	@DisplayName("유저 정보 변경 토큰 발급 API 테스트")
+	@WithCustomUser(email = "user@token.com")
+	void getUserUpdateTokenApiTest() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String password = "originPassword1!";
+		user.updatePassword(passwordEncoder.encode(password));
+		userEntityRepository.save(user);
+
+		GetUserUpdateTokenRequest request = new GetUserUpdateTokenRequest(password);
+		String json = objectMapper.writeValueAsString(request);
+
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		final String redisKey = "userUpdateToken:" + user.getId();
+		Assertions.assertThat(redisTemplate.hasKey(redisKey)).isTrue(); // 토큰이 Redis에 저장되어야 함
+	}
+
+	@Test
+	@DisplayName("유저 정보 변경 토큰 재발급 시 TTL이 갱신되어야 한다")
+	@WithCustomUser(email = "user@token.com")
+	void userUpdateToken_TTL_갱신_테스트() throws Exception {
+		// given
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String password = "originPassword1!";
+		user.updatePassword(passwordEncoder.encode(password));
+		userEntityRepository.save(user);
+
+		GetUserUpdateTokenRequest request = new GetUserUpdateTokenRequest(password);
+		String json = objectMapper.writeValueAsString(request);
+
+		// 1차 발급
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		// wait for 2 seconds
+		Thread.sleep(2000);
+
+		// TTL 체크 - 첫 TTL
+		String redisKey = "userUpdateToken:" + user.getId();
+		Long ttl1 = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+		assertThat(ttl1).isNotNull();
+		assertThat(ttl1).isGreaterThan(0);
+
+		// 2차 재발급
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		// TTL 체크 - 갱신 확인
+		Long ttl2 = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+		assertThat(ttl2).isNotNull();
+		assertThat(ttl2).isGreaterThan(ttl1); // TTL이 다시 늘어난 것을 확인
+
+		System.out.println("TTL1(before reissue) = " + ttl1 + " seconds");
+		System.out.println("TTL2(after reissue) = " + ttl2 + " seconds");
+	}
+
+	@Test
+	@DisplayName("유저 이메일 변경 API 테스트 (토큰 기반)")
+	@WithCustomUser(email = "user@email.com")
+	void updateUserEmailApiTest() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String password = "originPassword2!";
+		user.updatePassword(passwordEncoder.encode(password));
+		userEntityRepository.save(user);
+
+		// 토큰 발급
+		String updateToken = userService.getUserUpdateToken(user.getId(), password);
+
+		String newEmail = "changed@email.com";
+		UpdateUserEmailRequest emailRequest = new UpdateUserEmailRequest(newEmail, updateToken);
+
+		mockMvc.perform(patch("/api/users/email")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(emailRequest)))
+			.andExpect(status().isOk());
+
+		UserEntity updated = userEntityRepository.findById(user.getId()).orElseThrow();
+		assertThat(updated.getEmail()).isEqualTo(newEmail);
+	}
+
+	@Test
+	@DisplayName("유저 비밀번호 변경 API 테스트 (토큰 기반)")
+	@WithCustomUser(email = "user@pw.com")
+	void updateUserPasswordApiTest() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String oldPassword = "originPassword3!";
+		user.updatePassword(passwordEncoder.encode(oldPassword));
+		userEntityRepository.save(user);
+
+		// 토큰 발급
+		String updateToken = userService.getUserUpdateToken(user.getId(), oldPassword);
+
+		String newPassword = "changedPassword3!";
+		UpdateUserPasswordRequest pwRequest = new UpdateUserPasswordRequest(newPassword, updateToken);
+
+		mockMvc.perform(patch("/api/users/password")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(pwRequest)))
+			.andExpect(status().isOk());
+
+		UserEntity updated = userEntityRepository.findById(user.getId()).orElseThrow();
+		assertThat(passwordEncoder.matches(newPassword, updated.getPassword())).isTrue();
 	}
 }

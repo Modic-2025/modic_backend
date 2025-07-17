@@ -17,8 +17,9 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.UserCreateResponse;
-import hanium.modic.backend.web.user.dto.UserInfoResponse;
+import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
+import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
+import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -31,6 +32,9 @@ class UserServiceTest {
 
 	@Mock
 	private BCryptPasswordEncoder passwordEncoder;
+
+	@Mock
+	private UserUpdateTokenRepository userUpdateTokenRepository;
 
 	@Test
 	@DisplayName("유저 회원가입 테스트")
@@ -84,5 +88,47 @@ class UserServiceTest {
 		assertThat(response.id()).isEqualTo(userId);
 		assertThat(response.email()).isEqualTo(user.getEmail());
 		assertThat(response.name()).isEqualTo(user.getName());
+	}
+
+	@Test
+	@DisplayName("유저 이름 변경 테스트")
+	void updateUserNameTest() {
+		// given
+		final Long userId = 1L;
+		String newName = "newName";
+		UserEntity user = UserFactory.createMockUser(userId);
+
+		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+
+		// when
+		userService.updateUserName(userId, newName);
+
+		// then
+		assertThat(user.getName()).isEqualTo(newName);
+		verify(userEntityRepository, times(1)).findById(userId);
+		verify(user, times(1)).updateName(newName);
+	}
+
+	@Test
+	@DisplayName("유저 정보 변경 토큰 발급 성공")
+	void getUserUpdateToken_success() {
+		// given
+		Long userId = 1L;
+		String password = "password1!";
+		String encodedPassword = "encodedPassword1!";
+		UserEntity user = UserFactory.createMockUser(userId);
+		user.updatePassword(encodedPassword);
+
+		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+		when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
+		doNothing().when(userUpdateTokenRepository).deleteById(userId);
+		when(userUpdateTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+		// when
+		String token = userService.getUserUpdateToken(userId, password);
+
+		// then
+		assertThat(token).isNotBlank();
+		verify(userUpdateTokenRepository).save(any());
 	}
 }
