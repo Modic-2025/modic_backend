@@ -20,14 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class LockManager {
 
-
 	private final AopForTransaction aopForTransaction;
 	private final RedissonClient redissonClient;
 
 	private static final TimeUnit timeUnit = TimeUnit.SECONDS; // 락 시간 단위
 	private static final long waitTime = 5L; // 락 획득 대기 시간(5초)
 	private static final long leaseTime = 3L; // 락 유지 시간(3초)
+	private static final long postLikeWaitTime = 2L; // 좋아요 락 대기 시간(2초)
+	private static final long postLikeLeaseTime = 1L; // 좋아요 락 유지 시간(1초)
 	private static final String REDISSON_USER_LOCK_PREFIX = "USER_LOCK:";
+	private static final String REDISSON_POST_LIKE_LOCK_PREFIX = "POST_LIKE:";
 
 	// 유저 단일 락
 	public void userLock(
@@ -86,6 +88,33 @@ public class LockManager {
 				multiLock.unlock();
 			} catch (IllegalMonitorStateException e) {
 				log.info("멀티 분산 락이 이미 해제되었습니다. : keys={}", sortedKeys);
+			}
+		}
+	}
+
+	// 게시글 좋아요 락
+	public void postLikeLock(
+		final Long userId,
+		final Long postId,
+		Runnable block
+	) throws LockException {
+		String key = REDISSON_POST_LIKE_LOCK_PREFIX + userId + ":" + postId;
+		RLock rLock = redissonClient.getLock(key);
+
+		try {
+			boolean available = rLock.tryLock(postLikeWaitTime, postLikeLeaseTime, timeUnit);
+			if (!available) {
+				throw new LockException(new InterruptedException("좋아요 락 획득 실패"));
+			}
+
+			aopForTransaction.proceed(block); // lock 범위 안에서 트랜잭션 적용 후 로직 처리
+		} catch (InterruptedException e) {
+			throw new LockException(e); // 락 획득 실패시 Exception 발생
+		} finally {
+			try {
+				rLock.unlock();
+			} catch (IllegalMonitorStateException e) {
+				log.info("좋아요 분산 락이 이미 해제되었습니다. :key({})", key);
 			}
 		}
 	}

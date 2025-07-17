@@ -18,10 +18,11 @@ public interface PostLikeEntityRepository extends JpaRepository<PostLikeEntity, 
 
 	/**
 	 * 특정 사용자의 특정 게시글 하트 삭제
+	 * @return 삭제된 행의 개수 (0 또는 1)
 	 */
 	@Modifying
 	@Query("DELETE FROM PostLikeEntity p WHERE p.userId = :userId AND p.postId = :postId")
-	void deleteByUserIdAndPostId(@Param("userId") Long userId, @Param("postId") Long postId);
+	int deleteByUserIdAndPostId(@Param("userId") Long userId, @Param("postId") Long postId);
 
 	/**
 	 * 사용자가 하트한 게시글 목록 조회 (추후 기능용)

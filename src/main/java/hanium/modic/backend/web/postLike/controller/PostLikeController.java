@@ -33,7 +33,8 @@ public class PostLikeController {
 		@ApiResponse(responseCode = "200", description = "하트 토글 성공"),
 		@ApiResponse(responseCode = "400", description = "자신의 게시글에는 하트를 할 수 없습니다.[PL-001]"),
 		@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]"),
-		@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]")
+		@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]"),
+		@ApiResponse(responseCode = "500", description = "좋아요 처리에 실패하였습니다.[PL-002]")
 	})
 	public ResponseEntity<AppResponse<Void>> togglePostLike(
 		@PathVariable @Positive(message = "게시글 ID는 양수여야 합니다.") Long postId,

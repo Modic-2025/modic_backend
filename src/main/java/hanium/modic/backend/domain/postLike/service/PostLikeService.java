@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.error.exception.LockException;
+import hanium.modic.backend.common.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.postLike.entity.PostLikeEntity;
@@ -34,42 +36,45 @@ public class PostLikeService {
 	private final PostStatisticsEntityRepository postStatisticsRepository;
 	private final PostEntityRepository postRepository;
 	private final AsyncPostStatisticsService asyncPostStatisticsService;
+	private final LockManager lockManager;
 
 	/**
 	 * 게시글 하트 토글 (추가/삭제)
-	 * 사용자에게 즉시 응답하고 백그라운드에서 통계 업데이트
+	 * 분산 락을 사용하여 다중 서버 환경에서 동시성 문제 해결
 	 *
 	 * @param userId 사용자 ID
 	 * @param postId 게시글 ID
+	 * @throws AppException 락 획득 실패 시
 	 */
-	@Transactional
 	public void toggleLike(Long userId, Long postId) {
-		// 1. 게시글 존재 및 권한 확인
-		PostEntity post = postRepository.findById(postId)
-			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
+		try {
+			lockManager.postLikeLock(userId, postId, () -> {
+				// 1. 게시글 존재 및 권한 확인
+				PostEntity post = postRepository.findById(postId)
+					.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
-		if (post.getUserId().equals(userId)) {
-			throw new AppException(CANNOT_LIKE_OWN_POST_EXCEPTION);
-		}
+				if (post.getUserId().equals(userId)) {
+					throw new AppException(CANNOT_LIKE_OWN_POST_EXCEPTION);
+				}
 
-		// 2. 좋아요 토글 (즉시 처리)
-		boolean isLiked = postLikeRepository.existsByUserIdAndPostId(userId, postId);
+				// 2. 좋아요 삭제를 먼저 시도 (act-then-check 패턴)
+				int deletedCount = postLikeRepository.deleteByUserIdAndPostId(userId, postId);
 
-		if (isLiked) {
-			// 하트 삭제
-			postLikeRepository.deleteByUserIdAndPostId(userId, postId);
-			log.debug("하트 삭제: userId={}, postId={}", userId, postId);
-
-			// 3. 비동기로 통계 감소 (사용자는 여기서 응답 받음)
-			asyncPostStatisticsService.decrementLikeCount(postId);
-		} else {
-			// 하트 추가
-			PostLikeEntity postLike = PostLikeEntity.of(userId, postId);
-			postLikeRepository.save(postLike);
-			log.debug("하트 추가: userId={}, postId={}", userId, postId);
-
-			// 3. 비동기로 통계 증가 (사용자는 여기서 응답 받음)
-			asyncPostStatisticsService.incrementLikeCount(postId);
+				// 3. 삭제된 row가 없다면, 좋아요가 없었다는 의미이므로 추가
+				if (deletedCount == 0) {
+					// 하트 추가
+					PostLikeEntity postLike = PostLikeEntity.of(userId, postId);
+					postLikeRepository.save(postLike);
+					log.debug("하트 추가: userId={}, postId={}", userId, postId);
+					asyncPostStatisticsService.incrementLikeCount(postId);
+				} else {
+					// 4. 삭제 성공 시, 통계 감소
+					log.debug("하트 삭제: userId={}, postId={}", userId, postId);
+					asyncPostStatisticsService.decrementLikeCount(postId);
+				}
+			});
+		} catch (LockException e) {
+			throw new AppException(POST_LIKE_FAIL_EXCEPTION);
 		}
 	}
 

@@ -44,6 +44,7 @@ public enum ErrorCode {
 
 	// Post Like
 	CANNOT_LIKE_OWN_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "PL-001", "자신의 게시글에는 하트를 할 수 없습니다."),
+	POST_LIKE_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PL-002", "좋아요 처리에 실패하였습니다."),
 
 	// Post Review
 	POST_REVIEW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PR-001", "해당 포스트 리뷰를 찾을 수 없습니다."),
