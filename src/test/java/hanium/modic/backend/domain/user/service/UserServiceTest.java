@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,10 +17,9 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
-import hanium.modic.backend.domain.user.entity.UserUpdateToken;
-import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -123,7 +121,7 @@ class UserServiceTest {
 
 		when(userEntityRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
 		when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
-		when(userUpdateTokenRepository.findById(userId)).thenReturn(java.util.Optional.empty());
+		doNothing().when(userUpdateTokenRepository).deleteById(userId);
 		when(userUpdateTokenRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
 		// when
