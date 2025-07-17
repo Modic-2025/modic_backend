@@ -101,6 +101,9 @@ public class UserEntity extends BaseEntity {
 	}
 
 	public void updateEmail(String email) {
+		if (email == null || email.isBlank()) {
+			throw new AppException(USER_INPUT_EXCEPTION);
+		}
 		this.email = email;
 	}
 }
