@@ -5,9 +5,13 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.concurrent.TimeUnit;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.ResultActions;
@@ -39,6 +43,9 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private RedisTemplate<String, Object> redisTemplate;
 
 	@Test
 	@DisplayName("회원가입 API 테스트")
@@ -147,6 +154,54 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 				.content(json))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		final String redisKey = "userUpdateToken:" + user.getId();
+		Assertions.assertThat(redisTemplate.hasKey(redisKey)).isTrue(); // 토큰이 Redis에 저장되어야 함
+	}
+
+	@Test
+	@DisplayName("유저 정보 변경 토큰 재발급 시 TTL이 갱신되어야 한다")
+	@WithCustomUser(email = "user@token.com")
+	void userUpdateToken_TTL_갱신_테스트() throws Exception {
+		// given
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+		String password = "originPassword1!";
+		user.updatePassword(passwordEncoder.encode(password));
+		userEntityRepository.save(user);
+
+		GetUserUpdateTokenRequest request = new GetUserUpdateTokenRequest(password);
+		String json = objectMapper.writeValueAsString(request);
+
+		// 1차 발급
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		// wait for 2 seconds
+		Thread.sleep(2000);
+
+		// TTL 체크 - 첫 TTL
+		String redisKey = "userUpdateToken:" + user.getId();
+		Long ttl1 = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+		assertThat(ttl1).isNotNull();
+		assertThat(ttl1).isGreaterThan(0);
+
+		// 2차 재발급
+		mockMvc.perform(post("/api/users/update-token")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userUpdateToken").isNotEmpty());
+
+		// TTL 체크 - 갱신 확인
+		Long ttl2 = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+		assertThat(ttl2).isNotNull();
+		assertThat(ttl2).isGreaterThan(ttl1); // TTL이 다시 늘어난 것을 확인
+
+		System.out.println("TTL1(before reissue) = " + ttl1 + " seconds");
+		System.out.println("TTL2(after reissue) = " + ttl2 + " seconds");
 	}
 
 	@Test
