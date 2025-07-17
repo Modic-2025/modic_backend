@@ -19,8 +19,4 @@ public class UserUpdateToken {
 	private Long userId;
 
 	private String updateToken;
-
-	public void updateUpdateToken(final String updateToken) {
-		this.updateToken = updateToken;
-	}
 }
