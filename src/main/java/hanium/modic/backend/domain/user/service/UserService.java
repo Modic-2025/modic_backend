@@ -101,17 +101,9 @@ public class UserService {
 			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);
 		}
 
-		// 토큰을 조회하며 없으면 발급
-		UserUpdateToken userUpdateToken = userUpdateTokenRepository.findById(userId)
-			.orElseGet(() -> {
-				String updateToken = generateUpdateToken();
-
-				return userUpdateTokenRepository.save(UserUpdateToken.builder()
-					.userId(userId)
-					.updateToken(updateToken)
-					.build()
-				);
-			});
+		// 토큰을 조회하며, 기존에 있으면 TTL 초기화
+		userUpdateTokenRepository.deleteById(userId); // TTL 초기화
+		UserUpdateToken userUpdateToken = userUpdateTokenRepository.save(new UserUpdateToken(userId, generateUpdateToken()));
 
 		return userUpdateToken.getUpdateToken();
 	}
