@@ -34,6 +34,7 @@ public class PostReviewService {
 	private final PostReviewImageRepository postReviewImageRepository;
 	private final PostEntityRepository postEntityRepository;
 	private final UserEntityRepository userEntityRepository;
+	private final PostReviewAuthorizationService postReviewAuthorizationService;
 
 	// 포스트 리뷰 생성
 	@Transactional
@@ -43,6 +44,9 @@ public class PostReviewService {
 		final List<Long> postReviewImageIds,
 		final UserEntity user
 	) {
+		// 리뷰 작성 권한 검증 (해당 그림체를 사용한 이력이 있는지 확인)
+		postReviewAuthorizationService.validateUserCanReviewPost(user.getId(), postId);
+
 		final PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
@@ -119,12 +123,14 @@ public class PostReviewService {
 		List<Long> postReviewIds = postReviews.stream()
 			.map(PostReviewEntity::getId)
 			.toList();
-		Map<Long, List<PostReviewImageEntity>> imageMap = postReviewImageRepository.findAllByPostReviewIdIn(postReviewIds).stream()
+		Map<Long, List<PostReviewImageEntity>> imageMap = postReviewImageRepository.findAllByPostReviewIdIn(
+				postReviewIds).stream()
 			.collect(Collectors.groupingBy(PostReviewImageEntity::getPostReviewId));
 
 		return postReviews.map(postReview -> {
 			UserEntity user = userMap.get(postReview.getUserId());
-			if (user == null) throw new AppException(USER_NOT_FOUND_EXCEPTION);
+			if (user == null)
+				throw new AppException(USER_NOT_FOUND_EXCEPTION);
 
 			String userImageUrl = user.getUserImageUrl();
 			boolean hasUserImage = userImageUrl != null;
