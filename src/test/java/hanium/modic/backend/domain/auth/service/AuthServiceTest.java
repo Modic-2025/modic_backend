@@ -27,6 +27,7 @@ import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -259,5 +260,55 @@ class AuthServiceTest {
 		// when, then
 		AppException appException = assertThrows(AppException.class, () -> authService.verifyEmailCode(email, code));
 		assertThat(appException.getErrorCode()).isEqualTo(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 이메일이 존재하는 경우 (사용 불가)")
+	void checkEmailDuplicate_EmailExists() {
+		// given
+		final String email = "existing@example.com";
+		when(userEntityRepository.existsByEmail(email)).thenReturn(true);
+
+		// when
+		CheckEmailDuplicateResponse response = authService.checkEmailDuplicate(email);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.email()).isEqualTo(email);
+		assertThat(response.available()).isFalse();
+		verify(userEntityRepository).existsByEmail(email);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 이메일이 존재하지 않는 경우 (사용 가능)")
+	void checkEmailDuplicate_EmailNotExists() {
+		// given
+		final String email = "available@example.com";
+		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
+
+		// when
+		CheckEmailDuplicateResponse response = authService.checkEmailDuplicate(email);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.email()).isEqualTo(email);
+		assertThat(response.available()).isTrue();
+		verify(userEntityRepository).existsByEmail(email);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 응답 객체 생성 검증")
+	void checkEmailDuplicate_ResponseObjectCreation() {
+		// given
+		final String email = "test@example.com";
+		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
+
+		// when
+		CheckEmailDuplicateResponse response = authService.checkEmailDuplicate(email);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.email()).isEqualTo(email);
+		assertThat(response.available()).isInstanceOf(Boolean.class);
 	}
 }
