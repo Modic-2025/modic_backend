@@ -15,6 +15,7 @@ import hanium.modic.backend.domain.auth.service.component.EmailSender;
 import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
@@ -98,5 +99,10 @@ public class AuthService {
 			throw new AppException(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION);
 		}
 		return VerifyEmailCodeResponse.of(email, true);
+	}
+
+	public CheckEmailDuplicateResponse checkEmailDuplicate(final String email) {
+		boolean isAvailable = !userEntityRepository.existsByEmail(email);
+		return CheckEmailDuplicateResponse.of(email, isAvailable);
 	}
 }

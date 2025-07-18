@@ -2,15 +2,18 @@ package hanium.modic.backend.web.auth.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
+import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
@@ -22,6 +25,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -97,5 +102,19 @@ public class AuthController {
 	public ResponseEntity<AppResponse<VerifyEmailCodeResponse>> verifyEmailCode(
 		@RequestBody @Valid VerifyEmailCodeRequest request) {
 		return ResponseEntity.ok().body(AppResponse.ok(authService.verifyEmailCode(request.email(), request.code())));
+	}
+
+	@GetMapping("/email/check")
+	@Operation(
+		summary = "이메일 중복 확인 API",
+		description = "회원가입 시 이메일 중복 여부를 확인합니다.",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "중복 확인 성공"),
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		}
+	)
+	public ResponseEntity<AppResponse<CheckEmailDuplicateResponse>> checkEmailDuplicate(
+		@RequestParam @Email(message = "유효하지 않은 이메일 형식입니다.") @NotBlank(message = "이메일은 필수 입력 항목입니다.") String email) {
+		return ResponseEntity.ok(AppResponse.ok(authService.checkEmailDuplicate(email)));
 	}
 }
