@@ -135,15 +135,16 @@ class PostControllerTest extends BaseControllerTest {
 	}
 
 	@Test
-	@DisplayName("게시물 단일 조회 성공")
-	void getPost_Success() throws Exception {
+	@DisplayName("게시물 단일 조회 성공 - 인증된 사용자")
+	void getPost_AuthenticatedUser_ShouldReturnPost() throws Exception {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
 			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
-			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)));
+			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
+			10L, true);
 
-		when(postService.getPost(postId)).thenReturn(response);
+		when(postService.getPost(postId, testUser.getId())).thenReturn(response);
 
 		// when & then
 		mockMvc.perform(get("/api/posts/{id}", postId)
@@ -151,7 +152,11 @@ class PostControllerTest extends BaseControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.id").value(response.id()))
 			.andExpect(jsonPath("$.data.title").value(response.title()))
-			.andExpect(jsonPath("$.data.description").value(response.description()));
+			.andExpect(jsonPath("$.data.description").value(response.description()))
+			.andExpect(jsonPath("$.data.likeCount").value(response.likeCount()))
+			.andExpect(jsonPath("$.data.isLikedByCurrentUser").value(response.isLikedByCurrentUser()));
+
+		verify(postService).getPost(postId, testUser.getId());
 	}
 
 	@Test
@@ -159,7 +164,9 @@ class PostControllerTest extends BaseControllerTest {
 	void getPost_NotFound() throws Exception {
 		// given
 		Long postId = 999L;
-		when(postService.getPost(postId)).thenThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		when(postService.getPost(postId, testUser.getId())).thenThrow(
+			new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 
 		// when & then
 		mockMvc.perform(get("/api/posts/{id}", postId)
@@ -173,9 +180,9 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostsResponse post1 = new GetPostsResponse(
-			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)));
+			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
 		GetPostsResponse post2 = new GetPostsResponse(
-			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)));
+			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
 
 		List<GetPostsResponse> content = List.of(post1, post2);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
@@ -198,11 +205,11 @@ class PostControllerTest extends BaseControllerTest {
 	@ParameterizedTest(name = "[{index}] sort={0}, page={1}, size={2}")
 	@DisplayName("게시물 목록 조회 성공 - RequestParam 전달")
 	@MethodSource("provideValidParameters")
-	void getPosts_WithParameterizedPaging_Success(String sort, int pageNumber, int size, long totalElements) throws
-		Exception {
+	void getPosts_WithParameterizedPaging_Success(String sort, int pageNumber, int size, long totalElements)
+		throws Exception {
 		// given
 		GetPostsResponse post = new GetPostsResponse(
-			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)));
+			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
 
 		List<GetPostsResponse> content = List.of(post);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);

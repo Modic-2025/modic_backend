@@ -42,3 +42,8 @@ out/
 ### Application Config Files ###
 application.yml
 application-*.yml
+
+### Claude Code ###
+.claude/
+claude-rules/
+CLAUDE.md
