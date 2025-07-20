@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.auth.service.AuthService;
-import hanium.modic.backend.domain.auth.service.component.CodeManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -35,7 +34,7 @@ public class UserService {
 		final String code
 	) {
 		checkDuplicateEmail(email);
-		authService.checkEmailVerification(email, code);
+		authService.checkEmailCodeAndDelete(email, code);
 
 		final String encodedPassword = passwordEncoder.encode(password);
 

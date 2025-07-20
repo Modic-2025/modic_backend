@@ -51,13 +51,13 @@ class UserServiceTest {
 
 		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
 		when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
-		doNothing().when(authService).checkEmailVerification(email, code);
+		doNothing().when(authService).checkEmailCodeAndDelete(email, code);
 
 		// when
 		UserCreateResponse user = userService.createUser(email, password, name, code);
 
 		// then
-		verify(authService, times(1)).checkEmailVerification(email, code);
+		verify(authService, times(1)).checkEmailCodeAndDelete(email, code);
 		verify(passwordEncoder, times(1)).encode(password);
 		verify(userEntityRepository, times(1)).save(any(UserEntity.class));
 		assertNotNull(user);
@@ -93,7 +93,7 @@ class UserServiceTest {
 
 		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
 		doThrow(new AppException(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION))
-			.when(authService).checkEmailVerification(email, code);
+			.when(authService).checkEmailCodeAndDelete(email, code);
 
 		// when
 		AppException appException = assertThrows(AppException.class,

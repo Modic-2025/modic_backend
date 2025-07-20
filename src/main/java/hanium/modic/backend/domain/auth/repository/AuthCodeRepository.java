@@ -22,4 +22,8 @@ public class AuthCodeRepository {
 	public String getCode(final String email) {
 		return redisTemplate.opsForValue().get(email);
 	}
+
+	public void deleteCode(final String email) {
+		redisTemplate.delete(email);
+	}
 }
