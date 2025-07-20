@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -36,6 +37,9 @@ class UserServiceTest {
 	@Mock
 	private UserUpdateTokenRepository userUpdateTokenRepository;
 
+	@Mock
+	private AuthService authService;
+
 	@Test
 	@DisplayName("유저 회원가입 테스트")
 	void userCreateTest() {
@@ -43,14 +47,17 @@ class UserServiceTest {
 		String email = "user@cotato.kr";
 		String password = "password";
 		String name = "user";
+		String code = "code";
 
 		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
 		when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
+		doNothing().when(authService).checkEmailCodeAndDelete(email, code);
 
 		// when
-		UserCreateResponse user = userService.createUser(email, password, name);
+		UserCreateResponse user = userService.createUser(email, password, name, code);
 
 		// then
+		verify(authService, times(1)).checkEmailCodeAndDelete(email, code);
 		verify(passwordEncoder, times(1)).encode(password);
 		verify(userEntityRepository, times(1)).save(any(UserEntity.class));
 		assertNotNull(user);
@@ -63,15 +70,37 @@ class UserServiceTest {
 		String email = "user@cotato.kr";
 		String password = "password";
 		String name = "user";
+		String code = "code";
 
 		when(userEntityRepository.existsByEmail(email)).thenReturn(true);
 
 		// when
 		AppException appException = assertThrows(AppException.class,
-			() -> userService.createUser(email, password, name));
+			() -> userService.createUser(email, password, name, code));
 
 		// then
 		assertEquals(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION, appException.getErrorCode());
+	}
+
+	@Test
+	@DisplayName("유저 회원가입 시 인증 코드 검증 예외 테스트")
+	void codeExceptionTest() {
+		// given
+		String email = "user@cotato.kr";
+		String password = "password";
+		String name = "user";
+		String code = "code";
+
+		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
+		doThrow(new AppException(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION))
+			.when(authService).checkEmailCodeAndDelete(email, code);
+
+		// when
+		AppException appException = assertThrows(AppException.class,
+			() -> userService.createUser(email, password, name, code));
+
+		// then
+		assertEquals(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION, appException.getErrorCode());
 	}
 
 	@Test

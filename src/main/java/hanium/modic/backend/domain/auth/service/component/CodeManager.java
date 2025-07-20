@@ -36,4 +36,8 @@ public class CodeManager {
 		String savedVerificationCode = authCodeRepository.getCode(email);
 		return code.equals(savedVerificationCode);
 	}
+
+	public void deleteCode(final String email) {
+		authCodeRepository.deleteCode(email);
+	}
 }

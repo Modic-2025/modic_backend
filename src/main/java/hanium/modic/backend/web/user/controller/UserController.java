@@ -47,7 +47,12 @@ public class UserController {
 	)
 	public ResponseEntity<AppResponse<UserCreateResponse>> createUser(@RequestBody @Valid UserCreateRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED)
-			.body(AppResponse.created(userService.createUser(request.email(), request.password(), request.name())));
+			.body(AppResponse.created(userService.createUser(
+				request.email(),
+				request.password(),
+				request.name(),
+				request.code()
+			)));
 	}
 
 	@GetMapping("/me")

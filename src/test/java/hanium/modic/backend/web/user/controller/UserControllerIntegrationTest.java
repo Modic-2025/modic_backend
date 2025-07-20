@@ -21,6 +21,8 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.dto.Token;
+import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.domain.auth.service.component.CodeManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.service.UserService;
@@ -47,12 +49,19 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
 
+	@Autowired
+	private CodeManager codeManager;
+
 	@Test
 	@DisplayName("회원가입 API 테스트")
 	void createUserApiTest() throws Exception {
 		// given
-		UserCreateRequest request = new UserCreateRequest("youth@cotato.kr", "youth", "qwer1234@#!");
+		final String email = "youth@cotato.kr";
+		final String code = codeManager.generateRandomCode(email);
+
+		UserCreateRequest request = new UserCreateRequest(email, "youth", "qwer1234@#!", code);
 		String json = objectMapper.writeValueAsString(request);
+
 
 		// when
 		mockMvc.perform(post("/api/users")

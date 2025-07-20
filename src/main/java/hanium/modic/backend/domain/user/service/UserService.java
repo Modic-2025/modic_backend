@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -22,11 +23,18 @@ public class UserService {
 
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
+	private final AuthService authService;
 
 	// 회원가입
 	@Transactional
-	public UserCreateResponse createUser(final String email, final String password, final String name) {
+	public UserCreateResponse createUser(
+		final String email,
+		final String password,
+		final String name,
+		final String code
+	) {
 		checkDuplicateEmail(email);
+		authService.checkEmailCodeAndDelete(email, code);
 
 		final String encodedPassword = passwordEncoder.encode(password);
 

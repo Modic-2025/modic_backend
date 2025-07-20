@@ -94,9 +94,19 @@ public class AuthService {
 	}
 
 	public VerifyEmailCodeResponse verifyEmailCode(final String email, final String code) {
+		checkEmailCode(email, code);
+
+		return VerifyEmailCodeResponse.of(email, true);
+	}
+
+	private void checkEmailCode(final String email, final String code) {
 		if (!codeManager.checkSignupCode(email, code)) {
 			throw new AppException(ErrorCode.EMAIL_CODE_MISMATCH_EXCEPTION);
 		}
-		return VerifyEmailCodeResponse.of(email, true);
+	}
+
+	public void checkEmailCodeAndDelete(final String email, final String code) {
+		checkEmailCode(email, code);
+		codeManager.deleteCode(email);
 	}
 }
