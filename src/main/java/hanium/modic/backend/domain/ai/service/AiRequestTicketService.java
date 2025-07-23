@@ -24,7 +24,7 @@ public class AiRequestTicketService {
 	@Transactional(readOnly = true)
 	public GetTicketInformationResponse getTicketInformation(Long userId) {
 		AiRequestTicketEntity ticket = getTicketEntity(userId);
-		return GetTicketInformationResponse.of(ticket.getTicketCount(), ticket.getLastIssuedAt());
+		return GetTicketInformationResponse.of(ticket.getTicketCount(), ticket.getLastIssuedAt().plusDays(1));
 	}
 
 	// 티켓 엔티티 조회, 만료되면 갱신
