@@ -294,7 +294,8 @@ class AuthControllerTest extends BaseControllerTest {
 		// when, then
 		mockMvc.perform(get("/api/auth/email/check")
 				.param("email", email))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
 
 		verifyNoInteractions(authService);
 	}
@@ -314,12 +315,12 @@ class AuthControllerTest extends BaseControllerTest {
 			Arguments.of(
 				"이메일이 빈 문자열인 경우",
 				"",
-				"이메일은 필수 입력 항목입니다."
+				"checkEmailDuplicate.email: 이메일은 필수 입력 항목입니다."
 			),
 			Arguments.of(
 				"이메일 형식이 잘못된 경우",
 				"not-an-email",
-				"유효하지 않은 이메일 형식입니다."
+				"checkEmailDuplicate.email: 유효하지 않은 이메일 형식입니다."
 			)
 		);
 	}
