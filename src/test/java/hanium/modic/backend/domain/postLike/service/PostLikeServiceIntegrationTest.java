@@ -18,6 +18,8 @@ import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.postLike.entity.PostLikeEntity;
+import hanium.modic.backend.domain.postLike.entity.PostStatisticsEntity;
 import hanium.modic.backend.domain.postLike.repository.PostLikeEntityRepository;
 import hanium.modic.backend.domain.postLike.repository.PostStatisticsEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -184,26 +186,47 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("TEST4: 통계 일관성 검증 기능 간단 테스트")
-	void statisticsConsistencyValidationTest() {
-		// 실제 PostLike 데이터 생성 (2개의 좋아요)
-		postLikeService.toggleLike(user2.getId(), post.getId());
-		postLikeService.toggleLike(user3.getId(), post.getId());
+	@DisplayName("TEST4: 통계가 없는 상태에서 validateAndFixStatistics가 정상적으로 생성한다")
+	void statisticsConsistencyValidation_whenStatisticsNotExist_shouldCreate() {
+		// given: 실제 데이터는 있지만 통계가 없는 상황
+		postLikeRepository.save(PostLikeEntity.of(user2.getId(), post.getId()));
+		postLikeRepository.save(PostLikeEntity.of(user3.getId(), post.getId()));
+		long expectedCount = 2L;
 
-		// 통계 없는 상태에서 검증 (일관성 검증 메서드 테스트)
+		// 통계 데이터 없음 (의도적으로 생성하지 않음)
+
+		// when: 통계 검증 및 수정 메서드 호출
 		boolean wasFixed = postLikeService.validateAndFixStatistics(post.getId());
 
-		// 검증 결과 확인 (비동기 통계가 있을 수도 없을 수도 있음)
-		// 단순히 메서드가 정상 동작하는지만 확인
-		assertThat(wasFixed).isIn(true, false);
+		// then: 수정이 발생했고, 통계가 올바르게 생성되었는지 확인
+		assertThat(wasFixed).isTrue();
 
-		// 최종 상태 확인
-		long actualCount = postLikeRepository.countByPostId(post.getId());
 		long statisticsCount = postLikeService.getLikeCount(post.getId());
+		assertThat(statisticsCount).isEqualTo(expectedCount);
+	}
 
-		assertThat(actualCount).isEqualTo(2);
-		// 통계는 비동기이므로 0 또는 2일 수 있음
-		assertThat(statisticsCount).isIn(0L, 2L);
+	@Test
+	@DisplayName("TEST5: 통계 일치 시 validateAndFixStatistics가 수정하지 않는다")
+	void statisticsConsistencyValidation_whenConsistent_shouldNotFix() {
+		// given: 데이터와 통계가 일치하는 상황 생성
+		// 실제 좋아요: 1개
+		postLikeRepository.save(PostLikeEntity.of(user2.getId(), post.getId()));
+		long expectedCount = 1L;
+
+		// 통계: 1개 (올바른 값)
+		postStatisticsRepository.save(PostStatisticsEntity.builder()
+			.postId(post.getId())
+			.likeCount(expectedCount)
+			.build());
+
+		// when: 통계 검증 메서드 호출
+		boolean wasFixed = postLikeService.validateAndFixStatistics(post.getId());
+
+		// then: 수정이 발생하지 않았고, 통계가 그대로 유지되는지 확인
+		assertThat(wasFixed).isFalse();
+
+		long statisticsCount = postLikeService.getLikeCount(post.getId());
+		assertThat(statisticsCount).isEqualTo(expectedCount);
 	}
 
 	private void shutdownExecutor(ExecutorService executor) {
