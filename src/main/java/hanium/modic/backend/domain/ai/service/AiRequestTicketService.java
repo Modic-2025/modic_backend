@@ -54,8 +54,7 @@ public class AiRequestTicketService {
 	}
 
 	// 티켓이 만료되면 초기화
-	@Transactional
-	public AiRequestTicketEntity refreshTicketIfExpired(AiRequestTicketEntity userTicket) {
+	private AiRequestTicketEntity refreshTicketIfExpired(AiRequestTicketEntity userTicket) {
 		try {
 			lockManager.aiRequestTicketLock(userTicket.getUserId(), () -> {
 				if (userTicket.isTicketExpired()) {
