@@ -33,8 +33,13 @@ import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.entityfactory.PostFactory;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 
@@ -58,6 +63,10 @@ class AiImageGenerationServiceTest {
 	private CreatedAiImageService createdAiImageService;
 	@Mock
 	private AiImagePermissionRepository aiImagePermissionRepository;
+	@Mock
+	private PostEntityRepository postEntityRepository;
+	@Mock
+	private AiRequestTicketService aiRequestTicketService;
 
 	private static final Long TEST_USER_ID = 1L;
 	private static final Long TEST_POST_ID = 1L;
@@ -76,15 +85,19 @@ class AiImageGenerationServiceTest {
 		AiRequestEntity mockAiRequest = createTestAiRequestEntity();
 		List<PostImageEntity> mockPostImages = List.of(createTestPostImageEntity());
 		List<String> expectedStyleUrls = List.of(TEST_IMAGE_URL);
+		UserEntity user = UserFactory.createMockUser(TEST_USER_ID);
+		PostEntity mockPostEntity = PostFactory.createMockPost(user);
 
 		when(aiImagePermissionRepository.existsByUserIdAndPostId(TEST_USER_ID, TEST_POST_ID)).thenReturn(true);
 		when(postImageEntityRepository.findAllByPostId(TEST_POST_ID)).thenReturn(mockPostImages);
 		when(aiImageService.saveImage(imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_USER_ID, TEST_POST_ID))
 				.thenReturn(mockAiRequest);
+		when(postEntityRepository.findById(TEST_POST_ID)).thenReturn(Optional.of(mockPostEntity));
+		doNothing().when(aiRequestTicketService).useTicket(TEST_USER_ID);
 
 		// when
 		RequestAiImageGenerationResponse result = aiImageGenerationService.processImageGeneration(
-				imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID);
+				imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID, true);
 
 		// then
 		assertEquals(TEST_IMAGE_ID, result.imageId());
@@ -100,7 +113,7 @@ class AiImageGenerationServiceTest {
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, () -> aiImageGenerationService.processImageGeneration(
-				ImagePrefix.AI_REQUEST, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID));
+				ImagePrefix.AI_REQUEST, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID, true));
 
 		assertEquals(ErrorCode.AI_IMAGE_PERMISSION_NOT_FOUND, exception.getErrorCode());
 		verify(messageQueueService, never()).sendImageGenerationRequest(anyString(), anyString(), anyList());
