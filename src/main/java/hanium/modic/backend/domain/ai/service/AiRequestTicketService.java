@@ -39,7 +39,7 @@ public class AiRequestTicketService {
 	@Transactional
 	public void useTicket(Long userId) {
 		try {
-			lockManager.AiRequestTicketLock(userId, () -> {
+			lockManager.aiRequestTicketLock(userId, () -> {
 				AiRequestTicketEntity userTicket = getTicketEntity(userId);
 
 				// 티켓 만료 체크, 만료되면 티켓 초기화, 재진입 가능 락이라 refreshTicketsIfExpired 메서드에서 락 호출 가능.
@@ -58,7 +58,7 @@ public class AiRequestTicketService {
 	@Transactional
 	public AiRequestTicketEntity refreshTicketIfExpired(AiRequestTicketEntity userTicket) {
 		try {
-			lockManager.AiRequestTicketLock(userTicket.getUserId(), () -> {
+			lockManager.aiRequestTicketLock(userTicket.getUserId(), () -> {
 				if (userTicket.isTicketExpired()) {
 					userTicket.resetTickets();
 				}
