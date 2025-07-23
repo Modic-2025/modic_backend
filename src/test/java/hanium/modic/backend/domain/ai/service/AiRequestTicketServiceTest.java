@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
+import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.AiRequestTicketEntity;
@@ -38,6 +39,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("티켓 정보 조회 - 첫 조회시 새로운 티켓 생성")
+	@WithCustomUser(email = "user@test.com")
 	void getTicketInformation_CreatesNewTicket_WhenNotExists() {
 		// given
 		UserEntity user = ContextHolderUtil.getCurrentUser();
@@ -59,6 +61,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 
 	@Test
 	@DisplayName("티켓 정보 조회 - 기존 티켓이 있고 유효할 때")
+	@WithCustomUser(email = "user@test.com")
 	void getTicketInformation_ReturnsExistingTicket_WhenValid() {
 		// given
 		UserEntity user = ContextHolderUtil.getCurrentUser();
