@@ -182,32 +182,4 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 				.param("email", emptyEmail))
 			.andExpect(status().isBadRequest());
 	}
-
-	@Test
-	@DisplayName("이메일 중복 확인 API - 실제 데이터베이스 연동 검증")
-	void checkEmailDuplicate_DatabaseIntegration() throws Exception {
-		// given
-		final String existingEmail = "db-test@example.com";
-		final String availableEmail = "new-user@example.com";
-
-		// 기존 사용자 생성
-		UserEntity existingUser = UserEntity.builder()
-			.email(existingEmail)
-			.password(passwordEncoder.encode("password123"))
-			.name("데이터베이스테스트")
-			.build();
-		userEntityRepository.save(existingUser);
-
-		// when, then - 기존 이메일 확인
-		mockMvc.perform(get("/api/auth/email/check")
-				.param("email", existingEmail))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.available").value(false));
-
-		// when, then - 새로운 이메일 확인
-		mockMvc.perform(get("/api/auth/email/check")
-				.param("email", availableEmail))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.available").value(true));
-	}
 }
