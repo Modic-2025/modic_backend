@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/ai/tickets")
 @Validated
-public class AiRequestTickerController {
+public class AiRequestTicketController {
 
 	private final AiRequestTicketService aiRequestTicketService;
 
