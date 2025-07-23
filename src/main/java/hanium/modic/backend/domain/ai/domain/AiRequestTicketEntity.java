@@ -1,10 +1,12 @@
 package hanium.modic.backend.domain.ai.domain;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
 import static hanium.modic.backend.domain.ai.enums.AiRequestTicketConstants.*;
 
 import java.time.LocalDateTime;
 
 import hanium.modic.backend.common.entity.BaseEntity;
+import hanium.modic.backend.common.error.exception.AppException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -44,9 +46,10 @@ public class AiRequestTicketEntity extends BaseEntity {
 
 	// 잔여 티켓 차감
 	public void decreaseTicket() {
-		if (this.ticketCount > MINIMUM_TICKET_COUNT) {
-			this.ticketCount--;
+		if (this.ticketCount <= MINIMUM_TICKET_COUNT) {
+			throw new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION);
 		}
+		this.ticketCount--;
 	}
 
 	// 티켓을 초기화

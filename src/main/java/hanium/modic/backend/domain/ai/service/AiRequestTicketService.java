@@ -45,12 +45,7 @@ public class AiRequestTicketService {
 				// 티켓 만료 체크, 만료되면 티켓 초기화, 재진입 가능 락이라 refreshTicketsIfExpired 메서드에서 락 호출 가능.
 				refreshTicketIfExpired(userTicket);
 
-				// 잔여 티켓이 없으면 예외 발생
-				if (!userTicket.hasTickets()) {
-					throw new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION);
-				}
-
-				// 티켓 1 차감
+				// 티켓 차감, 잔여 티켓이 없으면 예외 발생
 				userTicket.decreaseTicket();
 				aiRequestTicketRepository.save(userTicket);
 			});
