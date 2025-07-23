@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.ai.service.AiRequestTicketService;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
@@ -24,6 +25,7 @@ public class UserService {
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
 	private final AuthService authService;
+	private final AiRequestTicketService aiRequestTicketService;
 
 	// 회원가입
 	@Transactional
