@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.service.AiRequestTicketService;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
@@ -25,7 +24,6 @@ public class UserService {
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
 	private final AuthService authService;
-	private final AiRequestTicketService aiRequestTicketService;
 
 	// 회원가입
 	@Transactional
@@ -113,7 +111,8 @@ public class UserService {
 
 		// 토큰을 조회하며, 기존에 있으면 TTL 초기화
 		userUpdateTokenRepository.deleteById(userId); // TTL 초기화
-		UserUpdateToken userUpdateToken = userUpdateTokenRepository.save(new UserUpdateToken(userId, generateUpdateToken()));
+		UserUpdateToken userUpdateToken = userUpdateTokenRepository.save(
+			new UserUpdateToken(userId, generateUpdateToken()));
 
 		return userUpdateToken.getUpdateToken();
 	}
