@@ -53,10 +53,10 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		assertThat(response.nextReset()).isBefore(LocalDateTime.now().plusDays(1).plusMinutes(1));
 
 		// 데이터베이스에 저장되었는지 확인
-		AiRequestTicketEntity savedTicket = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		AiRequestTicketEntity savedTicket = aiRequestTicketRepository.findByUserId(user.getId()).orElse(null);
 		assertThat(savedTicket).isNotNull();
 		assertThat(savedTicket.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY);
-		assertThat(savedTicket.getUserId()).isEqualTo(TEST_USER_ID);
+		assertThat(savedTicket.getUserId()).isEqualTo(user.getId());
 	}
 
 	@Test
@@ -73,7 +73,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		aiRequestTicketRepository.save(existingTicket);
 
 		// when
-		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(TEST_USER_ID);
+		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(user.getId());
 
 		// then
 		assertThat(response.ticketCount()).isEqualTo(2);
