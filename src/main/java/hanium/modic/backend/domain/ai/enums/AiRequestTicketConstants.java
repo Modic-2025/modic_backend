@@ -1,6 +1,10 @@
 package hanium.modic.backend.domain.ai.enums;
 
-public class AiRequestTicketConstants {
+public final class AiRequestTicketConstants {
+
+	private AiRequestTicketConstants() {
+		// Prevent instantiation
+	}
 
 	public static final int FREE_TICKET_COUNT_PER_DAY = 3;
 
