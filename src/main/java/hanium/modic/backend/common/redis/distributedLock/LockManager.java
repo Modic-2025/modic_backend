@@ -121,7 +121,7 @@ public class LockManager {
 	}
 
 	// AI 요청 티켓 락
-	public void AiRequestTicketLock(
+	public void aiRequestTicketLock(
 		final Long userId,
 		Runnable block
 	) throws LockException {
