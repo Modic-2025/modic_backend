@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.response.AppResponse;
@@ -75,13 +76,19 @@ public class AuthController {
 	@PostMapping(value = "/email/verification", params = "type=sign-up")
 	@Operation(
 		summary = "이메일 인증 코드 발송 API (회원가입)",
-		description = "회원가입 시 입력한 이메일로 인증 코드를 전송합니다.",
+		description = """
+			회원가입 시 입력한 이메일로 인증 코드를 전송합니다.
+			type = sign-up
+			""",
 		responses = {
 			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
 			@ApiResponse(responseCode = "500", description = "이메일 전송 중 에러가 발생하였습니다.[A-001]")
 		}
 	)
-	public ResponseEntity<AppResponse<Void>> sendEmailVerification(@RequestBody @Valid SendEmailRequest request) {
+	public ResponseEntity<AppResponse<Void>> sendEmailVerification(
+		@RequestParam(name = "type", required = true) String type,
+		@RequestBody @Valid SendEmailRequest request
+	) {
 		authService.sendEmailVerification(request.email());
 		return ResponseEntity.ok().build();
 	}
@@ -89,13 +96,18 @@ public class AuthController {
 	@PostMapping(value = "/email/verification/check", params = "type=sign-up")
 	@Operation(
 		summary = "이메일 인증 코드 검증 API (회원가입)",
-		description = "사용자가 입력한 이메일과 인증 코드가 일치하는지 확인합니다.",
+		description = """
+			사용자가 입력한 이메일과 인증 코드가 일치하는지 확인합니다.
+			type = sign-up
+			""",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "이메일 인증 코드가 일치하지 않습니다.[A-002]")
 		}
 	)
 	public ResponseEntity<AppResponse<VerifyEmailCodeResponse>> verifyEmailCode(
-		@RequestBody @Valid VerifyEmailCodeRequest request) {
+		@RequestParam(name = "type", required = true) String type,
+		@RequestBody @Valid VerifyEmailCodeRequest request
+	) {
 		return ResponseEntity.ok().body(AppResponse.ok(authService.verifyEmailCode(request.email(), request.code())));
 	}
 }
