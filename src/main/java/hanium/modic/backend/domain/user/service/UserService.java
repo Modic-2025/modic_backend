@@ -111,7 +111,8 @@ public class UserService {
 
 		// 토큰을 조회하며, 기존에 있으면 TTL 초기화
 		userUpdateTokenRepository.deleteById(userId); // TTL 초기화
-		UserUpdateToken userUpdateToken = userUpdateTokenRepository.save(new UserUpdateToken(userId, generateUpdateToken()));
+		UserUpdateToken userUpdateToken = userUpdateTokenRepository.save(
+			new UserUpdateToken(userId, generateUpdateToken()));
 
 		return userUpdateToken.getUpdateToken();
 	}

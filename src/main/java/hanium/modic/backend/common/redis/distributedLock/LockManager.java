@@ -30,6 +30,7 @@ public class LockManager {
 	private static final long postLikeLeaseTime = 1L; // 좋아요 락 유지 시간(1초)
 	private static final String REDISSON_USER_LOCK_PREFIX = "USER_LOCK:";
 	private static final String REDISSON_POST_LIKE_LOCK_PREFIX = "POST_LIKE:";
+	private static final String REDISSON_USER_TICKET_LOCK_PREFIX = "USER_TICKET_LOCK:";
 
 	// 유저 단일 락
 	public void userLock(
@@ -115,6 +116,32 @@ public class LockManager {
 				rLock.unlock();
 			} catch (IllegalMonitorStateException e) {
 				log.info("좋아요 분산 락이 이미 해제되었습니다. :key({})", key);
+			}
+		}
+	}
+
+	// AI 요청 티켓 락
+	public void aiRequestTicketLock(
+		final Long userId,
+		Runnable block
+	) throws LockException {
+		String key = REDISSON_USER_TICKET_LOCK_PREFIX + userId;
+		RLock rLock = redissonClient.getLock(key);
+
+		try {
+			boolean available = rLock.tryLock(waitTime, leaseTime, timeUnit);
+			if (!available) {
+				throw new LockException(new InterruptedException("유저 티켓 락 획득 실패"));
+			}
+
+			aopForTransaction.proceed(block); // lock 범위 안에서 트랜잭션 적용 후 로직 처리
+		} catch (InterruptedException e) {
+			throw new LockException(e); // 락 획득 실패시 Exception 발생
+		} finally {
+			try {
+				rLock.unlock();
+			} catch (IllegalMonitorStateException e) {
+				log.info("유저 티켓 분산 락이 이미 해제되었습니다. :key({})", key);
 			}
 		}
 	}

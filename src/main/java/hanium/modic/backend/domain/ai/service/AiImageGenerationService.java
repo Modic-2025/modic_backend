@@ -1,5 +1,7 @@
 package hanium.modic.backend.domain.ai.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,8 +22,11 @@ import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 import lombok.AccessLevel;
@@ -35,16 +40,25 @@ import lombok.extern.slf4j.Slf4j;
 public class AiImageGenerationService {
 
 	private final AiImageService aiImageService;
+	private final AiRequestTicketService aiRequestTicketService;
 	private final MessageQueueService messageQueueService;
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final AiRequestRepository aiRequestRepository;
 	private final CreatedAiImageRepository createdAiImageRepository;
 	private final CreatedAiImageService createdAiImageService;
 	private final AiImagePermissionRepository aiImagePermissionRepository;
+	private final UserCoinService userCoinService;
+	private final PostEntityRepository postEntityRepository;
 
 	@Transactional
-	public RequestAiImageGenerationResponse processImageGeneration(ImagePrefix imageUsagePurpose, String fileName,
-		String imagePath, Long postId, Long userId) {
+	public RequestAiImageGenerationResponse processImageGeneration(
+		ImagePrefix imageUsagePurpose,
+		String fileName,
+		String imagePath,
+		Long postId,
+		Long userId,
+		Boolean useTicket
+	) {
 		// 사용자 권한 검증
 		validateAiRequestPermission(userId, postId);
 
@@ -56,6 +70,18 @@ public class AiImageGenerationService {
 		// 이미지 저장 및 ID 반환
 		AiRequestEntity aiRequestEntity = aiImageService.saveImage(imageUsagePurpose, fileName, imagePath, userId,
 			postId);
+
+		// 포스트 조회
+		PostEntity post = postEntityRepository.findById(postId)
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
+
+		// 결제 처리
+		if (useTicket) {
+			aiRequestTicketService.useTicket(userId);
+		} else {
+			// Todo : 상업용, 비상업용에 대해 로직 처리 필요
+			userCoinService.consumeCoin(userId, post.getCommercialPrice());
+		}
 
 		// MQ에 이미지 생성 요청 전송
 		messageQueueService.sendImageGenerationRequest(

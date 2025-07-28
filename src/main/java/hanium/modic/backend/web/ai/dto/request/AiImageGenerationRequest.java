@@ -20,6 +20,10 @@ public record AiImageGenerationRequest(
 
 	@NotNull(message = "postId는 필수입니다.")
 	@Schema(description = "연결될 게시글 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-	Long postId
+	Long postId,
+
+	@NotNull(message = "결제 방식은 필수입니다.")
+	@Schema(description = "결제 방식 (true: 티켓 사용, false: 코인 사용)", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
+	Boolean useTicket
 ) {
 }

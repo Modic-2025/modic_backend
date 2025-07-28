@@ -20,6 +20,7 @@ import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
+import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
 import hanium.modic.backend.web.user.dto.response.GetUserUpdateTokenResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
@@ -118,6 +119,16 @@ public class UserController {
 			request.updateToken()
 		);
 		return ResponseEntity.ok().build();
+	}
+
+	@GetMapping("/coins")
+	@Operation(
+		summary = "유저 코인 조회 API",
+		description = "로그인한 유저의 코인 잔액을 조회합니다."
+	)
+	public ResponseEntity<AppResponse<GetCoinBalanceResponse>> getUserCoins(@CurrentUser UserEntity user) {
+		GetCoinBalanceResponse response = userCoinService.getCoinBalance(user.getId());
+		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
 	@PostMapping("/coins/transfer")

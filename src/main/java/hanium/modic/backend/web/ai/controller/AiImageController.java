@@ -77,7 +77,9 @@ public class AiImageController {
 			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
 			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]"),
-			@ApiResponse(responseCode = "403", description = "AI 이미지 생성 권한이 없습니다.[AI-003]"),
+			@ApiResponse(responseCode = "403", description = "AI 이미지 생성 권한이 없습니다.[A-004]"),
+			@ApiResponse(responseCode = "500", description = "티켓 처리에 실패했습니다.[A-005]"),
+			@ApiResponse(responseCode = "400", description = "티켓이 부족합니다.[A-006]")
 		}
 	)
 	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
@@ -89,7 +91,8 @@ public class AiImageController {
 			request.fileName(),
 			request.imagePath(),
 			request.postId(),
-			userEntity.getId()
+			userEntity.getId(),
+			request.useTicket()
 		);
 
 		return ResponseEntity.status(CREATED)

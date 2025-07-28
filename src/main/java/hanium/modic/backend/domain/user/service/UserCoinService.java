@@ -11,6 +11,7 @@ import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,6 +21,14 @@ public class UserCoinService {
 	private final UserEntityRepository userEntityRepository;
 
 	private final LockManager lockManager;
+
+
+	// 코인 잔액 조회
+	public GetCoinBalanceResponse getCoinBalance(final Long userId) {
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		return new GetCoinBalanceResponse(user.getCoin());
+	}
 
 	// 코인 충전
 	public void chargeCoin(final long userId, final long coin) {

@@ -86,27 +86,27 @@ class AiImageControllerTest extends BaseControllerTest {
 	private static Stream<AiImageGenerationRequest> provideInvalidAiImageGenerationRequests() {
 		return Stream.of(
 			// 파일명 누락
-			new AiImageGenerationRequest(null, "valid/path", AI_REQUEST, 1L),
+			new AiImageGenerationRequest(null, "valid/path", AI_REQUEST, 1L, true),
 			// 파일명 빈 문자열
-			new AiImageGenerationRequest("", "valid/path", AI_REQUEST, 1L),
+			new AiImageGenerationRequest("", "valid/path", AI_REQUEST, 1L, true),
 			// 파일명 공백
-			new AiImageGenerationRequest("   ", "valid/path", AI_REQUEST, 1L),
+			new AiImageGenerationRequest("   ", "valid/path", AI_REQUEST, 1L, true),
 
 			// 이미지 Path 누락
-			new AiImageGenerationRequest("valid.jpg", null, AI_REQUEST, 1L),
+			new AiImageGenerationRequest("valid.jpg", null, AI_REQUEST, 1L, true),
 			// 이미지 Path 빈 문자열
-			new AiImageGenerationRequest("valid.jpg", "", AI_REQUEST, 1L),
+			new AiImageGenerationRequest("valid.jpg", "", AI_REQUEST, 1L, true),
 			// 이미지 Path 공백
-			new AiImageGenerationRequest("valid.jpg", "   ", AI_REQUEST, 1L),
+			new AiImageGenerationRequest("valid.jpg", "   ", AI_REQUEST, 1L, true),
 
 			// 이미지 사용 목적 누락
-			new AiImageGenerationRequest("valid.jpg", "valid/path", null, 1L),
+			new AiImageGenerationRequest("valid.jpg", "valid/path", null, 1L, true),
 
 			// postId 누락
-			new AiImageGenerationRequest("valid.jpg", "valid/path", AI_REQUEST, null),
+			new AiImageGenerationRequest("valid.jpg", "valid/path", AI_REQUEST, null, true),
 
 			// 모든 필수값 누락
-			new AiImageGenerationRequest(null, null, null, null)
+			new AiImageGenerationRequest(null, null, null, null, true)
 		);
 	}
 
