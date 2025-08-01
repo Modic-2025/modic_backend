@@ -48,6 +48,6 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 		response.addCookie(refreshTokenCookie);
 
 		// Todo: 리다이렉트 URL을 환경 변수로 관리
-		response.sendRedirect("http://localhost:3000");
+		response.sendRedirect(AuthConstant.LOCAL_OAUTH_REDIRECT_URI);
 	}
 }

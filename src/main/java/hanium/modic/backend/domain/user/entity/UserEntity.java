@@ -54,10 +54,14 @@ public class UserEntity extends BaseEntity {
 	@Builder
 	private UserEntity(String email, String password, String name, String uniqueId) {
 		this.email = email;
-		this.password = password;
+		this.password = password != null ? password : generateTemporaryPassword();
 		this.name = name;
 		this.userRole = UserRole.USER;
 		this.uniqueId = uniqueId;
+	}
+
+	private String generateTemporaryPassword() {
+		return "OAUTH_" + java.util.UUID.randomUUID().toString().replace("-", "");
 	}
 
 	public void addCoin(Long coin) {
