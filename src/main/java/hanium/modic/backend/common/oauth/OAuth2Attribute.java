@@ -65,6 +65,7 @@ public class OAuth2Attribute {
 			.email(email)
 			.uniqueId(uniqueId)
 			.name(name)
+			.password(null)
 			.build();
 	}
 }
