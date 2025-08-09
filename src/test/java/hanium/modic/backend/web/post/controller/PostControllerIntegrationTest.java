@@ -33,6 +33,8 @@ import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.ai.entity.AiImagePermissionEntity;
+import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 
@@ -48,6 +50,8 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	private PostImageEntityRepository postImageEntityRepository;
 	@Autowired
 	private UserEntityRepository userEntityRepository;
+	@Autowired
+	private AiImagePermissionRepository aiImagePermissionRepository;
 
 	@Test
 	@DisplayName("게시물 등록 요청 API")
@@ -244,6 +248,71 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			postImages.forEach(postImage -> deleteImage(postImage.getImagePath()));
 		}
 
+	}
+
+	@Test
+	@DisplayName("리뷰 권한 확인 API - 권한 있음")
+	@WithCustomUser(email = "user1@test.com")
+	void canReviewPost_WithPermission_ShouldReturnTrue() throws Exception {
+		final UserEntity user = ContextHolderUtil.getCurrentUser();
+		// 다른 사용자가 만든 게시물 생성
+		final UserEntity postOwner = userEntityRepository.save(UserFactory.createMockUserWithoutId("postOwner"));
+		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(postOwner));
+
+		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
+		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+			.userId(user.getId())
+			.postId(post.getId())
+			.remainingGenerations(10)
+			.isActive(true)
+			.build());
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/can-review", post.getId()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.canReview").value(true));
+	}
+
+	@Test
+	@DisplayName("리뷰 권한 확인 API - 권한 없음")
+	@WithCustomUser(email = "user2@test.com")
+	void canReviewPost_WithoutPermission_ShouldReturnFalse() throws Exception {
+		final UserEntity user = ContextHolderUtil.getCurrentUser();
+		// 다른 사용자가 만든 게시물 생성
+		final UserEntity postOwner = userEntityRepository.save(UserFactory.createMockUserWithoutId("postOwner"));
+		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(postOwner));
+
+		// AiImagePermission 생성하지 않음 (해당 그림체를 사용한 이력 없음)
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/can-review", post.getId()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.canReview").value(false));
+	}
+
+	@Test
+	@DisplayName("리뷰 권한 확인 API - 자신의 게시물")
+	@WithCustomUser(email = "user3@test.com")
+	void canReviewPost_OwnPost_ShouldReturnFalse() throws Exception {
+		final UserEntity user = ContextHolderUtil.getCurrentUser();
+		// 자신의 게시물 생성
+		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user));
+
+		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
+		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+			.userId(user.getId())
+			.postId(post.getId())
+			.remainingGenerations(10)
+			.isActive(true)
+			.build());
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/can-review", post.getId()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.canReview").value(false));
 	}
 
 	private void uploadImage(String filePath, String content) {

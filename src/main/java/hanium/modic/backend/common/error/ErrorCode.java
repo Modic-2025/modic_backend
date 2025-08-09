@@ -49,6 +49,8 @@ public enum ErrorCode {
 
 	// Post Review
 	POST_REVIEW_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PR-001", "해당 포스트 리뷰를 찾을 수 없습니다."),
+	CANNOT_REVIEW_OWN_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "PR-002", "자신의 게시물에는 리뷰를 작성할 수 없습니다."),
+	POST_REVIEW_PERMISSION_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "PR-003", "해당 그림체를 사용한 이력이 없어 리뷰를 작성할 수 없습니다."),
 
 	// Post Review Comment
 	POST_REVIEW_COMMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "PRC-001", "해당 포스트 리뷰 댓글을 찾을 수 없습니다."),
