@@ -27,6 +27,14 @@ public class RabbitMqConfig {
 	public static final String AI_IMAGE_CREATED_EXCHANGE = "ai.image.created.exchange";
 	public static final String AI_IMAGE_CREATED_ROUTING_KEY = "ai.image.created";
 
+	// DLQ (Dead Letter Queue) 및 재시도 관련 상수
+	public static final String AI_IMAGE_REQUEST_DLX = "ai.image.request.dlx";
+	public static final String AI_IMAGE_REQUEST_DLQ = "ai.image.request.dlq";
+	public static final String AI_IMAGE_REQUEST_RETRY_EXCHANGE = "ai.image.request.retry.exchange";
+	public static final String AI_IMAGE_REQUEST_RETRY_QUEUE = "ai.image.request.retry.queue";
+	public static final String AI_IMAGE_REQUEST_DLQ_ROUTING_KEY = "ai.image.request.dlq";
+	public static final String AI_IMAGE_REQUEST_RETRY_ROUTING_KEY = "ai.image.request.retry";
+
 	private final RabbitMqProperties rabbitMqProperties;
 
 	@Bean
