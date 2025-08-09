@@ -18,12 +18,14 @@ import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.post.service.PostService;
+import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.postReview.dto.response.CanReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -39,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 public class PostController {
 
 	private final PostService postService;
+	private final PostReviewAuthorizationService postReviewAuthorizationService;
 
 	@PostMapping
 	@Operation(summary = "게시글 작성 API", description = "게시글을 작성합니다. 작성자는 인증된 사용자여야 합니다.", responses = {
@@ -92,5 +95,31 @@ public class PostController {
 			request.nonCommercialPrice(), request.imageIds());
 
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
+	}
+
+	@GetMapping("/{postId}/can-review")
+	@Operation(
+		summary = "리뷰 작성 권한 확인 API",
+		description = "사용자가 특정 게시물(그림체)에 대해 리뷰를 작성할 수 있는지 확인합니다. 해당 그림체를 사용한 이력이 있는 사용자만 리뷰를 작성할 수 있습니다.",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "권한 확인 성공"),
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]"),
+			@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]")
+		}
+	)
+	public ResponseEntity<AppResponse<CanReviewResponse>> canReviewPost(
+		@PathVariable Long postId,
+		@CurrentUser UserEntity user) {
+
+		boolean canReview = postReviewAuthorizationService.canUserReviewPost(user.getId(), postId);
+		
+		CanReviewResponse response;
+		if (canReview) {
+			response = CanReviewResponse.allowed();
+		} else {
+			response = CanReviewResponse.denied();
+		}
+
+		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 }

@@ -15,12 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
-import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import hanium.modic.backend.domain.postReview.service.PostReviewService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.postReview.dto.request.CreatePostReviewRequest;
 import hanium.modic.backend.web.postReview.dto.request.UpdatePostReviewRequest;
-import hanium.modic.backend.web.postReview.dto.response.CanReviewResponse;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 public class PostReviewController {
 
 	private final PostReviewService postReviewService;
-	private final PostReviewAuthorizationService postReviewAuthorizationService;
 
 	@PostMapping
 	@Operation(
@@ -120,23 +117,4 @@ public class PostReviewController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
-	@GetMapping("/can-review")
-	@Operation(
-		summary = "리뷰 작성 권한 확인 API",
-		description = "사용자가 특정 게시물(그림체)에 대해 리뷰를 작성할 수 있는지 확인합니다. 해당 그림체를 사용한 이력이 있는 사용자만 리뷰를 작성할 수 있습니다.",
-		responses = {
-			@ApiResponse(responseCode = "200", description = "권한 확인 성공"),
-			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]"),
-			@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]")
-		}
-	)
-	public ResponseEntity<AppResponse<CanReviewResponse>> canReviewPost(
-		@RequestParam Long postId,
-		@CurrentUser UserEntity user) {
-
-		boolean canReview = postReviewAuthorizationService.canUserReviewPost(user.getId(), postId);
-		CanReviewResponse response = canReview ? CanReviewResponse.allowed() : CanReviewResponse.denied();
-
-		return ResponseEntity.ok(AppResponse.ok(response));
-	}
 }
