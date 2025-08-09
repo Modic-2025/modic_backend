@@ -15,6 +15,7 @@ import hanium.modic.backend.domain.auth.service.component.EmailSender;
 import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
 import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
@@ -108,5 +109,10 @@ public class AuthService {
 	public void checkEmailCodeAndDelete(final String email, final String code) {
 		checkEmailCode(email, code);
 		codeManager.deleteCode(email);
+	}
+
+	public CheckEmailDuplicateResponse checkEmailDuplicate(final String email) {
+		boolean isAvailable = !userEntityRepository.existsByEmail(email);
+		return CheckEmailDuplicateResponse.of(email, isAvailable);
 	}
 }

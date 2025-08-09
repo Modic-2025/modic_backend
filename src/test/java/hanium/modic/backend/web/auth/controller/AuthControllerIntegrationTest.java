@@ -4,7 +4,6 @@ import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,5 +120,66 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(status().isOk())
 			.andExpectAll(jsonPath("$.data.email").value(email),
 				jsonPath("$.data.isVerified").value(true));
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 API - 중복된 이메일 (사용 불가)")
+	void checkEmailDuplicate_ExistingEmail() throws Exception {
+		// given
+		final String email = "existing@example.com";
+		UserEntity existingUser = UserEntity.builder()
+			.email(email)
+			.password(passwordEncoder.encode("password123"))
+			.name("기존사용자")
+			.build();
+		userEntityRepository.save(existingUser);
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", email))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.email").value(email))
+			.andExpect(jsonPath("$.data.available").value(false));
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 API - 사용 가능한 이메일")
+	void checkEmailDuplicate_AvailableEmail() throws Exception {
+		// given
+		final String email = "available@example.com";
+		// 데이터베이스에 해당 이메일이 없는 상태
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", email))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.email").value(email))
+			.andExpect(jsonPath("$.data.available").value(true));
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 API - 잘못된 이메일 형식")
+	void checkEmailDuplicate_InvalidEmailFormat() throws Exception {
+		// given
+		final String invalidEmail = "invalid-email-format";
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", invalidEmail))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 API - 빈 이메일")
+	void checkEmailDuplicate_EmptyEmail() throws Exception {
+		// given
+		final String emptyEmail = "";
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", emptyEmail))
+			.andExpect(status().isBadRequest());
 	}
 }

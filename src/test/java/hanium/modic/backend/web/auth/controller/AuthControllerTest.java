@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
 import hanium.modic.backend.web.auth.dto.ReissueResponse;
@@ -241,6 +242,85 @@ class AuthControllerTest extends BaseControllerTest {
 				"인증 코드가 빈 문자열인 경우",
 				new VerifyEmailCodeRequest("email@email.email", ""),
 				"인증 코드를 입력해주세요."
+			)
+		);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 성공 케이스 (사용 가능한 이메일)")
+	void checkEmailDuplicate_Available() throws Exception {
+		// given
+		final String email = "available@example.com";
+		CheckEmailDuplicateResponse mockResponse = CheckEmailDuplicateResponse.of(email, true);
+
+		when(authService.checkEmailDuplicate(email)).thenReturn(mockResponse);
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", email))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.email").value(email))
+			.andExpect(jsonPath("$.data.available").value(true));
+
+		verify(authService).checkEmailDuplicate(email);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 성공 케이스 (중복된 이메일)")
+	void checkEmailDuplicate_NotAvailable() throws Exception {
+		// given
+		final String email = "existing@example.com";
+		CheckEmailDuplicateResponse mockResponse = CheckEmailDuplicateResponse.of(email, false);
+
+		when(authService.checkEmailDuplicate(email)).thenReturn(mockResponse);
+
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", email))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data.email").value(email))
+			.andExpect(jsonPath("$.data.available").value(false));
+
+		verify(authService).checkEmailDuplicate(email);
+	}
+
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("invalidEmailParameterRequests")
+	@DisplayName("이메일 중복 확인 - 실패 케이스 (잘못된 이메일 파라미터)")
+	void checkEmailDuplicate_InvalidEmail(String description, String email, String expectedErrorMessage) throws
+		Exception {
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check")
+				.param("email", email))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
+
+		verifyNoInteractions(authService);
+	}
+
+	@Test
+	@DisplayName("이메일 중복 확인 - 실패 케이스 (이메일 파라미터 누락)")
+	void checkEmailDuplicate_MissingEmailParameter() throws Exception {
+		// when, then
+		mockMvc.perform(get("/api/auth/email/check"))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(authService);
+	}
+
+	static Stream<Arguments> invalidEmailParameterRequests() {
+		return Stream.of(
+			Arguments.of(
+				"이메일이 빈 문자열인 경우",
+				"",
+				"checkEmailDuplicate.email: 이메일은 필수 입력 항목입니다."
+			),
+			Arguments.of(
+				"이메일 형식이 잘못된 경우",
+				"not-an-email",
+				"checkEmailDuplicate.email: 유효하지 않은 이메일 형식입니다."
 			)
 		);
 	}
