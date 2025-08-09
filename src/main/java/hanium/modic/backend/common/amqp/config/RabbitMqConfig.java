@@ -1,5 +1,8 @@
 package hanium.modic.backend.common.amqp.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
@@ -39,7 +42,10 @@ public class RabbitMqConfig {
 
 	@Bean
 	public Queue aiImageRequestQueue() {
-		return new Queue(AI_IMAGE_REQUEST_QUEUE, true);
+		Map<String, Object> args = new HashMap<>();
+		args.put("x-dead-letter-exchange", AI_IMAGE_REQUEST_DLX);
+		args.put("x-dead-letter-routing-key", AI_IMAGE_REQUEST_RETRY_ROUTING_KEY); // 기본적으로 재시도로 라우팅
+		return new Queue(AI_IMAGE_REQUEST_QUEUE, true, false, false, args);
 	}
 
 	@Bean
@@ -69,6 +75,58 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(aiImageCreatedQueue)
 			.to(aiImageCreatedExchange)
 			.with(AI_IMAGE_CREATED_ROUTING_KEY);
+	}
+
+	// DLX (Dead Letter Exchange) - 실패한 메시지를 받아서 재시도 또는 최종 처리로 라우팅
+	@Bean
+	public TopicExchange aiImageRequestDlx() {
+		return new TopicExchange(AI_IMAGE_REQUEST_DLX, true, false);
+	}
+
+	// 최종 실패 메시지 저장소
+	@Bean
+	public Queue aiImageRequestDlq() {
+		return new Queue(AI_IMAGE_REQUEST_DLQ, true);
+	}
+
+	// DLX에서 최종 DLQ로의 바인딩
+	@Bean
+	public Binding aiImageRequestDlqBinding(Queue aiImageRequestDlq, TopicExchange aiImageRequestDlx) {
+		return BindingBuilder.bind(aiImageRequestDlq)
+			.to(aiImageRequestDlx)
+			.with(AI_IMAGE_REQUEST_DLQ_ROUTING_KEY);
+	}
+
+	// 재시도용 Exchange
+	@Bean
+	public TopicExchange aiImageRequestRetryExchange() {
+		return new TopicExchange(AI_IMAGE_REQUEST_RETRY_EXCHANGE, true, false);
+	}
+
+	// 재시도 대기 Queue (TTL 60초 설정, 만료 시 원래 exchange로 재전송)
+	@Bean
+	public Queue aiImageRequestRetryQueue() {
+		Map<String, Object> args = new HashMap<>();
+		args.put("x-message-ttl", 60000); // 60초
+		args.put("x-dead-letter-exchange", AI_IMAGE_REQUEST_EXCHANGE); // 만료 시 원래 exchange로
+		args.put("x-dead-letter-routing-key", AI_IMAGE_REQUEST_ROUTING_KEY);
+		return new Queue(AI_IMAGE_REQUEST_RETRY_QUEUE, true, false, false, args);
+	}
+
+	// 재시도 Exchange와 Queue 바인딩
+	@Bean
+	public Binding aiImageRequestRetryBinding(Queue aiImageRequestRetryQueue, TopicExchange aiImageRequestRetryExchange) {
+		return BindingBuilder.bind(aiImageRequestRetryQueue)
+			.to(aiImageRequestRetryExchange)
+			.with(AI_IMAGE_REQUEST_RETRY_ROUTING_KEY);
+	}
+
+	// DLX에서 재시도 Exchange로의 바인딩
+	@Bean
+	public Binding aiImageRequestDlxToRetryBinding(TopicExchange aiImageRequestRetryExchange, TopicExchange aiImageRequestDlx) {
+		return BindingBuilder.bind(aiImageRequestRetryExchange)
+			.to(aiImageRequestDlx)
+			.with(AI_IMAGE_REQUEST_RETRY_ROUTING_KEY);
 	}
 
 	@Bean
