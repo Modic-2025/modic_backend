@@ -18,6 +18,8 @@ import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.postLike.entity.PostLikeEntity;
+import hanium.modic.backend.domain.postLike.entity.PostStatisticsEntity;
 import hanium.modic.backend.domain.postLike.repository.PostLikeEntityRepository;
 import hanium.modic.backend.domain.postLike.repository.PostStatisticsEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -84,9 +86,9 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 		boolean isLiked = postLikeService.isLikedByUser(user2.getId(), post.getId());
 		assertThat(isLiked).isTrue();
 
-		// 좋아요 수 확인
-		long likeCount = postLikeService.getLikeCount(post.getId());
-		assertThat(likeCount).isEqualTo(1);
+		// PostLike 테이블에서 실제 좋아요 수 확인 (동기적 검증)
+		long actualLikeCount = postLikeRepository.countByPostId(post.getId());
+		assertThat(actualLikeCount).isEqualTo(1);
 	}
 
 	@Test
@@ -132,8 +134,8 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 	}
 
 	@Test
-	@DisplayName("TEST3: 다중 사용자가 동시에 좋아요 추가/삭제 시 통계 일관성이 유지된다")
-	void concurrentLikeToggleStatisticsConsistencyTest() throws InterruptedException {
+	@DisplayName("TEST3: 다중 사용자가 동시에 좋아요 추가/삭제 시 데이터 정합성이 유지된다")
+	void concurrentLikeToggleDataConsistencyTest() throws InterruptedException {
 		// 사전 설정: 사용자2, 사용자3가 이미 좋아요를 누른 상태
 		postLikeService.toggleLike(user2.getId(), post.getId());
 		postLikeService.toggleLike(user3.getId(), post.getId());
@@ -172,20 +174,59 @@ class PostLikeServiceIntegrationTest extends BaseIntegrationTest {
 		latch.await();
 		shutdownExecutor(executor);
 
-		// 실제 좋아요 수 계산
+		// PostLike 테이블에서 실제 좋아요 수 확인 (동기적 검증)
 		long actualLikeCount = postLikeRepository.countByPostId(post.getId());
-
-		// 통계 테이블의 좋아요 수
-		long statisticsLikeCount = postLikeService.getLikeCount(post.getId());
-
-		// 실제 수와 통계가 일치하는지 확인
-		assertThat(actualLikeCount).isEqualTo(statisticsLikeCount);
 
 		// 최종 상태 확인 (사용자2가 2번 토글했으므로 좋아요 있음, 사용자3는 삭제됨)
 		assertThat(postLikeService.isLikedByUser(user2.getId(), post.getId())).isTrue();
 		assertThat(postLikeService.isLikedByUser(user3.getId(), post.getId())).isFalse();
 
+		// 실제 PostLike 데이터 정합성 확인
 		assertThat(actualLikeCount).isEqualTo(1);
+	}
+
+	@Test
+	@DisplayName("TEST4: 통계가 없는 상태에서 validateAndFixStatistics가 정상적으로 생성한다")
+	void statisticsConsistencyValidation_whenStatisticsNotExist_shouldCreate() {
+		// given: 실제 데이터는 있지만 통계가 없는 상황
+		postLikeRepository.save(PostLikeEntity.of(user2.getId(), post.getId()));
+		postLikeRepository.save(PostLikeEntity.of(user3.getId(), post.getId()));
+		long expectedCount = 2L;
+
+		// 통계 데이터 없음 (의도적으로 생성하지 않음)
+
+		// when: 통계 검증 및 수정 메서드 호출
+		boolean wasFixed = postLikeService.validateAndFixStatistics(post.getId());
+
+		// then: 수정이 발생했고, 통계가 올바르게 생성되었는지 확인
+		assertThat(wasFixed).isTrue();
+
+		long statisticsCount = postLikeService.getLikeCount(post.getId());
+		assertThat(statisticsCount).isEqualTo(expectedCount);
+	}
+
+	@Test
+	@DisplayName("TEST5: 통계 일치 시 validateAndFixStatistics가 수정하지 않는다")
+	void statisticsConsistencyValidation_whenConsistent_shouldNotFix() {
+		// given: 데이터와 통계가 일치하는 상황 생성
+		// 실제 좋아요: 1개
+		postLikeRepository.save(PostLikeEntity.of(user2.getId(), post.getId()));
+		long expectedCount = 1L;
+
+		// 통계: 1개 (올바른 값)
+		postStatisticsRepository.save(PostStatisticsEntity.builder()
+			.postId(post.getId())
+			.likeCount(expectedCount)
+			.build());
+
+		// when: 통계 검증 메서드 호출
+		boolean wasFixed = postLikeService.validateAndFixStatistics(post.getId());
+
+		// then: 수정이 발생하지 않았고, 통계가 그대로 유지되는지 확인
+		assertThat(wasFixed).isFalse();
+
+		long statisticsCount = postLikeService.getLikeCount(post.getId());
+		assertThat(statisticsCount).isEqualTo(expectedCount);
 	}
 
 	private void shutdownExecutor(ExecutorService executor) {
