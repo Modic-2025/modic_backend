@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,6 +43,9 @@ class PostControllerTest extends BaseControllerTest {
 
 	@MockitoBean
 	private PostService postService;
+
+	@MockitoBean
+	PostReviewAuthorizationService postReviewAuthorizationService;
 
 	@Autowired
 	private MockMvc mockMvc;
