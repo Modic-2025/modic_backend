@@ -2,12 +2,10 @@ package hanium.modic.backend.domain.ai.listener;
 
 import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
 
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,16 +20,24 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class DlqListener {
-    
-    private static final int MAX_RETRY_COUNT = 3;
-    private static final String RETRY_COUNT_HEADER = "x-retries-count";
-    
+
     private final AiRequestRepository aiRequestRepository;
-    private final RabbitTemplate rabbitTemplate;
-    
-    // TODO: Task 6에서 handleFailedMessage 메서드 구현 예정
-    
-    // TODO: Task 7에서 handleFinalFailure 메서드 구현 예정
-    
-    // TODO: Task 8에서 handleRetry 메서드 구현 예정
+
+    @Transactional
+    @RabbitListener(queues = AI_IMAGE_REQUEST_DLQ)
+    public void handleFinalFailedMessage(AiImageRequestMessageDto messageDto, Message message) {
+        log.error("[최종 실패] AI 이미지 생성 요청 최종 실패: requestId={}", messageDto.requestId());
+
+        // AiRequestEntity 상태를 FAILED로 변경
+        Optional<AiRequestEntity> aiRequestOpt = aiRequestRepository.findByRequestId(messageDto.requestId());
+        if (aiRequestOpt.isPresent()) {
+            AiRequestEntity aiRequest = aiRequestOpt.get();
+            aiRequest.updateStatus(AiImageStatus.FAILED);
+            aiRequestRepository.save(aiRequest);
+            log.info("[상태 업데이트] requestId={} 상태를 FAILED로 변경", messageDto.requestId());
+        } else {
+            log.error("[데이터 오류] requestId={}에 해당하는 AI 요청을 찾을 수 없습니다", messageDto.requestId());
+        }
+    }
+
 }
