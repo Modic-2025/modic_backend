@@ -202,6 +202,67 @@ class PostServiceTest {
 	}
 
 	@Test
+	@DisplayName("공개 게시글 조회 성공 - 비로그인 사용자")
+	void getPostForPublic_Success_ShouldReturnPostWithFalseLikeStatus() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long postId = 1L;
+		PostEntity mockPost = createMockPostWithId(postId, mockUser);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
+		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
+			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
+			.toList();
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(postLikeService.getLikeCount(postId)).thenReturn(15L);
+
+		// when
+		GetPostResponse response = postService.getPostForPublic(postId);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.id()).isEqualTo(mockPost.getId());
+		assertThat(response.title()).isEqualTo(mockPost.getTitle());
+		assertThat(response.description()).isEqualTo(mockPost.getDescription());
+		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());
+		assertThat(response.nonCommercialPrice()).isEqualTo(mockPost.getNonCommercialPrice());
+		assertThat(response.likeCount()).isEqualTo(15L);
+		assertThat(response.isLikedByCurrentUser()).isFalse(); // 비로그인 사용자이므로 false
+		assertThat(response.images()).hasSize(expectedImages.size());
+		for (int i = 0; i < expectedImages.size(); i++) {
+			assertThat(response.images().get(i).getImageUrl()).isEqualTo(expectedImages.get(i).getImageUrl());
+			assertThat(response.images().get(i).getImageId()).isEqualTo(expectedImages.get(i).getImageId());
+		}
+
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		// isLikedByUser 메서드는 호출되지 않아야 함
+		verify(postLikeService, never()).isLikedByUser(any(), any());
+	}
+
+	@Test
+	@DisplayName("공개 게시글 조회 실패 - 존재하지 않는 게시글 ID")
+	void getPostForPublic_NonExistentPostId_ShouldThrowPostNotFoundException() {
+		// given
+		Long nonExistentPostId = 99L;
+		when(postEntityRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
+
+		// when & then
+		AppException exception = assertThrows(AppException.class,
+			() -> postService.getPostForPublic(nonExistentPostId));
+
+		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_NOT_FOUND_EXCEPTION);
+		verify(postEntityRepository).findById(nonExistentPostId);
+		verify(postImageEntityRepository, never()).findAllByPostId(any());
+		verify(postLikeService, never()).getLikeCount(any());
+		verify(postLikeService, never()).isLikedByUser(any(), any());
+	}
+
+	@Test
 	@DisplayName("게시글 목록 조회 성공 - 하트 수 배치 조회 포함")
 	void getPosts_WithBatchLikeCountsAndImages_ShouldReturnOptimizedResults() {
 		// given
