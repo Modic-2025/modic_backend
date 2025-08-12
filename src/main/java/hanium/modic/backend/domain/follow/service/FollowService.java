@@ -72,6 +72,19 @@ public class FollowService {
 			});
 	}
 
+	// 팔로우 여부 확인
+	public boolean isFollowing(final Long currentUserId, final Long targetUserId) {
+		// 자기 자신을 팔로우하는지 확인하는 경우
+		if (currentUserId.equals(targetUserId)) {
+			return false;
+		}
+
+		// 대상 사용자 존재 여부 확인
+		validateUserExists(targetUserId);
+
+		return followRepository.existsByMyIdAndFollowingId(currentUserId, targetUserId);
+	}
+
 	// 유저 존재 체크
 	private void validateUserExists(final long userId) {
 		if (!userRepository.existsById(userId)) {

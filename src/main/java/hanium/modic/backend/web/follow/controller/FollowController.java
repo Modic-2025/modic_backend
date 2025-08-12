@@ -16,6 +16,7 @@ import hanium.modic.backend.domain.follow.service.FollowService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
+import hanium.modic.backend.web.follow.dto.response.IsFollowingResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.Max;
@@ -114,5 +115,22 @@ public class FollowController {
 		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
 		return ResponseEntity.ok(AppResponse.ok(followService.getFollowings(userId, page, size)));
+	}
+
+	@GetMapping("/status")
+	@Operation(
+		summary = "팔로우 상태 확인",
+		description = "현재 사용자가 특정 사용자를 팔로우하고 있는지 확인합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
+		}
+	)
+	public ResponseEntity<AppResponse<IsFollowingResponse>> getFollowStatus(
+		@CurrentUser UserEntity me,
+		@RequestParam(required = true) long userId
+	) {
+		boolean isFollowing = followService.isFollowing(me.getId(), userId);
+		return ResponseEntity.ok(AppResponse.ok(new IsFollowingResponse(isFollowing)));
 	}
 }
