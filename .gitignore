@@ -47,3 +47,4 @@ application-*.yml
 .claude/
 claude-rules/
 CLAUDE.md
+docs/**
