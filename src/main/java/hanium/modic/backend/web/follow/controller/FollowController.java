@@ -130,7 +130,8 @@ public class FollowController {
 		@CurrentUser UserEntity me,
 		@RequestParam(required = true) long userId
 	) {
+		boolean isSelf = me.getId().equals(userId);
 		boolean isFollowing = followService.isFollowing(me.getId(), userId);
-		return ResponseEntity.ok(AppResponse.ok(new IsFollowingResponse(isFollowing)));
+		return ResponseEntity.ok(AppResponse.ok(new IsFollowingResponse(isFollowing, isSelf)));
 	}
 }
