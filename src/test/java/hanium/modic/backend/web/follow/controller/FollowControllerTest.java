@@ -87,6 +87,7 @@ class FollowControllerTest extends BaseControllerTest {
 				.param("userId", String.valueOf(targetUserId)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.isFollowing").value(true))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
 			.andExpect(jsonPath("$.isSuccess").value(true));
 
 		verify(followService).isFollowing(1L, targetUserId);
@@ -105,9 +106,29 @@ class FollowControllerTest extends BaseControllerTest {
 				.param("userId", String.valueOf(targetUserId)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
 			.andExpect(jsonPath("$.isSuccess").value(true));
 
 		verify(followService).isFollowing(1L, targetUserId);
+	}
+
+	@Test
+	@DisplayName("팔로우 상태 확인 - 자기 자신인 경우")
+	void getFollowStatusSelf() throws Exception {
+		// given
+		setupCurrentUserMocking();
+		Long currentUserId = 1L; // same as mocked current user
+		when(followService.isFollowing(1L, currentUserId)).thenReturn(false);
+
+		// when & then
+		mockMvc.perform(get("/api/follows/status")
+				.param("userId", String.valueOf(currentUserId)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(true))
+			.andExpect(jsonPath("$.isSuccess").value(true));
+
+		verify(followService).isFollowing(1L, currentUserId);
 	}
 
 	@Test

@@ -305,6 +305,7 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 		// then: 팔로우 중임을 확인
 		result.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.isFollowing").value(true))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
 			.andExpect(jsonPath("$.isSuccess").value(true));
 	}
 
@@ -323,11 +324,12 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 		// then: 팔로우하지 않음을 확인
 		result.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
 			.andExpect(jsonPath("$.isSuccess").value(true));
 	}
 
 	@Test
-	@DisplayName("TEST14: 팔로우 상태 확인 - 자기 자신인 경우 false 반환")
+	@DisplayName("TEST14: 팔로우 상태 확인 - 자기 자신인 경우 isSelf true 반환")
 	@WithCustomUser(email = "user1@test.com")
 	void getFollowStatusSelf() throws Exception {
 		// given: user1이 로그인한 상태
@@ -337,9 +339,10 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 		ResultActions result = mockMvc.perform(get("/api/follows/status")
 			.param("userId", String.valueOf(user1.getId())));
 
-		// then: false 반환
+		// then: isFollowing false, isSelf true 반환
 		result.andExpect(status().isOk())
 			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(true))
 			.andExpect(jsonPath("$.isSuccess").value(true));
 	}
 
