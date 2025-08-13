@@ -10,26 +10,26 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
+import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.postReview.entity.PostReviewImageEntity;
 import hanium.modic.backend.domain.postReview.repository.PostReviewImageRepository;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
-public class PostReviewImageService {
+public class PostReviewImageService extends ImageService {
 
 	private final PostReviewImageRepository postReviewImageRepository;
 	private final ImageValidationService imageValidationService;
 	private final ImageUtil imageUtil;
 
-	// 이미지 저장 URL 생성
-	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
-		imageValidationService.validateFullFileName(fullFileName);
-
-		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
+	public PostReviewImageService(ImageValidationService imageValidationService, ImageUtil imageUtil,
+		PostReviewImageRepository postReviewImageRepository) {
+		super(imageValidationService, imageUtil);
+		this.postReviewImageRepository = postReviewImageRepository;
+		this.imageValidationService = imageValidationService;
+		this.imageUtil = imageUtil;
 	}
 
 	// 이미지 URL 조회
@@ -38,7 +38,7 @@ public class PostReviewImageService {
 		PostReviewImageEntity image = postReviewImageRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
-		return image.getImageUrl();
+		return imageUtil.createImageGetUrl(image.getImagePath());
 	}
 
 	// 이미지 삭제
@@ -73,21 +73,17 @@ public class PostReviewImageService {
 		final String fullFileName,
 		final String imagePath
 	) {
-		imageValidationService.validateImageSaved(imagePath, imagePrefix);
-		imageValidationService.validateFullFileName(fullFileName);
+		imageValidationService.validateImageSaved(imagePath);
 		validateDuplicatedImagePath(imagePath);
 
-		String[] fileNameParts = fullFileName.split("\\.");
-		String fileName = fileNameParts[0];
-		String fileExtension = fileNameParts[1];
+		final ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
 
 		return postReviewImageRepository.save(
 			PostReviewImageEntity.builder()
 				.imagePurpose(imagePrefix)
-				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
 				.fullImageName(fullFileName)
-				.imageName(fileName)
-				.extension(ImageExtension.from(fileExtension))
+				.imageName(parsedImageName.imageName())
+				.extension(ImageExtension.from(parsedImageName.fileExtension()))
 				.imagePath(imagePath)
 				.build()
 		);

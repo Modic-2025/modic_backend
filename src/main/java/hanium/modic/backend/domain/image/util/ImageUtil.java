@@ -4,6 +4,7 @@ import java.util.List;
 
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
 
 public interface ImageUtil {
 
@@ -22,6 +23,6 @@ public interface ImageUtil {
 	// 이미지 조회 URL 생성
 	String createImageGetUrl(String imagePath);
 
-	// 이미지 저장 확인
-	boolean isImageSaved(ImagePrefix imagePrefix, String imagePath);
+	// FullImageName 파싱
+	ParsedImageName parseFullImageName(String fullFileName);
 }

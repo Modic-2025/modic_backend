@@ -39,7 +39,6 @@ public class AiImageCreatedListener {
 		AiRequestEntity aiRequest = aiRequestOpt.get();
 		CreatedAiImageEntity created = CreatedAiImageEntity.builder()
 			.requestId(message.requestId())
-			.imageUrl(message.imageUrl())
 			.imagePath(message.imagePath())
 			.fullImageName(message.fullImageName())
 			.imageName(message.imageName())

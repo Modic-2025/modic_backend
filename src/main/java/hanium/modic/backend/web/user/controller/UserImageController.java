@@ -12,8 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
-import hanium.modic.backend.common.error.ErrorCode;
-import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -92,8 +90,7 @@ public class UserImageController {
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@CurrentUser UserEntity user
 	) {
-		String imageGetUrl = userImageService.createImageGetUrl(user.getId())
-			.orElseThrow(() -> new AppException(ErrorCode.USER_IMAGE_NOT_FOUND_EXCEPTION));
+		String imageGetUrl = userImageService.createImageGetUrl(user.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
 	}

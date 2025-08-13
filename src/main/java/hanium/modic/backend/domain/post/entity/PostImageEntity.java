@@ -36,14 +36,13 @@ public class PostImageEntity extends Image {
 	@Builder
 	public PostImageEntity(
 		String imagePath,
-		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
 		ImagePrefix imagePurpose,
 		PostEntity postEntity
 	) {
-		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
+		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 
 		if (postEntity == null) {
 			this.postId = null;

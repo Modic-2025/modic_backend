@@ -4,37 +4,55 @@ import static com.amazonaws.HttpMethod.*;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import java.net.URL;
+import java.security.PrivateKey;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.HttpMethod;
+import com.amazonaws.services.cloudfront.CloudFrontUrlSigner;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 
+import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.property.property.CloudFrontProperties;
 import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
-import lombok.RequiredArgsConstructor;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
+import hanium.modic.backend.domain.image.service.ImageValidationService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class S3ImageUtil implements ImageUtil {
 
 	private final S3Properties s3Properties;
-	private final AmazonS3 amazonS3Client;
+	private final CloudFrontProperties cloudFrontProperties;
 
-	private final int EXPIRATION_TIME = 1000 * 60 * 2; // 2분
+	private final AmazonS3 amazonS3Client;
+	private final ImageValidationService imageValidationService;
+	private PrivateKey pk;
+
+	private final int EXPIRATION_TIME = 60 * 2; // 2분
+	private final String HTTPS = "https://";
+
+	public S3ImageUtil(S3Properties s3Properties, CloudFrontProperties cloudFrontProperties, AmazonS3 amazonS3Client,
+		ImageValidationService imageValidationService) {
+		this.pk = CloudFrontKeyLoader.loadFromPem(cloudFrontProperties.getPrivateKeyPem());
+		this.s3Properties = s3Properties;
+		this.cloudFrontProperties = cloudFrontProperties;
+		this.amazonS3Client = amazonS3Client;
+		this.imageValidationService = imageValidationService;
+	}
 
 	// 이미지 삭제
 	@Override
@@ -49,7 +67,7 @@ public class S3ImageUtil implements ImageUtil {
 	// 여러 이미지 삭제
 	@Override
 	@Async
-	public void deleteImages(List<String>imagePaths) {
+	public void deleteImages(List<String> imagePaths) {
 		if (imagePaths == null || imagePaths.isEmpty()) {
 			return;
 		}
@@ -97,21 +115,34 @@ public class S3ImageUtil implements ImageUtil {
 		return new CreateImageSaveUrlDto(url.toString(), path);
 	}
 
-	// 조회 PreSignedUrl 생성
-	@Override
-	public String createImageGetUrl(String imagePath) {
-		validateImagePath(imagePath);
+	// 조회 url 생성
+	public String createImageGetUrl(String resourcePath) {
+		try {
+			String resourceUrl = HTTPS + cloudFrontProperties.getDomain() + resourcePath;
+			Date expires = Date.from(Instant.now().plusSeconds(EXPIRATION_TIME));
 
-		GeneratePresignedUrlRequest request = createGeneratePreSignedUrlRequest(imagePath, GET, getUrlExpiration());
-		return amazonS3Client.generatePresignedUrl(request).toString();
+			return CloudFrontUrlSigner.getSignedURLWithCannedPolicy(
+				resourceUrl,
+				cloudFrontProperties.getKeyPairId(),
+				pk,
+				expires
+			);
+		} catch (Exception e) {
+			log.error("서명 URL 생성 중 에러 발생: {}", e.getMessage(), e);
+			throw new AppException(ErrorCode.S3_SERVER_ERROR);
+		}
 	}
 
-	// 이미지 저장확인
+	// FullImageName 파싱
 	@Override
-	public boolean isImageSaved(ImagePrefix imagePrefix, String imagePath) {
-		validateImagePath(imagePath);
+	public ParsedImageName parseFullImageName(String fullFileName) {
+		imageValidationService.validateFullFileName(fullFileName);
 
-		return amazonS3Client.doesObjectExist(s3Properties.getBucketName(), imagePath);
+		int dotIndex = fullFileName.lastIndexOf('.');
+		String fileName = fullFileName.substring(0, dotIndex);
+		String fileExtension = fullFileName.substring(dotIndex + 1);
+
+		return new ParsedImageName(fileName, fileExtension);
 	}
 
 	// S3 preSigned URL 요청 객체 생성
@@ -135,7 +166,7 @@ public class S3ImageUtil implements ImageUtil {
 	private Date getUrlExpiration() {
 		Date expiration = new Date();
 		long expTimeMillis = expiration.getTime();
-		expTimeMillis += EXPIRATION_TIME;
+		expTimeMillis += 1000 * EXPIRATION_TIME;
 		expiration.setTime(expTimeMillis);
 		return expiration;
 	}

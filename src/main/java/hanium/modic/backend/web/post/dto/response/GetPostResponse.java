@@ -7,7 +7,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,7 +35,7 @@ public record GetPostResponse(
 		String userImageUrl,
 		String userEmail,
 		PostEntity postEntity,
-		List<PostImageEntity> images) {
+		List<ImageDto> images) {
 		return of(userName, hasUserImage, userImageUrl, userEmail, postEntity, images, 0L, null);
 	}
 
@@ -47,12 +46,9 @@ public record GetPostResponse(
 		String userImageUrl,
 		String userEmail,
 		PostEntity postEntity,
-		List<PostImageEntity> images,
+		List<ImageDto> imageDtos,
 		long likeCount,
 		Boolean isLikedByCurrentUser) {
-		List<ImageDto> imageDtos = images.stream()
-			.map(image -> new ImageDto(image.getImageUrl(), image.getId()))
-			.toList();
 
 		return new GetPostResponse(
 			userName,
