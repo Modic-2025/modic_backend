@@ -11,6 +11,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
 import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
@@ -82,9 +83,9 @@ public class PostImageService extends ImageService {
 		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
 
-		String[] fileNameParts = fullFileName.split("\\.");
-		String fileName = fileNameParts[0];
-		String fileExtension = fileNameParts[1];
+		ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
+		String fileName = parsedImageName.imageName();
+		String fileExtension = parsedImageName.fileExtension();
 
 		return postImageEntityRepository.save(
 			PostImageEntity.builder()
