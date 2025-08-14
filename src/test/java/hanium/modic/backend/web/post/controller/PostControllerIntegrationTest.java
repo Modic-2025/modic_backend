@@ -63,7 +63,6 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		// PostImage 미리 저장
 		PostImageEntity image1 = postImageEntityRepository.save(PostImageEntity.builder()
 			.imagePath("imagePath1")
-			.imageUrl("http://dqweq2ejh93-img1.jpg")
 			.fullImageName("img1.jpg")
 			.imageName("img1")
 			.extension(ImageExtension.JPG)
@@ -72,7 +71,6 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		);
 		PostImageEntity image2 = postImageEntityRepository.save(PostImageEntity.builder()
 			.imagePath("imagePath2")
-			.imageUrl("http://dqweq2ejh93-img2.jpg")
 			.fullImageName("img2.jpg")
 			.imageName("img2")
 			.extension(ImageExtension.JPG)
