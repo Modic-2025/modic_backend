@@ -96,14 +96,6 @@ public class S3ImageUtil implements ImageUtil {
 		}
 	}
 
-	// 이미지 URL 생성
-	@Override
-	public String createImageUrl(ImagePrefix imagePrefix, String imagePath) {
-		validateImagePath(imagePath);
-
-		return amazonS3Client.getUrl(s3Properties.getBucketName(), imagePath).toString();
-	}
-
 	// 저장 PreSignedUrl 생성
 	@Override
 	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {

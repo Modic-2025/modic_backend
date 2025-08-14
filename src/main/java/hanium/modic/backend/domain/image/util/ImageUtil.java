@@ -14,9 +14,6 @@ public interface ImageUtil {
 	// 여러 이미지 삭제
 	void deleteImages(List<String> imagePaths);
 
-	// 이미지 URL 생성
-	String createImageUrl(ImagePrefix imagePrefix, String imagePath);
-
 	// 이미지 저장 URL 생성
 	CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName);
 
