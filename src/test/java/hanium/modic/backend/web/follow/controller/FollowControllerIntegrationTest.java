@@ -288,5 +288,121 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.data.content[1].userId").value(followed.get(1).getId()))
 			.andExpect(jsonPath("$.data.content[2].userId").value(followed.get(0).getId()));
 	}
+
+	@Test
+	@DisplayName("TEST12: 인증된 유저의 팔로워 목록 조회 (팔로우 상태 포함) - 일부만 팔로우")
+	@WithCustomUser(email = "current@test.com")
+	void getFollowersWithStatusSuccess() throws Exception {
+		// given: 현재 로그인한 유저
+		UserEntity currentUser = ContextHolderUtil.getCurrentUser();
+		
+		// given: targetUser와 그의 팔로워들 생성
+		UserEntity targetUser = saveUser("TargetUser");
+		UserEntity follower1 = saveUser("Follower1");
+		UserEntity follower2 = saveUser("Follower2");
+		UserEntity follower3 = saveUser("Follower3");
+		
+		// targetUser의 팔로워들 생성
+		followEntityRepository.save(FollowEntity.builder().me(follower1).following(targetUser).build());
+		Thread.sleep(10);
+		followEntityRepository.save(FollowEntity.builder().me(follower2).following(targetUser).build());
+		Thread.sleep(10);
+		followEntityRepository.save(FollowEntity.builder().me(follower3).following(targetUser).build());
+		
+		// 현재 유저가 follower1과 follower3을 팔로우
+		followEntityRepository.save(FollowEntity.builder().me(currentUser).following(follower1).build());
+		followEntityRepository.save(FollowEntity.builder().me(currentUser).following(follower3).build());
+
+		// when: 팔로우 상태가 포함된 팔로워 목록 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/followers/with-status")
+			.param("userId", String.valueOf(targetUser.getId()))
+			.param("page", "0")
+			.param("size", "10"));
+
+		// then: 팔로워 목록과 팔로우 상태가 올바르게 반환됨
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.content.length()").value(3))
+			.andExpect(jsonPath("$.data.content[0].userId").value(follower3.getId()))
+			.andExpect(jsonPath("$.data.content[0].isFollowing").value(true))
+			.andExpect(jsonPath("$.data.content[1].userId").value(follower2.getId()))
+			.andExpect(jsonPath("$.data.content[1].isFollowing").value(false))
+			.andExpect(jsonPath("$.data.content[2].userId").value(follower1.getId()))
+			.andExpect(jsonPath("$.data.content[2].isFollowing").value(true));
+	}
+
+	@Test
+	@DisplayName("TEST13: 인증된 유저의 팔로워 목록 조회 (팔로우 상태 포함) - 아무도 팔로우하지 않음")
+	@WithCustomUser(email = "current@test.com")
+	void getFollowersWithStatusAllNotFollowing() throws Exception {
+		// given: 현재 로그인한 유저
+		UserEntity currentUser = ContextHolderUtil.getCurrentUser();
+		
+		// given: targetUser와 그의 팔로워들 생성
+		UserEntity targetUser = saveUser("TargetUser");
+		UserEntity follower1 = saveUser("Follower1");
+		UserEntity follower2 = saveUser("Follower2");
+		
+		// targetUser의 팔로워들 생성 (현재 유저는 아무도 팔로우하지 않음)
+		followEntityRepository.save(FollowEntity.builder().me(follower1).following(targetUser).build());
+		Thread.sleep(10);
+		followEntityRepository.save(FollowEntity.builder().me(follower2).following(targetUser).build());
+
+		// when: 팔로우 상태가 포함된 팔로워 목록 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/followers/with-status")
+			.param("userId", String.valueOf(targetUser.getId()))
+			.param("page", "0")
+			.param("size", "10"));
+
+		// then: 모든 팔로워의 isFollowing이 false
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].isFollowing").value(false))
+			.andExpect(jsonPath("$.data.content[1].isFollowing").value(false));
+	}
+
+	@Test
+	@DisplayName("TEST14: 미인증 유저의 팔로워 목록 조회 - isFollowing 필드 없음")
+	void getFollowersUnauthenticatedUserSuccess() throws Exception {
+		// given: targetUser와 그의 팔로워들 생성
+		UserEntity targetUser = saveUser("TargetUser");
+		UserEntity follower1 = saveUser("Follower1");
+		UserEntity follower2 = saveUser("Follower2");
+		
+		// targetUser의 팔로워들 생성
+		followEntityRepository.save(FollowEntity.builder().me(follower1).following(targetUser).build());
+		Thread.sleep(10);
+		followEntityRepository.save(FollowEntity.builder().me(follower2).following(targetUser).build());
+
+		// when: 미인증 상태에서 팔로워 목록 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/followers")
+			.param("userId", String.valueOf(targetUser.getId()))
+			.param("page", "0")
+			.param("size", "10"));
+
+		// then: isFollowing 필드가 없는 팔로워 목록 반환
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].userId").value(follower2.getId()))
+			.andExpect(jsonPath("$.data.content[0].userName").exists())
+			.andExpect(jsonPath("$.data.content[0].userEmail").exists())
+			.andExpect(jsonPath("$.data.content[0].isFollowing").doesNotExist())
+			.andExpect(jsonPath("$.data.content[1].userId").value(follower1.getId()))
+			.andExpect(jsonPath("$.data.content[1].isFollowing").doesNotExist());
+	}
+
+	@Test
+	@DisplayName("TEST15: 인증된 유저가 존재하지 않는 유저의 팔로워 목록 조회 시 예외 발생")
+	@WithCustomUser(email = "current@test.com")
+	void getFollowersWithStatusUserNotFound() throws Exception {
+		// when: 존재하지 않는 유저의 팔로워 목록 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/followers/with-status")
+			.param("userId", String.valueOf(99999L))
+			.param("page", "0")
+			.param("size", "10"));
+
+		// then: USER_NOT_FOUND 예외 발생
+		result.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value("U-002"));
+	}
 }
 
