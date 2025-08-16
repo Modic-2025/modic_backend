@@ -16,6 +16,7 @@ import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
+import hanium.modic.backend.web.follow.dto.response.GetFollowingsWithStatusResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -61,6 +62,26 @@ public class FollowService {
 	}
 
 	// TODO : 정렬 기준 고려
+	// 내 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	public Page<GetFollowersWithStatusResponse> getMyFollowers(final long userId, final int page, final int size) {
+		validateUserExists(userId);
+
+		return followRepository.findFollowersWithStatusOrderByCreatedAt(userId, userId, PageRequest.of(page, size))
+			.map(u -> {
+				final String userImageUrl = u.getUserImageUrl();
+				final boolean hasUserImage = userImageUrl != null;
+				return new GetFollowersWithStatusResponse(
+					u.getId(), 
+					hasUserImage, 
+					userImageUrl, 
+					u.getName(), 
+					u.getEmail(),
+					u.getIsFollowing()
+				);
+			});
+	}
+
+	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
 	public Page<GetFollowersWithStatusResponse> getFollowersWithStatus(
 		final long currentUserId, 
@@ -86,7 +107,7 @@ public class FollowService {
 	}
 
 	// TODO : 정렬 기준 고려
-	// 팔로잉 목록 조회
+	// 팔로잉 목록 조회 (미인증 유저용)
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
@@ -95,6 +116,51 @@ public class FollowService {
 				final String userImageUrl = u.getUserImageUrl();
 				final boolean hasUserImage = userImageUrl != null;
 				return new GetFollowingsResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
+			});
+	}
+
+	// TODO : 정렬 기준 고려
+	// 내 팔로잉 목록 조회 (인증 유저용 - isFollowing 항상 true)
+	public Page<GetFollowingsWithStatusResponse> getMyFollowings(final long userId, final int page, final int size) {
+		validateUserExists(userId);
+
+		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
+			.map(u -> {
+				final String userImageUrl = u.getUserImageUrl();
+				final boolean hasUserImage = userImageUrl != null;
+				return new GetFollowingsWithStatusResponse(
+					u.getId(), 
+					hasUserImage, 
+					userImageUrl, 
+					u.getName(), 
+					u.getEmail(),
+					true // 내 팔로잉 목록이므로 항상 true
+				);
+			});
+	}
+
+	// TODO : 정렬 기준 고려
+	// 팔로잉 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	public Page<GetFollowingsWithStatusResponse> getFollowingsWithStatus(
+		final long currentUserId, 
+		final long targetUserId, 
+		final int page, 
+		final int size
+	) {
+		validateUserExists(targetUserId);
+
+		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId, PageRequest.of(page, size))
+			.map(u -> {
+				final String userImageUrl = u.getUserImageUrl();
+				final boolean hasUserImage = userImageUrl != null;
+				return new GetFollowingsWithStatusResponse(
+					u.getId(), 
+					hasUserImage, 
+					userImageUrl, 
+					u.getName(), 
+					u.getEmail(),
+					u.getIsFollowing()
+				);
 			});
 	}
 
