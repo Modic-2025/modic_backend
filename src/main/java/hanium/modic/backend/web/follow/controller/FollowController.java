@@ -15,6 +15,7 @@ import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.service.FollowService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
+import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -68,8 +69,8 @@ public class FollowController {
 
 	@GetMapping("/followers")
 	@Operation(
-		summary = "팔로워 목록 조회",
-		description = "팔로워 목록을 페이지네이션 형태로 반환합니다.",
+		summary = "팔로워 목록 조회 (미인증)",
+		description = "팔로워 목록을 페이지네이션 형태로 반환합니다. 팔로우 상태 정보는 포함되지 않습니다.",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
 			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
@@ -81,6 +82,24 @@ public class FollowController {
 		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
 	) {
 		return ResponseEntity.ok(AppResponse.ok(followService.getFollowers(userId, page, size)));
+	}
+
+	@GetMapping("/followers/with-status")
+	@Operation(
+		summary = "팔로워 목록 조회 (인증)",
+		description = "팔로워 목록을 페이지네이션 형태로 반환합니다. 현재 로그인한 유저의 각 팔로워에 대한 팔로우 상태가 포함됩니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류(C-001)"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.(U-002)"),
+		}
+	)
+	public ResponseEntity<AppResponse<Page<GetFollowersWithStatusResponse>>> getFollowersWithStatus(
+		@CurrentUser UserEntity me,
+		@RequestParam(required = true) long userId,
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
+		@RequestParam(required = false, defaultValue = "10") @Max(value = 30, message = "최대 크기는 30입니다.") int size
+	) {
+		return ResponseEntity.ok(AppResponse.ok(followService.getFollowersWithStatus(me.getId(), userId, page, size)));
 	}
 
 	@GetMapping("/followings/me")
