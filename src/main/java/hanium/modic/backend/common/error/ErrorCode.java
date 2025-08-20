@@ -78,6 +78,12 @@ public enum ErrorCode {
 	AI_IMAGE_PERMISSION_NOT_FOUND(HttpStatus.FORBIDDEN, "A-004", "AI 이미지 생성 권한이 없습니다."),
 	AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "A-005", "티켓 처리에 실패했습니다."),
 	AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-006", "티켓이 부족합니다."),
+
+	// Chat
+	CHAT_ROOM_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "CH-001", "해당 채팅방을 찾을 수 없습니다."),
+	CHAT_MESSAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "CH-002", "해당 채팅 메시지를 찾을 수 없습니다."),
+	CHAT_SELF_ROOM_CREATION_EXCEPTION(HttpStatus.BAD_REQUEST, "CH-003", "자기 자신과는 채팅방을 만들 수 없습니다."),
+	CHAT_ROOM_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "CH-004", "해당 채팅방에 접근할 권한이 없습니다."),
 	;
 
 	private final HttpStatus status;
