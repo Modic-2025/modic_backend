@@ -22,14 +22,10 @@ import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 public class PostImageService extends ImageService {
 
 	private final PostImageEntityRepository postImageEntityRepository;
-	private final ImageValidationService imageValidationService;
-	private final ImageUtil imageUtil;
 
 	public PostImageService(ImageValidationService imageValidationService, ImageUtil imageUtil,
 		PostImageEntityRepository postImageEntityRepository) {
 		super(imageValidationService, imageUtil);
-		this.imageUtil = imageUtil;
-		this.imageValidationService = imageValidationService;
 		this.postImageEntityRepository = postImageEntityRepository;
 
 	}

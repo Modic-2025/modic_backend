@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public abstract class ImageService {
 
-	private final ImageValidationService imageValidationService;
-	private final ImageUtil imageUtil;
+	protected final ImageValidationService imageValidationService;
+	protected final ImageUtil imageUtil;
 
 	// 이미지 저장 URL 생성
 	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {

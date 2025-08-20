@@ -21,15 +21,11 @@ import hanium.modic.backend.domain.postReview.repository.PostReviewImageReposito
 public class PostReviewImageService extends ImageService {
 
 	private final PostReviewImageRepository postReviewImageRepository;
-	private final ImageValidationService imageValidationService;
-	private final ImageUtil imageUtil;
 
 	public PostReviewImageService(ImageValidationService imageValidationService, ImageUtil imageUtil,
 		PostReviewImageRepository postReviewImageRepository) {
 		super(imageValidationService, imageUtil);
 		this.postReviewImageRepository = postReviewImageRepository;
-		this.imageValidationService = imageValidationService;
-		this.imageUtil = imageUtil;
 	}
 
 	// 이미지 URL 조회

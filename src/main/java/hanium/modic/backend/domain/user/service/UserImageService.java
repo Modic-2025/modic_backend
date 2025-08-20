@@ -22,16 +22,12 @@ public class UserImageService extends ImageService {
 
 	private final UserEntityRepository userEntityRepository;
 	private final UserImageEntityRepository userImageRepository;
-	private final ImageValidationService imageValidationService;
-	private final ImageUtil imageUtil;
 
 	public UserImageService(ImageValidationService imageValidationService, ImageUtil imageUtil,
 		UserEntityRepository userEntityRepository, UserImageEntityRepository userImageRepository) {
 		super(imageValidationService, imageUtil);
 		this.userEntityRepository = userEntityRepository;
 		this.userImageRepository = userImageRepository;
-		this.imageValidationService = imageValidationService;
-		this.imageUtil = imageUtil;
 	}
 
 	// 이미지 URL 조회

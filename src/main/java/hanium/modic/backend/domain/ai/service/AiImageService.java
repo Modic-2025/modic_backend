@@ -22,17 +22,13 @@ import hanium.modic.backend.domain.image.util.ImageUtil;
 public class AiImageService extends ImageService {
 
 	private final AiRequestRepository aiRequestRepository;
-	private final ImageValidationService imageValidationService;
 	private final KeyGenerator keyGenerator;
-	private final ImageUtil imageUtil;
 
 	public AiImageService(AiRequestRepository aiRequestRepository, ImageValidationService imageValidationService,
 		KeyGenerator keyGenerator, ImageUtil imageUtil) {
 		super(imageValidationService, imageUtil);
 		this.aiRequestRepository = aiRequestRepository;
-		this.imageValidationService = imageValidationService;
 		this.keyGenerator = keyGenerator;
-		this.imageUtil = imageUtil;
 	}
 
 	// 이미지 저장 URL 생성
