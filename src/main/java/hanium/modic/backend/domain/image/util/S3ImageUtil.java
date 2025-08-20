@@ -110,7 +110,17 @@ public class S3ImageUtil implements ImageUtil {
 	// 조회 url 생성
 	public String createImageGetUrl(String resourcePath) {
 		try {
-			String resourceUrl = HTTPS + cloudFrontProperties.getDomain() + resourcePath;
+			String domain = cloudFrontProperties.getDomain();
+			// 도메인에 프로토콜이 포함된 경우 제거
+			if (domain.startsWith("https://")) {
+				domain = domain.substring(8);
+			} else if (domain.startsWith("http://")) {
+				domain = domain.substring(7);
+			}
+			// 경로는 선행 슬래시 보장
+			String path = resourcePath.startsWith("/") ? resourcePath : ("/" + resourcePath);
+			String resourceUrl = HTTPS + domain + path;
+
 			Date expires = Date.from(Instant.now().plusSeconds(EXPIRATION_TIME));
 
 			return CloudFrontUrlSigner.getSignedURLWithCannedPolicy(
