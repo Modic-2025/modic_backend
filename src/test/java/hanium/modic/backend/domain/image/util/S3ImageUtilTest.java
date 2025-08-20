@@ -202,7 +202,6 @@ class S3ImageUtilTest {
 		// then
 		assertThat(result.imageSaveUrl()).isEqualTo(expectedUrl);
 		assertThat(result.imagePath()).contains("post/");
-		assertThat(result.imagePath()).contains(fullFileName);
 		verify(amazonS3, times(1)).generatePresignedUrl(any(GeneratePresignedUrlRequest.class));
 	}
 

@@ -99,7 +99,7 @@ public class S3ImageUtil implements ImageUtil {
 	// 저장 PreSignedUrl 생성
 	@Override
 	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
-		String path = createPath(imagePrefix, fullFileName);
+		String path = createPath(imagePrefix);
 
 		GeneratePresignedUrlRequest request = createGeneratePreSignedUrlRequest(path, PUT, getUrlExpiration());
 		URL url = amazonS3Client.generatePresignedUrl(request);
@@ -159,9 +159,9 @@ public class S3ImageUtil implements ImageUtil {
 	}
 
 	// 파일이 저장될 경로 생성
-	private String createPath(ImagePrefix imagePrefix, String fullFileName) {
+	private String createPath(ImagePrefix imagePrefix) {
 		// 이미지명 곂치지않게 uuid 추가
-		return String.format("%s/%s", imagePrefix.getPrefix(), UUID.randomUUID() + "-" + fullFileName);
+		return String.format("%s/%s", imagePrefix.getPrefix(), UUID.randomUUID());
 	}
 
 	// PreSignedUrl 만료 시간 설정
