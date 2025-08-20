@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.post.service;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -227,12 +228,13 @@ public class PostService {
 		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
 
 		// 포스트ID별로 첫 번째 이미지 URL을 찾는 Map 생성
-		Map<Long, String> firstImageByPostId = allPostImages.stream()
-			.collect(Collectors.toMap(
-				PostImageEntity::getPostId, // Key: postId
-				image -> imageUtil.createImageGetUrl(image.getImagePath()), // Value: imageUrl
-				(existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
-			));
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
 
 		return posts.map(post -> {
 			String firstImageUrl = firstImageByPostId.get(post.getId());
