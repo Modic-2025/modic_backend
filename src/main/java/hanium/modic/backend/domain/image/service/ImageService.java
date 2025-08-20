@@ -18,6 +18,13 @@ public abstract class ImageService {
 	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
 		imageValidationService.validateFullFileName(fullFileName);
 
+		fullFileName = replaceSpaceWithUnderscore(fullFileName);
+
 		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
+	}
+
+	// 이미지 이름의 스페이스를 _로 변경
+	private String replaceSpaceWithUnderscore(String fullFileName) {
+		return fullFileName.replace(" ", "_");
 	}
 }
