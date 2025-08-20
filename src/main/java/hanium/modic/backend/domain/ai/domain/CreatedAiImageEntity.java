@@ -34,13 +34,12 @@ public class CreatedAiImageEntity extends Image {
 	@Builder
 	public CreatedAiImageEntity(
 		String imagePath,
-		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
 		ImagePrefix imagePurpose,
 		String requestId) {
-		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
+		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 		this.requestId = requestId;
 	}
 }

@@ -23,9 +23,9 @@ import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.post.service.PostImageService;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
@@ -49,6 +49,7 @@ public class AiImageGenerationService {
 	private final AiImagePermissionRepository aiImagePermissionRepository;
 	private final UserCoinService userCoinService;
 	private final PostEntityRepository postEntityRepository;
+	private final PostImageService postImageService;
 
 	@Transactional
 	public RequestAiImageGenerationResponse processImageGeneration(
@@ -64,7 +65,7 @@ public class AiImageGenerationService {
 
 		List<String> styleImageUrls = postImageEntityRepository.findAllByPostId(postId)
 			.stream()
-			.map(PostImageEntity::getImageUrl)
+			.map(postImage -> postImageService.createImageGetUrl(postImage.getId()))
 			.toList();
 
 		// 이미지 저장 및 ID 반환
@@ -86,7 +87,7 @@ public class AiImageGenerationService {
 		// MQ에 이미지 생성 요청 전송
 		messageQueueService.sendImageGenerationRequest(
 			aiRequestEntity.getRequestId(),
-			aiRequestEntity.getImageUrl(),
+			aiImageService.createImageGetUrl(aiRequestEntity.getId()),
 			styleImageUrls);
 
 		return RequestAiImageGenerationResponse.from(aiRequestEntity);

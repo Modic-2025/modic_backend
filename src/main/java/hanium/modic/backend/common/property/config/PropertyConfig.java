@@ -3,6 +3,7 @@ package hanium.modic.backend.common.property.config;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import hanium.modic.backend.common.property.property.CloudFrontProperties;
 import hanium.modic.backend.common.property.property.CorsProperties;
 import hanium.modic.backend.common.property.property.EmailProperty;
 import hanium.modic.backend.common.property.property.RabbitMqProperties;
@@ -22,7 +23,8 @@ import hanium.modic.backend.common.property.property.TokenProperty;
 	EmailProperty.class,
 	SecurityProperties.class,
 	CorsProperties.class,
-	RabbitMqProperties.class
+	RabbitMqProperties.class,
+	CloudFrontProperties.class
 })
 public class PropertyConfig {
 }

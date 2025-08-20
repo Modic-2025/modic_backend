@@ -38,6 +38,7 @@ import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.post.service.PostImageService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
@@ -67,6 +68,8 @@ class AiImageGenerationServiceTest {
 	private PostEntityRepository postEntityRepository;
 	@Mock
 	private AiRequestTicketService aiRequestTicketService;
+	@Mock
+	private PostImageService postImageService;
 
 	private static final Long TEST_USER_ID = 1L;
 	private static final Long TEST_POST_ID = 1L;
@@ -90,10 +93,12 @@ class AiImageGenerationServiceTest {
 
 		when(aiImagePermissionRepository.existsByUserIdAndPostId(TEST_USER_ID, TEST_POST_ID)).thenReturn(true);
 		when(postImageEntityRepository.findAllByPostId(TEST_POST_ID)).thenReturn(mockPostImages);
+		when(postImageService.createImageGetUrl(any())).thenReturn(TEST_IMAGE_URL);
 		when(aiImageService.saveImage(imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_USER_ID, TEST_POST_ID))
 				.thenReturn(mockAiRequest);
 		when(postEntityRepository.findById(TEST_POST_ID)).thenReturn(Optional.of(mockPostEntity));
 		doNothing().when(aiRequestTicketService).useTicket(TEST_USER_ID);
+		when(aiImageService.createImageGetUrl(mockAiRequest.getId())).thenReturn(TEST_IMAGE_URL);
 
 		// when
 		RequestAiImageGenerationResponse result = aiImageGenerationService.processImageGeneration(
@@ -302,7 +307,6 @@ class AiImageGenerationServiceTest {
 		AiRequestEntity entity = Mockito.mock(AiRequestEntity.class);
 		when(entity.getId()).thenReturn(TEST_IMAGE_ID);
 		when(entity.getRequestId()).thenReturn(TEST_REQUEST_ID);
-		when(entity.getImageUrl()).thenReturn(TEST_IMAGE_URL);
 		return entity;
 	}
 
@@ -314,7 +318,6 @@ class AiImageGenerationServiceTest {
 
 	private PostImageEntity createTestPostImageEntity() {
 		PostImageEntity entity = Mockito.mock(PostImageEntity.class);
-		when(entity.getImageUrl()).thenReturn(TEST_IMAGE_URL);
 		return entity;
 	}
 

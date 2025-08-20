@@ -49,7 +49,6 @@ public class AiRequestEntity extends Image {
 	@Builder
 	public AiRequestEntity(
 		String imagePath,
-		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
@@ -58,7 +57,7 @@ public class AiRequestEntity extends Image {
 		AiImageStatus status,
 		Long userId,
 		Long postId) {
-		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
+		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 		this.requestId = requestId;
 		this.status = status != null ? status : AiImageStatus.PENDING;
 		this.userId = userId;

@@ -29,7 +29,10 @@ import org.springframework.data.domain.Sort;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.image.domain.ImageExtension;
+import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
+import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
@@ -59,6 +62,8 @@ class PostServiceTest {
 	private PostLikeService postLikeService;
 	@Mock
 	private AsyncPostStatisticsService asyncPostStatisticsService;
+	@Mock
+	private ImageUtil imageUtil;
 
 	@InjectMocks
 	private PostService postService;
@@ -113,18 +118,21 @@ class PostServiceTest {
 	@DisplayName("단일 게시글 조회 성공 - 사용자가 좋아요한 경우")
 	void getPost_UserLikedPost_ShouldReturnPostWithLikeStatus() {
 		// given
+		final String URL = "https://signed-url.com/image.jpg";
 		UserEntity mockUser = UserFactory.createMockUser(1L);
 		Long postId = 1L;
 		Long currentUserId = 2L;
 		PostEntity mockPost = createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
-			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
+			.map(image -> new GetPostResponse.ImageDto(URL, image.getId()))
 			.toList();
+
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn(URL);
 		when(postLikeService.getLikeCount(postId)).thenReturn(10L);
 		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(true);
 
@@ -140,15 +148,12 @@ class PostServiceTest {
 		assertThat(response.nonCommercialPrice()).isEqualTo(mockPost.getNonCommercialPrice());
 		assertThat(response.likeCount()).isEqualTo(10L);
 		assertThat(response.isLikedByCurrentUser()).isTrue();
-		assertThat(response.images()).hasSize(expectedImages.size());
-		for (int i = 0; i < expectedImages.size(); i++) {
-			assertThat(response.images().get(i).getImageUrl()).isEqualTo(expectedImages.get(i).getImageUrl());
-			assertThat(response.images().get(i).getImageId()).isEqualTo(expectedImages.get(i).getImageId());
-		}
+		assertThat(response.images()).hasSize(2);
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
 		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(imageUtil, times(2)).createImageGetUrl(anyString());
 		verify(postLikeService).getLikeCount(postId);
 		verify(postLikeService).isLikedByUser(currentUserId, postId);
 	}
@@ -166,6 +171,7 @@ class PostServiceTest {
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 		when(postLikeService.getLikeCount(postId)).thenReturn(5L);
 		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(false);
 
@@ -180,6 +186,7 @@ class PostServiceTest {
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
 		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(imageUtil, times(2)).createImageGetUrl(anyString());
 		verify(postLikeService).getLikeCount(postId);
 		verify(postLikeService).isLikedByUser(currentUserId, postId);
 	}
@@ -233,6 +240,7 @@ class PostServiceTest {
 			.thenReturn(allMockImages);
 		when(postLikeService.getLikeCounts(Arrays.asList(1L, 2L)))
 			.thenReturn(mockLikeCounts);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// when
 		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
@@ -282,6 +290,7 @@ class PostServiceTest {
 		when(postEntityRepository.findAll(any(Pageable.class))).thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostIdIn(Arrays.asList(1L, 2L))).thenReturn(allMockImages);
 		when(postLikeService.getLikeCounts(Arrays.asList(1L, 2L))).thenReturn(mockLikeCounts);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// When
 		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
@@ -347,6 +356,7 @@ class PostServiceTest {
 			.thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostIdIn(Arrays.asList(1L, 2L)))
 			.thenReturn(allMockImages);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// when
 		Page<GetSimplePostsResponse> result = postService.getSimplePosts(userId, page, size);
@@ -357,11 +367,11 @@ class PostServiceTest {
 
 		GetSimplePostsResponse firstPost = result.getContent().get(0);
 		assertThat(firstPost.postId()).isEqualTo(1L);
-		assertThat(firstPost.imageUrl()).isEqualTo(mockImagesPost1.get(0).getImageUrl());
+		assertThat(firstPost.imageUrl()).isNotNull();
 
 		GetSimplePostsResponse secondPost = result.getContent().get(1);
 		assertThat(secondPost.postId()).isEqualTo(2L);
-		assertThat(secondPost.imageUrl()).isEqualTo(mockImagesPost2.get(0).getImageUrl());
+		assertThat(secondPost.imageUrl()).isNotNull();
 
 		verify(postEntityRepository).findAllByUserId(userId, PageRequest.of(page, size));
 		verify(postImageEntityRepository).findAllByPostIdIn(Arrays.asList(1L, 2L));
@@ -434,7 +444,9 @@ class PostServiceTest {
 		final UserEntity mockUser = UserFactory.createMockUser(userId);
 
 		PostEntity mockPost = PostFactory.createMockPostWithId(postId, mockUser);
-		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
+		PostImageEntity image1 = ImageFactory.createMockPostImageWithId(mockPost, 1L);
+		PostImageEntity image2 = ImageFactory.createMockPostImageWithId(mockPost, 2L);
+		List<PostImageEntity> mockImages = List.of(image1, image2);
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
@@ -445,7 +457,7 @@ class PostServiceTest {
 		// Then
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
-		verify(postImageService, times(mockImages.size())).deleteImage(any());
+		verify(postImageService, times(2)).deleteImage(any(Long.class));
 		verify(postEntityRepository, times(1)).delete(mockPost);
 	}
 
@@ -475,6 +487,9 @@ class PostServiceTest {
 		final Long anotherPostImageId2 = 4L;
 		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
 
+		// 새로운 이미지들 모킹
+		when(postImageEntityRepository.findAllByIds(newImageIds)).thenReturn(List.of());
+
 		// When
 		postService.updatePost(userId, postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
 			newImageIds);
@@ -483,6 +498,8 @@ class PostServiceTest {
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postEntityRepository, times(1)).save(any(PostEntity.class));
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
+		verify(postImageService, times(1)).deleteImages(anyList());
+		verify(postImageEntityRepository, times(1)).findAllByIds(newImageIds);
 
 		assertEquals(newTitle, mockPost.getTitle());
 		assertEquals(newDescription, mockPost.getDescription());

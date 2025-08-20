@@ -79,7 +79,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostReviewImageEntity savedImage = postReviewImageRepository.save(
 			PostReviewImageEntity.builder()
 				.imagePath("post-review/test-image.jpg")
-				.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 				.fullImageName("test-image.jpg")
 				.imageName("test-image")
 				.extension(ImageExtension.JPG)
@@ -111,7 +110,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostReviewEntity review = postReviewRepository.save(PostReviewFactory.createMockPostReview(post, user));
 		PostReviewImageEntity postReviewImage = PostReviewImageEntity.builder()
 			.imagePath("post-review/test-image.jpg")
-			.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 			.fullImageName("test-image.jpg")
 			.imageName("test-image")
 			.extension(ImageExtension.JPG)
@@ -139,7 +137,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostReviewEntity review = postReviewRepository.save(PostReviewFactory.createMockPostReview(post, writer));
 		PostReviewImageEntity postReviewImage = PostReviewImageEntity.builder()
 			.imagePath("post-review/test-image.jpg")
-			.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 			.fullImageName("test-image.jpg")
 			.imageName("test-image")
 			.extension(ImageExtension.JPG)

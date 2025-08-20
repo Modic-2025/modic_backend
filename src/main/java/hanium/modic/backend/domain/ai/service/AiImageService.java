@@ -2,7 +2,6 @@ package hanium.modic.backend.domain.ai.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,18 +13,23 @@ import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
+import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
-public class AiImageService {
+public class AiImageService extends ImageService {
 
 	private final AiRequestRepository aiRequestRepository;
-	private final ImageValidationService imageValidationService;
 	private final KeyGenerator keyGenerator;
-	private final ImageUtil imageUtil;
+
+	public AiImageService(AiRequestRepository aiRequestRepository, ImageValidationService imageValidationService,
+		KeyGenerator keyGenerator, ImageUtil imageUtil) {
+		super(imageValidationService, imageUtil);
+		this.aiRequestRepository = aiRequestRepository;
+		this.keyGenerator = keyGenerator;
+	}
 
 	// 이미지 저장 URL 생성
 	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
@@ -57,19 +61,17 @@ public class AiImageService {
 	@Transactional
 	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath,
 		Long userId, Long postId) {
-		imageValidationService.validateImageSaved(imagePath, imagePrefix);
-		imageValidationService.validateFullFileName(fullFileName);
+		imageValidationService.validateImageSaved(imagePath);
 		validateDuplicatedImagePath(imagePath);
 
-		String[] fileNameParts = fullFileName.split("\\.");
-		String fileName = fileNameParts[0];
-		String fileExtension = fileNameParts[1];
+		ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
+		String fileName = parsedImageName.imageName();
+		String fileExtension = parsedImageName.fileExtension();
 		String requestId = keyGenerator.generateKey();
 
 		return aiRequestRepository.save(
 			AiRequestEntity.builder()
 				.imagePurpose(imagePrefix)
-				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
 				.fullImageName(fullFileName)
 				.imageName(fileName)
 				.extension(ImageExtension.from(fileExtension))

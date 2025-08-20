@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.post.service;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
@@ -25,6 +27,7 @@ import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class PostService {
 
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = DESC;
+	private final ImageUtil imageUtil;
 
 	@Transactional
 	public Long createPost(
@@ -90,7 +94,13 @@ public class PostService {
 		final boolean hasUserImage = userImage != null;
 		final String userEmail = userEntity.getEmail();
 
-		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
+			.stream()
+			.map(image -> new ImageDto(
+				imageUtil.createImageGetUrl(image.getImagePath()),
+				image.getId()
+			))
+			.toList();
 
 		// 하트 수 조회 (통계 테이블 사용)
 		long likeCount = postLikeService.getLikeCount(id);
@@ -129,7 +139,14 @@ public class PostService {
 			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
-			List<PostImageEntity> postImages = imagesByPostId.getOrDefault(post.getId(), List.of());
+			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetPostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
 			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
 
 			return GetPostsResponse.of(post, postImages, likeCount);
@@ -211,12 +228,13 @@ public class PostService {
 		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
 
 		// 포스트ID별로 첫 번째 이미지 URL을 찾는 Map 생성
-		Map<Long, String> firstImageByPostId = allPostImages.stream()
-			.collect(Collectors.toMap(
-				PostImageEntity::getPostId,     // Key: postId
-				PostImageEntity::getImageUrl,   // Value: imageUrl
-				(existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
-			));
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
 
 		return posts.map(post -> {
 			String firstImageUrl = firstImageByPostId.get(post.getId());
