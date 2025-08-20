@@ -190,7 +190,7 @@ class S3ImageUtilTest {
 		final String bucketName = "test-bucket";
 		final ImagePrefix imagePrefix = ImagePrefix.POST;
 		final String fullFileName = "test-image.jpg";
-		final String expectedUrl = "https://test-bucket.s3.amazonaws.com/posts/uuid-test-image.jpg";
+		final String expectedUrl = "https://test-bucket.s3.amazonaws.com/post/uuid-test-image.jpg";
 
 		when(s3Properties.getBucketName()).thenReturn(bucketName);
 		when(amazonS3.generatePresignedUrl(any(GeneratePresignedUrlRequest.class)))
@@ -295,8 +295,8 @@ class S3ImageUtilTest {
 		// given
 		final String bucketName = "test-bucket";
 		final ImagePrefix imagePrefix = ImagePrefix.POST;
-		final String fullFileName = "profile.png";
-		final String expectedUrl = "https://test-bucket.s3.amazonaws.com/users/uuid-profile.png";
+		final String fullFileName = "post.png";
+		final String expectedUrl = "https://test-bucket.s3.amazonaws.com/post/uuid-profile.png";
 
 		when(s3Properties.getBucketName()).thenReturn(bucketName);
 		when(amazonS3.generatePresignedUrl(any(GeneratePresignedUrlRequest.class)))
