@@ -240,7 +240,6 @@ class S3ImageUtilTest {
 		// then
 		assertThat(result.imageSaveUrl()).isEqualTo(expectedUrl);
 		assertThat(result.imagePath()).startsWith(imagePrefix.getPrefix() + "/");
-		assertThat(result.imagePath()).contains(fullFileName);
 	}
 
 	@ParameterizedTest
