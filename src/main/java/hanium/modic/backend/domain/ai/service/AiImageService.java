@@ -62,7 +62,6 @@ public class AiImageService extends ImageService {
 	public AiRequestEntity saveImage(ImagePrefix imagePrefix, String fullFileName, String imagePath,
 		Long userId, Long postId) {
 		imageValidationService.validateImageSaved(imagePath);
-		imageValidationService.validateFullFileName(fullFileName);
 		validateDuplicatedImagePath(imagePath);
 
 		ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
