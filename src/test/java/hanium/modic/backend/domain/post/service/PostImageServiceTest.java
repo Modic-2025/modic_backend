@@ -278,7 +278,6 @@ class PostImageServiceTest {
 		when(postImageEntityRepository.existsByImagePath(imagePath)).thenReturn(false);
 		when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(savedEntity);
 		doNothing().when(imageValidationService).validateImageSaved(imagePath);
-		doNothing().when(imageValidationService).validateFullFileName(fullFileName);
 		when(imageUtil.parseFullImageName(fullFileName)).thenReturn(new ParsedImageName(expectedName, expectedExtension));
 
 		// when
