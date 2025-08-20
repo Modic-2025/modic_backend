@@ -30,13 +30,6 @@ public class PostImageService extends ImageService {
 
 	}
 
-	// 이미지 저장 URL 생성
-	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
-		imageValidationService.validateFullFileName(fullFileName);
-
-		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
-	}
-
 	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(final Long id) {

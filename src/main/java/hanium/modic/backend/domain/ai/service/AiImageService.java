@@ -31,13 +31,6 @@ public class AiImageService extends ImageService {
 		this.keyGenerator = keyGenerator;
 	}
 
-	// 이미지 저장 URL 생성
-	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
-		imageValidationService.validateFullFileName(fullFileName);
-
-		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
-	}
-
 	// AI 이미지 조회용 URL 생성
 	@Transactional(readOnly = true)
 	public String createImageGetUrl(Long id) {
