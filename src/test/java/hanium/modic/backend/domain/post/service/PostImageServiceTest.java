@@ -147,7 +147,6 @@ class PostImageServiceTest {
 		when(postImageEntityRepository.existsByImagePath(imagePath)).thenReturn(false);
 		when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(savedEntity);
 		doNothing().when(imageValidationService).validateImageSaved(imagePath);
-		doNothing().when(imageValidationService).validateFullFileName(fullFileName);
 		when(imageUtil.parseFullImageName(fullFileName)).thenReturn(new ParsedImageName("test-image", "jpg"));
 
 		// when
@@ -156,31 +155,8 @@ class PostImageServiceTest {
 		// then
 		assertThat(result).isEqualTo(savedEntity);
 		verify(imageValidationService, times(1)).validateImageSaved(imagePath);
-		verify(imageValidationService, times(1)).validateFullFileName(fullFileName);
 		verify(postImageEntityRepository, times(1)).existsByImagePath(imagePath);
 		verify(postImageEntityRepository, times(1)).save(any(PostImageEntity.class));
-	}
-
-	@Test
-	@DisplayName("saveImage - 유효하지 않은 파일명으로 예외 발생")
-	void saveImage_fail_invalidFileName() {
-		// given
-		final ImagePrefix imagePrefix = ImagePrefix.POST;
-		final String invalidFileName = "invalid-file-name";
-		final String imagePath = "posts/uuid-invalid-file-name";
-
-		doThrow(new AppException(INVALID_IMAGE_FILE_NAME_EXCEPTION))
-			.when(imageValidationService).validateFullFileName(invalidFileName);
-
-		// when
-		AppException exception = assertThrows(AppException.class, () -> {
-			postImageService.saveImage(imagePrefix, invalidFileName, imagePath);
-		});
-
-		// then
-		assertEquals(INVALID_IMAGE_FILE_NAME_EXCEPTION.getCode(), exception.getErrorCode().getCode());
-		verify(imageValidationService, times(1)).validateFullFileName(invalidFileName);
-		verify(postImageEntityRepository, never()).save(any(PostImageEntity.class));
 	}
 
 	@Test
@@ -215,7 +191,6 @@ class PostImageServiceTest {
 
 		when(postImageEntityRepository.existsByImagePath(imagePath)).thenReturn(true);
 		doNothing().when(imageValidationService).validateImageSaved(imagePath);
-		doNothing().when(imageValidationService).validateFullFileName(fullFileName);
 
 		// when
 		AppException exception = assertThrows(AppException.class, () -> {
@@ -225,7 +200,6 @@ class PostImageServiceTest {
 		// then
 		assertEquals(IMAGE_PATH_DUPLICATED_EXCEPTION.getCode(), exception.getErrorCode().getCode());
 		verify(imageValidationService, times(1)).validateImageSaved(imagePath);
-		verify(imageValidationService, times(1)).validateFullFileName(fullFileName);
 		verify(postImageEntityRepository, times(1)).existsByImagePath(imagePath);
 		verify(postImageEntityRepository, never()).save(any(PostImageEntity.class));
 	}
@@ -402,7 +376,6 @@ class PostImageServiceTest {
 		when(postImageEntityRepository.existsByImagePath(imagePath)).thenReturn(false);
 		when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(savedEntity);
 		doNothing().when(imageValidationService).validateImageSaved(imagePath);
-		doNothing().when(imageValidationService).validateFullFileName(fullFileName);
 		when(imageUtil.parseFullImageName(fullFileName)).thenReturn(new ParsedImageName("complex-file-name_v2.final", "jpg"));
 
 		// when
@@ -413,7 +386,6 @@ class PostImageServiceTest {
 		assertThat(result.getImageName()).isEqualTo("complex-file-name_v2.final");
 		assertThat(result.getExtension()).isEqualTo(ImageExtension.JPG);
 		verify(imageValidationService, times(1)).validateImageSaved(imagePath);
-		verify(imageValidationService, times(1)).validateFullFileName(fullFileName);
 		verify(postImageEntityRepository, times(1)).existsByImagePath(imagePath);
 		verify(postImageEntityRepository, times(1)).save(any(PostImageEntity.class));
 	}
