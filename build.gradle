@@ -61,6 +61,9 @@ dependencies {
     implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
     // OAuth
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:3.5.0'
+    // metric
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-cloudwatch2")
 }
 
 tasks.named('test') {
