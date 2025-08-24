@@ -113,6 +113,29 @@ public class PostService {
 	}
 
 	@Transactional(readOnly = true)
+	public GetPostResponse getPostForPublic(final Long id) {
+		final PostEntity postEntity = postEntityRepository.findById(id)
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
+		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		final String userName = userEntity.getName();
+		final String userImage = userEntity.getUserImageUrl();
+		final boolean hasUserImage = userImage != null;
+		final String userEmail = userEntity.getEmail();
+
+		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+
+		// 하트 수 조회 (통계 테이블 사용)
+		long likeCount = postLikeService.getLikeCount(id);
+
+		// 비로그인 사용자이므로 좋아요 여부는 null로 설정
+		Boolean isLikedByCurrentUser = false;
+
+		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
+			isLikedByCurrentUser);
+	}
+
+	@Transactional(readOnly = true)
 	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size) {
 
 		// Todo: sort 기능 추가
