@@ -123,7 +123,13 @@ public class PostService {
 		final boolean hasUserImage = userImage != null;
 		final String userEmail = userEntity.getEmail();
 
-		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
+			.stream()
+			.map(image -> new ImageDto(
+				imageUtil.createImageGetUrl(image.getImagePath()),
+				image.getId()
+			))
+			.toList();
 
 		// 하트 수 조회 (통계 테이블 사용)
 		long likeCount = postLikeService.getLikeCount(id);
