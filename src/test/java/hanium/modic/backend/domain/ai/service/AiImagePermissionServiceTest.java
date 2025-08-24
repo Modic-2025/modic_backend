@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
 import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
@@ -49,21 +47,15 @@ class AiImagePermissionServiceTest {
 	@Mock
 	private LockManager lockManager;
 
-	private UserEntity testUser;
-	private PostEntity testPost;
-
-	@BeforeEach
-	void setUp() {
-		testUser = UserFactory.createMockUser(1L);
-		testPost = PostFactory.createMockPostWithId(1L, testUser);
-	}
-
 	@Test
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionByCoin_Success() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(eq(testUser.getId()), eq(testPost.getId()), eq(20)))
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 
 		// when
@@ -79,7 +71,10 @@ class AiImagePermissionServiceTest {
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 존재하지 않는 포스트")
 	void buyAiImagePermissionByCoin_PostNotFound() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.empty());
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
@@ -88,19 +83,22 @@ class AiImagePermissionServiceTest {
 		assertEquals(POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository, never()).upsertAndIncrease(any(), any(), anyInt());
-		verify(userCoinService, never()).consumeCoin(any(), any());
+		verify(aiImagePermissionRepository, never()).upsertAndIncrease(anyLong(), anyLong(), anyInt());
+		verify(userCoinService, never()).consumeCoin(anyLong(), anyLong());
 	}
 
 	@Test
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 코인 부족")
 	void buyAiImagePermissionByCoin_InsufficientCoin() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(eq(testUser.getId()), eq(testPost.getId()), eq(20)))
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION))
-			.when(userCoinService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
+			.when(userCoinService).consumeCoin(anyLong(), anyLong());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
@@ -117,8 +115,11 @@ class AiImagePermissionServiceTest {
 	@DisplayName("티켓으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionByTicket_Success() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(eq(testUser.getId()), eq(testPost.getId()), eq(20)))
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 
 		// when
@@ -134,7 +135,10 @@ class AiImagePermissionServiceTest {
 	@DisplayName("티켓으로 AI 이미지 생성권 구매 - 존재하지 않는 포스트")
 	void buyAiImagePermissionByTicket_PostNotFound() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.empty());
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
@@ -151,11 +155,14 @@ class AiImagePermissionServiceTest {
 	@DisplayName("티켓으로 AI 이미지 생성권 구매 - 티켓 부족")
 	void buyAiImagePermissionByTicket_InsufficientTicket() {
 		// given
-		when(postRepository.findById(testPost.getId())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(eq(testUser.getId()), eq(testPost.getId()), eq(20)))
+		UserEntity testUser = UserFactory.createMockUser(1L);
+		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
+
+		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION))
-			.when(aiRequestTicketService).useTicket(testUser.getId(), testPost.getTicketPrice());
+			.when(aiRequestTicketService).useTicket(anyLong(), anyLong());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
@@ -172,27 +179,30 @@ class AiImagePermissionServiceTest {
 	@DisplayName("이미지 생성권 소모 - 성공")
 	void consumeRemainingGenerations_Success() throws Exception {
 		// given
+		final Long userId = 1L;
+		final Long postId = 1L;
+
 		AiImagePermissionEntity permission = AiImagePermissionEntity.builder()
-			.userId(testUser.getId())
-			.postId(testPost.getId())
+			.userId(userId)
+			.postId(postId)
 			.remainingGenerations(3)
 			.build();
 
-		when(aiImagePermissionRepository.findByUserIdAndPostId(testUser.getId(), testPost.getId()))
+		when(aiImagePermissionRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.of(permission));
 		
 		doAnswer(invocation -> {
 			Runnable callback = invocation.getArgument(2);
 			callback.run();
 			return null;
-		}).when(lockManager).aiImagePermissionLock(eq(testUser.getId()), eq(testPost.getId()), any(Runnable.class));
+		}).when(lockManager).aiImagePermissionLock(anyLong(), anyLong(), any(Runnable.class));
 
 		// when
-		aiImagePermissionService.consumeRemainingGenerations(testUser.getId(), testPost.getId());
+		aiImagePermissionService.consumeRemainingGenerations(userId, postId);
 
 		// then
-		verify(lockManager).aiImagePermissionLock(eq(testUser.getId()), eq(testPost.getId()), any(Runnable.class));
-		verify(aiImagePermissionRepository).findByUserIdAndPostId(testUser.getId(), testPost.getId());
+		verify(lockManager).aiImagePermissionLock(eq(userId), eq(postId), any(Runnable.class));
+		verify(aiImagePermissionRepository).findByUserIdAndPostId(userId, postId);
 		verify(aiImagePermissionRepository).save(permission);
 		assertThat(permission.getRemainingGenerations()).isEqualTo(2);
 	}
@@ -201,23 +211,26 @@ class AiImagePermissionServiceTest {
 	@DisplayName("이미지 생성권 소모 - 권한 없음")
 	void consumeRemainingGenerations_PermissionNotFound() throws Exception {
 		// given
-		when(aiImagePermissionRepository.findByUserIdAndPostId(testUser.getId(), testPost.getId()))
+		final Long userId = 1L;
+		final Long postId = 1L;
+
+		when(aiImagePermissionRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.empty());
 		
 		doAnswer(invocation -> {
 			Runnable callback = invocation.getArgument(2);
 			callback.run();
 			return null;
-		}).when(lockManager).aiImagePermissionLock(eq(testUser.getId()), eq(testPost.getId()), any(Runnable.class));
+		}).when(lockManager).aiImagePermissionLock(anyLong(), anyLong(), any(Runnable.class));
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
-			() -> aiImagePermissionService.consumeRemainingGenerations(testUser.getId(), testPost.getId()));
+			() -> aiImagePermissionService.consumeRemainingGenerations(userId, postId));
 		
 		assertEquals(AI_IMAGE_PERMISSION_NOT_FOUND, exception.getErrorCode());
 
-		verify(lockManager).aiImagePermissionLock(eq(testUser.getId()), eq(testPost.getId()), any(Runnable.class));
-		verify(aiImagePermissionRepository).findByUserIdAndPostId(testUser.getId(), testPost.getId());
+		verify(lockManager).aiImagePermissionLock(eq(userId), eq(postId), any(Runnable.class));
+		verify(aiImagePermissionRepository).findByUserIdAndPostId(userId, postId);
 		verify(aiImagePermissionRepository, never()).save(any());
 	}
 }

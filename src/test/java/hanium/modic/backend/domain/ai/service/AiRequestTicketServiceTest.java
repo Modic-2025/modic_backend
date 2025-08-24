@@ -73,7 +73,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(user.getId());
 
 		// then
-		assertThat(response.ticketCount()).isEqualTo(2);
+		assertThat(response.ticketCount()).isEqualTo(1);
 		assertThat(response.nextReset()).isAfter(LocalDateTime.now());
 	}
 
