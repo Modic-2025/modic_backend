@@ -21,7 +21,6 @@ public class AiRequestTicketService {
 	private final LockManager lockManager;
 
 	// 티켓 관련 정보 조회
-	@Transactional(readOnly = true)
 	public GetTicketInformationResponse getTicketInformation(Long userId) {
 		AiRequestTicketEntity ticket = getTicketEntity(userId);
 		return GetTicketInformationResponse.of(ticket.getTicketCount(), ticket.getLastIssuedAt().plusDays(1));
