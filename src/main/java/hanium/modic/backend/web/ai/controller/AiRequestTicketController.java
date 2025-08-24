@@ -29,7 +29,7 @@ public class AiRequestTicketController {
 	@GetMapping("/me")
 	@Operation(
 		summary = "사용자 티켓 정보 조회",
-		description = "현재 사용자의 AI 요청 티켓 정보를 조회합니다. 잔여 티켓 수와 다음 갱신까지의 시간을 포함합니다.",
+		description = "현재 사용자의 AI 요청 티켓 정보를 조회합니다. 잔여 티켓 수와 다음 갱신까지의 시간을 포함합니다. 하루가 지났을 때 이 API를 호출하면 티켓이 갱신됩니다.",
 		responses = {
 			@ApiResponse(responseCode = "500", description = "티켓 처리에 실패했습니다.[U-006]")
 		}
