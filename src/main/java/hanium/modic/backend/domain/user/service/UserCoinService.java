@@ -58,7 +58,6 @@ public class UserCoinService {
 		} catch (LockException e) {
 			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
-
 	}
 
 	// 코인 소비
@@ -70,7 +69,6 @@ public class UserCoinService {
 		} catch (LockException e) {
 			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
-
 	}
 
 	// 코인 추가, 트랜잭션은 lockManager에 의해 관리됨

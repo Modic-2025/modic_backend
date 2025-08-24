@@ -32,7 +32,7 @@ public class AiRequestTicketEntity extends BaseEntity {
 	private Long userId;
 
 	@Column(name = "ticket_count", nullable = false)
-	private Integer ticketCount;
+	private Long ticketCount;
 
 	@Column(name = "last_issued_at", nullable = false)
 	private LocalDateTime lastIssuedAt;
@@ -45,21 +45,17 @@ public class AiRequestTicketEntity extends BaseEntity {
 	}
 
 	// 잔여 티켓 차감
-	public void decreaseTicket() {
-		if (this.ticketCount <= MINIMUM_TICKET_COUNT) {
+	public void decreaseTicket(final long ticketPrice) {
+		if (this.ticketCount - ticketPrice < MINIMUM_TICKET_COUNT) {
 			throw new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION);
 		}
-		this.ticketCount--;
+		this.ticketCount -= ticketPrice;
 	}
 
 	// 티켓을 초기화
 	public void resetTickets() {
 		this.ticketCount = FREE_TICKET_COUNT_PER_DAY;
 		this.lastIssuedAt = LocalDateTime.now();
-	}
-
-	public boolean hasTickets() {
-		return this.ticketCount > MINIMUM_TICKET_COUNT;
 	}
 
 	public boolean isTicketExpired() {

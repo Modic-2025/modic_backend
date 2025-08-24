@@ -75,9 +75,12 @@ public enum ErrorCode {
 	AI_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "A-001", "해당 AI 요청을 찾을 수 없습니다."),
 	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "A-002", "생성된 AI 이미지를 찾을 수 없습니다."),
 	AI_IMAGE_DATA_INCONSISTENCY(HttpStatus.INTERNAL_SERVER_ERROR, "A-003", "AI 이미지 데이터 일관성 오류가 발생했습니다."),
-	AI_IMAGE_PERMISSION_NOT_FOUND(HttpStatus.FORBIDDEN, "A-004", "AI 이미지 생성 권한이 없습니다."),
-	AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "A-005", "티켓 처리에 실패했습니다."),
+	AI_IMAGE_PERMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-004", "AI 이미지 생성권을 구매한 이력이 없습니다."),
+	AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "AI-005", "티켓 처리에 실패했습니다."),
 	AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-006", "티켓이 부족합니다."),
+	REMAINING_GENERATIONS_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-007", "AI 이미지 생성권이 부족합니다."),
+	AI_IMAGE_PERMISSION_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "AI-008", "이미지 생성권 처리에 실패하였습니다."),
+	AI_IMAGE_PERMISSION_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "AI-009", "이미 AI 이미지 생성권을 구매했습니다."),
 	;
 
 	private final HttpStatus status;

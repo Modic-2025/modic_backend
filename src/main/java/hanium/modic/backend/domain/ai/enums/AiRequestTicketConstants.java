@@ -6,7 +6,7 @@ public final class AiRequestTicketConstants {
 		// Prevent instantiation
 	}
 
-	public static final int FREE_TICKET_COUNT_PER_DAY = 3;
+	public static final long FREE_TICKET_COUNT_PER_DAY = 3L;
 
-	public static final int MINIMUM_TICKET_COUNT = 0;
+	public static final long MINIMUM_TICKET_COUNT = 0L;
 }

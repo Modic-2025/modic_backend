@@ -24,6 +24,10 @@ public record CreatePostRequest(
         @Min(value = 0, message = "비상업적 가격은 0 이상이어야 합니다.")
         Long nonCommercialPrice,
 
+        @NotNull(message = "티켓 가격은 필수입니다.")
+        @Min(value = 0, message = "티켓 가격은 0 이상이어야 합니다.")
+        Long ticketPrice,
+
         @NotNull(message = "이미지는 필수입니다.")
         @Size(min = 1, message = "이미지는 최소 1개 이상이어야 합니다.")
         @Size(max = 8, message = "이미지는 최대 8개까지 업로드 가능합니다.")

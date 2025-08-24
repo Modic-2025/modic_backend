@@ -6,11 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
@@ -18,7 +16,6 @@ import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.ai.domain.AiRequestTicketEntity;
 import hanium.modic.backend.domain.ai.repository.AiRequestTicketRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
 
@@ -69,7 +66,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		AiRequestTicketEntity existingTicket = AiRequestTicketEntity.builder()
 			.userId(1L)
 			.build();
-		existingTicket.decreaseTicket(); // 1개 소모하여 2개로 만들기
+		existingTicket.decreaseTicket(1); // 1개 소모하여 2개로 만들기
 		aiRequestTicketRepository.save(existingTicket);
 
 		// when & then
@@ -78,7 +75,8 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(2))
 			.andExpect(jsonPath("$.data.nextReset").exists());
 
-		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions, GetTicketInformationResponse.class);
+		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions,
+			GetTicketInformationResponse.class);
 
 		// 응답 검증
 		assertThat(ticketInfo.ticketCount()).isEqualTo(2);
@@ -93,12 +91,10 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		AiRequestTicketEntity expiredTicket = AiRequestTicketEntity.builder()
 			.userId(1L)
 			.build();
-		
+
 		// 티켓 모두 소모
-		expiredTicket.decreaseTicket();
-		expiredTicket.decreaseTicket();
-		expiredTicket.decreaseTicket();
-		
+		expiredTicket.decreaseTicket(3);
+
 		// Reflection을 사용하여 lastIssuedAt을 어제로 설정하여 만료시키기
 		try {
 			java.lang.reflect.Field field = expiredTicket.getClass().getDeclaredField("lastIssuedAt");
@@ -107,7 +103,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
+
 		aiRequestTicketRepository.save(expiredTicket);
 
 		// when & then
@@ -117,7 +113,8 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(3))
 			.andExpect(jsonPath("$.data.nextReset").exists());
 
-		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions, GetTicketInformationResponse.class);
+		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions,
+			GetTicketInformationResponse.class);
 
 		// 응답 검증 - 갱신되어 3개로 돌아와야 함
 		assertThat(ticketInfo.ticketCount()).isEqualTo(3);
@@ -138,7 +135,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		AiRequestTicketEntity otherUserTicket = AiRequestTicketEntity.builder()
 			.userId(999L)
 			.build();
-		otherUserTicket.decreaseTicket(); // 1개 소모하여 2개로 만들기
+		otherUserTicket.decreaseTicket(1); // 1개 소모하여 2개로 만들기
 		aiRequestTicketRepository.save(otherUserTicket);
 
 		// when - 현재 사용자(ID: 1)로 조회
@@ -148,7 +145,8 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(3)) // 새로 생성되므로 3개
 			.andExpect(jsonPath("$.data.nextReset").exists());
 
-		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions, GetTicketInformationResponse.class);
+		GetTicketInformationResponse ticketInfo = testUtil.getResponseData(resultActions,
+			GetTicketInformationResponse.class);
 
 		// then - 현재 사용자의 새 티켓이 생성되어야 함
 		assertThat(ticketInfo.ticketCount()).isEqualTo(3);

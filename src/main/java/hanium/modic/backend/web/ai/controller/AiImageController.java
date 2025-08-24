@@ -72,14 +72,21 @@ public class AiImageController {
 	@PostMapping("/requests")
 	@Operation(
 		summary = "AI 이미지 생성 요청",
-		description = "사용자가 업로드한 이미지를 기반으로 AI 이미지 생성을 요청합니다. 참조 이미지(Post ID)와 함께 전송되며, 요청 ID를 반환합니다.",
+		description = """
+			사용자가 업로드한 이미지를 기반으로 AI 이미지 생성을 요청합니다. 참조 이미지(Post ID)와 함께 전송되며, 요청 ID를 반환합니다.
+			생성권을 구매한 적이 없으면 AI-004
+			생성권을 구매했으나 다 사용했으면 AI-007
+			""",
 		responses = {
 			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
 			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]"),
-			@ApiResponse(responseCode = "403", description = "AI 이미지 생성 권한이 없습니다.[A-004]"),
+			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]"),
 			@ApiResponse(responseCode = "500", description = "티켓 처리에 실패했습니다.[A-005]"),
-			@ApiResponse(responseCode = "400", description = "티켓이 부족합니다.[A-006]")
+			@ApiResponse(responseCode = "400", description = "티켓이 부족합니다.[A-006]"),
+			@ApiResponse(responseCode = "400", description = "AI 이미지 생성권이 부족합니다.[AI-007]"),
+			@ApiResponse(responseCode = "400", description = "이미지 생성권 처리에 실패하였습니다.(서버 문제)[AI-008]"),
+
 		}
 	)
 	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
@@ -91,8 +98,7 @@ public class AiImageController {
 			request.fileName(),
 			request.imagePath(),
 			request.postId(),
-			userEntity.getId(),
-			request.useTicket()
+			userEntity.getId()
 		);
 
 		return ResponseEntity.status(CREATED)

@@ -67,7 +67,7 @@ class AiImageGenerationServiceTest {
 	@Mock
 	private PostEntityRepository postEntityRepository;
 	@Mock
-	private AiRequestTicketService aiRequestTicketService;
+	private AiImagePermissionService aiImagePermissionService;
 	@Mock
 	private PostImageService postImageService;
 
@@ -89,20 +89,20 @@ class AiImageGenerationServiceTest {
 		List<PostImageEntity> mockPostImages = List.of(createTestPostImageEntity());
 		List<String> expectedStyleUrls = List.of(TEST_IMAGE_URL);
 		UserEntity user = UserFactory.createMockUser(TEST_USER_ID);
-		PostEntity mockPostEntity = PostFactory.createMockPost(user);
+		PostEntity mockPostEntity = PostFactory.createMockPostWithId(1L, user);
+		Long postId = mockPostEntity.getId();
 
 		when(aiImagePermissionRepository.existsByUserIdAndPostId(TEST_USER_ID, TEST_POST_ID)).thenReturn(true);
 		when(postImageEntityRepository.findAllByPostId(TEST_POST_ID)).thenReturn(mockPostImages);
 		when(postImageService.createImageGetUrl(any())).thenReturn(TEST_IMAGE_URL);
 		when(aiImageService.saveImage(imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_USER_ID, TEST_POST_ID))
 				.thenReturn(mockAiRequest);
-		when(postEntityRepository.findById(TEST_POST_ID)).thenReturn(Optional.of(mockPostEntity));
-		doNothing().when(aiRequestTicketService).useTicket(TEST_USER_ID);
+		doNothing().when(aiImagePermissionService).consumeRemainingGenerations(TEST_USER_ID, postId);
 		when(aiImageService.createImageGetUrl(mockAiRequest.getId())).thenReturn(TEST_IMAGE_URL);
 
 		// when
 		RequestAiImageGenerationResponse result = aiImageGenerationService.processImageGeneration(
-				imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID, true);
+				imageUsagePurpose, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID);
 
 		// then
 		assertEquals(TEST_IMAGE_ID, result.imageId());
@@ -118,7 +118,7 @@ class AiImageGenerationServiceTest {
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, () -> aiImageGenerationService.processImageGeneration(
-				ImagePrefix.AI_REQUEST, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID, true));
+				ImagePrefix.AI_REQUEST, TEST_FILE_NAME, TEST_IMAGE_PATH, TEST_POST_ID, TEST_USER_ID));
 
 		assertEquals(ErrorCode.AI_IMAGE_PERMISSION_NOT_FOUND, exception.getErrorCode());
 		verify(messageQueueService, never()).sendImageGenerationRequest(anyString(), anyString(), anyList());

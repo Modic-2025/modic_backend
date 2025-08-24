@@ -19,7 +19,7 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
-import hanium.modic.backend.domain.ai.entity.AiImagePermissionEntity;
+import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
 import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
@@ -73,7 +73,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)
-			.isActive(true)
 			.build());
 
 		final PostReviewImageEntity savedImage = postReviewImageRepository.save(

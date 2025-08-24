@@ -28,15 +28,15 @@ public class AiRequestTicketService {
 
 	// 티켓 엔티티 조회, 만료되면 갱신
 	@Transactional
-	public AiRequestTicketEntity getTicketEntity(Long userId) {
+	public AiRequestTicketEntity getTicketEntity(long userId) {
 		return aiRequestTicketRepository.findByUserId(userId)
 			.map(this::refreshTicketIfExpired)
 			.orElseGet(() -> createInitialTicket(userId));
 	}
 
-	// 티켓 한 개 소모, 잔여 티켓이 없으면 에러
+	// 티켓, 잔여 티켓이 없으면 에러
 	@Transactional
-	public void useTicket(Long userId) {
+	public void useTicket(final long userId, final long ticketPrice) {
 		try {
 			lockManager.aiRequestTicketLock(userId, () -> {
 				// 티켓 조회, 티켓 만료 체크, 만료되면 티켓 초기화, 재진입 가능 락이라 refreshTicketsIfExpired 메서드에서 락 호출 가능.
@@ -44,7 +44,7 @@ public class AiRequestTicketService {
 
 
 				// 티켓 차감, 잔여 티켓이 없으면 예외 발생
-				userTicket.decreaseTicket();
+				userTicket.decreaseTicket(ticketPrice);
 				aiRequestTicketRepository.save(userTicket);
 			});
 		} catch (LockException e) {
