@@ -1,56 +1,36 @@
 package hanium.modic.backend.domain.ai.repository;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import hanium.modic.backend.domain.ai.entity.AiImagePermissionEntity;
+import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
 
 @Repository
 public interface AiImagePermissionRepository extends JpaRepository<AiImagePermissionEntity, Long> {
 
-	/**
-	 * 사용자 ID와 포스트 ID를 통해 권한 정보 조회
-	 */
 	Optional<AiImagePermissionEntity> findByUserIdAndPostId(Long userId, Long postId);
 
-	/**
-	 * 사용자 ID와 포스트 ID를 통해 활성화된 권한 정보 조회
-	 */
-	Optional<AiImagePermissionEntity> findByUserIdAndPostIdAndIsActiveTrue(Long userId, Long postId);
-
-	/**
-	 * 사용자 ID를 통해 모든 권한 정보 조회
-	 */
-	List<AiImagePermissionEntity> findAllByUserId(Long userId);
-
-	/**
-	 * 사용자 ID를 통해 활성화된 모든 권한 정보 조회
-	 */
-	List<AiImagePermissionEntity> findAllByUserIdAndIsActiveTrue(Long userId);
-
-	/**
-	 * 포스트 ID를 통해 모든 권한 정보 조회
-	 */
-	List<AiImagePermissionEntity> findAllByPostId(Long postId);
-
-	/**
-	 * 사용자 ID와 포스트 ID를 통해 유효한 권한(활성화 + 남은 횟수 > 0) 조회
-	 * (메서드 이름 기반 쿼리로 변경)
-	 */
-	Optional<AiImagePermissionEntity> findByUserIdAndPostIdAndIsActiveTrueAndRemainingGenerationsGreaterThan(
-		Long userId, Long postId, int generations);
-
-	/**
-	 * 권한 존재 여부 확인
-	 */
 	boolean existsByUserIdAndPostId(Long userId, Long postId);
 
 	/**
-	 * 유효한 권한 존재 여부 확인
+	 * AI 이미지 생성권을 업서트하고, 남은 생성 횟수를 증가시킵니다.
 	 */
-	boolean existsByUserIdAndPostIdAndIsActiveTrueAndRemainingGenerationsGreaterThan(Long userId, Long postId,
-		int generations);
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query(value = """
+		  INSERT INTO ai_image_permissions (user_id, post_id, remaining_generations, create_at, update_at)
+		  VALUES (:userId, :postId, :remainingGenerations, NOW(), NOW())
+		  ON DUPLICATE KEY UPDATE
+		    remaining_generations = remaining_generations + VALUES(remaining_generations),
+		    update_at = NOW()
+		""", nativeQuery = true)
+	int upsertAndIncrease(
+		@Param("userId") Long userId,
+		@Param("postId") Long postId,
+		@Param("remainingGenerations") int remainingGenerations
+	);
 }
