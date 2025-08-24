@@ -46,7 +46,7 @@ public class AiRequestTicketEntity extends BaseEntity {
 
 	// 잔여 티켓 차감
 	public void decreaseTicket(final long ticketPrice) {
-		if (this.ticketCount - ticketPrice <= MINIMUM_TICKET_COUNT) {
+		if (this.ticketCount - ticketPrice < MINIMUM_TICKET_COUNT) {
 			throw new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION);
 		}
 		this.ticketCount -= ticketPrice;
@@ -56,10 +56,6 @@ public class AiRequestTicketEntity extends BaseEntity {
 	public void resetTickets() {
 		this.ticketCount = FREE_TICKET_COUNT_PER_DAY;
 		this.lastIssuedAt = LocalDateTime.now();
-	}
-
-	public boolean hasTickets() {
-		return this.ticketCount > MINIMUM_TICKET_COUNT;
 	}
 
 	public boolean isTicketExpired() {
