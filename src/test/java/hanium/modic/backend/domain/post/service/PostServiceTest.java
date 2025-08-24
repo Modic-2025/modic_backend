@@ -29,8 +29,6 @@ import org.springframework.data.domain.Sort;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
-import hanium.modic.backend.domain.image.domain.ImageExtension;
-import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -141,7 +139,7 @@ class PostServiceTest {
 
 		// then
 		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(mockPost.getId());
+		assertThat(response.postId()).isEqualTo(mockPost.getId());
 		assertThat(response.title()).isEqualTo(mockPost.getTitle());
 		assertThat(response.description()).isEqualTo(mockPost.getDescription());
 		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());
@@ -217,7 +215,7 @@ class PostServiceTest {
 		PostEntity mockPost = createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
-			.map(image -> new GetPostResponse.ImageDto(image.getImageUrl(), image.getId()))
+			.map(image -> new GetPostResponse.ImageDto(imageUtil.createImageGetUrl(image.getImagePath()), image.getId()))
 			.toList();
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
@@ -230,7 +228,7 @@ class PostServiceTest {
 
 		// then
 		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(mockPost.getId());
+		assertThat(response.postId()).isEqualTo(mockPost.getId());
 		assertThat(response.title()).isEqualTo(mockPost.getTitle());
 		assertThat(response.description()).isEqualTo(mockPost.getDescription());
 		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());

@@ -17,7 +17,7 @@ public record GetPostResponse(
 	boolean hasUserImage,
 	String userImageUrl,
 	String userEmail,
-	Long id,
+	Long postId,
 	Long userId,
 	String title,
 	String description,

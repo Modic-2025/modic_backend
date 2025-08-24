@@ -76,7 +76,7 @@ class PublicPostControllerTest extends BaseControllerTest {
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value(200))
-			.andExpect(jsonPath("$.data.id").value(postId))
+			.andExpect(jsonPath("$.data.postId").value(postId))
 			.andExpect(jsonPath("$.data.title").value(mockPost.getTitle()))
 			.andExpect(jsonPath("$.data.description").value(mockPost.getDescription()))
 			.andExpect(jsonPath("$.data.commercialPrice").value(mockPost.getCommercialPrice()))
