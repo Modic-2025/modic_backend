@@ -42,7 +42,7 @@ public class AiImagePermissionController {
 		@CurrentUser UserEntity user,
 		@Valid @RequestBody BuyAiImagePermissionRequest request
 	) {
-		aiImagePermissionService.buyAiImagePermissionByCoin(user.getId(), request.getPostId());
+		aiImagePermissionService.buyAiImagePermissionByCoin(user.getId(), request.postId());
 
 		return ResponseEntity.ok().build();
 	}
@@ -63,7 +63,7 @@ public class AiImagePermissionController {
 		@CurrentUser UserEntity user,
 		@Valid @RequestBody BuyAiImagePermissionRequest request
 	) {
-		aiImagePermissionService.buyAiImagePermissionByTicket(user.getId(), request.getPostId());
+		aiImagePermissionService.buyAiImagePermissionByTicket(user.getId(), request.postId());
 
 		return ResponseEntity.ok().build();
 	}
