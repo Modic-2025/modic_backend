@@ -8,7 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public record GetPostsResponse(
-	Long id,
+	Long postId,
 	Long userId,
 	String title,
 	String description,

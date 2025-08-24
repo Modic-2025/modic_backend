@@ -154,7 +154,7 @@ class PostControllerTest extends BaseControllerTest {
 		mockMvc.perform(get("/api/posts/{id}", postId)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.id").value(response.id()))
+			.andExpect(jsonPath("$.data.postId").value(response.postId()))
 			.andExpect(jsonPath("$.data.title").value(response.title()))
 			.andExpect(jsonPath("$.data.description").value(response.description()))
 			.andExpect(jsonPath("$.data.likeCount").value(response.likeCount()))
