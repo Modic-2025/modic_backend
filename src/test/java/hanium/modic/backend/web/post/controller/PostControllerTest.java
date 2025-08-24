@@ -75,6 +75,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"제목은 필수입니다.",
@@ -85,6 +86,7 @@ class PostControllerTest extends BaseControllerTest {
 					"제목",
 					"설명",
 					null,
+					0L,
 					0L,
 					List.of(1L)
 				),
@@ -97,6 +99,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					null,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 필수입니다.",
@@ -108,6 +111,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					-1L,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
@@ -119,6 +123,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					null
 				),
 				"이미지는 필수입니다.",
@@ -128,6 +133,7 @@ class PostControllerTest extends BaseControllerTest {
 				new CreatePostRequest(
 					"제목",
 					"설명",
+					0L,
 					0L,
 					0L,
 					Collections.nCopies(9, 1L)
@@ -144,7 +150,7 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
+			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
 			10L, true);
 
@@ -285,6 +291,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"제목은 필수입니다.",
@@ -296,6 +303,7 @@ class PostControllerTest extends BaseControllerTest {
 					null,
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"설명은 필수입니다.",
@@ -305,6 +313,7 @@ class PostControllerTest extends BaseControllerTest {
 				new UpdatePostRequest(
 					"제목",
 					"",
+					0L,
 					0L,
 					0L,
 					List.of(1L)
@@ -319,6 +328,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					null,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"상업적 가격은 필수입니다.",
@@ -330,6 +340,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					null,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 필수입니다.",
@@ -341,6 +352,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					-1L,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
@@ -352,6 +364,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					null
 				),
 				"이미지는 필수입니다.",
@@ -361,6 +374,7 @@ class PostControllerTest extends BaseControllerTest {
 				new UpdatePostRequest(
 					"제목",
 					"설명",
+					0L,
 					0L,
 					0L,
 					Collections.nCopies(9, 1L)

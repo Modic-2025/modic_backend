@@ -64,6 +64,7 @@ class PublicPostControllerTest extends BaseControllerTest {
 			mockPost.getDescription(),
 			mockPost.getCommercialPrice(),
 			mockPost.getNonCommercialPrice(),
+			mockPost.getTicketPrice(),
 			mockImages,
 			10L, // likeCount
 			false

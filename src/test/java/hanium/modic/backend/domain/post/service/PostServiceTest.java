@@ -79,6 +79,7 @@ class PostServiceTest {
 		String description = "Test Description";
 		Long commercialPrice = 1000L;
 		Long nonCommercialPrice = 500L;
+		Long ticketPrice = 200L;
 
 		List<Long> imageIds = new ArrayList<>();
 		List<PostImageEntity> postImageEntities = ImageFactory.createMockPostImages(null, 2);
@@ -92,7 +93,7 @@ class PostServiceTest {
 		when(postEntityRepository.save(any())).thenReturn(mockPost);
 
 		// when
-		postService.createPost(userId, title, description, commercialPrice, nonCommercialPrice, imageIds);
+		postService.createPost(userId, title, description, commercialPrice, nonCommercialPrice, ticketPrice, imageIds);
 
 		// then - PostEntity 저장 확인
 		ArgumentCaptor<PostEntity> postCaptor = ArgumentCaptor.forClass(PostEntity.class);
@@ -125,7 +126,6 @@ class PostServiceTest {
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
 			.map(image -> new GetPostResponse.ImageDto(URL, image.getId()))
 			.toList();
-
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
@@ -215,7 +215,8 @@ class PostServiceTest {
 		PostEntity mockPost = createMockPostWithId(postId, mockUser);
 		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 2);
 		List<GetPostResponse.ImageDto> expectedImages = mockImages.stream()
-			.map(image -> new GetPostResponse.ImageDto(imageUtil.createImageGetUrl(image.getImagePath()), image.getId()))
+			.map(
+				image -> new GetPostResponse.ImageDto(imageUtil.createImageGetUrl(image.getImagePath()), image.getId()))
 			.toList();
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
@@ -542,6 +543,7 @@ class PostServiceTest {
 		final String newDescription = "Updated Description";
 		final Long newCommercialPrice = 2000L;
 		final Long newNonCommercialPrice = 1000L;
+		final Long ticketPrice = 500L;
 		final Long anotherPostImageId1 = 3L;
 		final Long anotherPostImageId2 = 4L;
 		final List<Long> newImageIds = List.of(anotherPostImageId1, anotherPostImageId2);
@@ -551,7 +553,7 @@ class PostServiceTest {
 
 		// When
 		postService.updatePost(userId, postId, newTitle, newDescription, newCommercialPrice, newNonCommercialPrice,
-			newImageIds);
+			ticketPrice, newImageIds);
 
 		// Then
 		verify(postEntityRepository, times(1)).findById(postId);
@@ -578,12 +580,13 @@ class PostServiceTest {
 		final String newDescription = "Updated Description";
 		final Long newCommercialPrice = 2000L;
 		final Long newNonCommercialPrice = 1000L;
+		final Long ticketPrice = 500L;
 		final List<Long> newImageIds = List.of(3L, 4L);
 
 		// When & Then
 		AppException exception = assertThrows(AppException.class,
 			() -> postService.updatePost(userId, postId, newTitle, newDescription, newCommercialPrice,
-				newNonCommercialPrice, newImageIds)
+				newNonCommercialPrice, ticketPrice, newImageIds)
 		);
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 

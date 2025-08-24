@@ -16,6 +16,7 @@ public class PostFactory {
 			.description("테스트 설명 " + id)
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
+			.ticketPrice(3L)
 			.build();
 
 		PostEntity spyPost = Mockito.spy(post);
@@ -31,6 +32,7 @@ public class PostFactory {
 			.description("테스트 설명")
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
+			.ticketPrice(3L)
 			.build();
 	}
 }

@@ -33,7 +33,7 @@ import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.domain.ai.entity.AiImagePermissionEntity;
+import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
 import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
@@ -83,6 +83,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			"테스트 설명",
 			10000L,
 			5000L,
+			0L,
 			List.of(image1.getId(), image2.getId())
 		);
 		String json = objectMapper.writeValueAsString(request);
@@ -143,6 +144,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			"수정된 설명",
 			20000L,
 			10000L,
+			0L,
 			postImageIds
 		);
 		String json = objectMapper.writeValueAsString(request);
@@ -184,6 +186,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			"수정된 설명",
 			20000L,
 			10000L,
+			0L,
 			List.of(otherPersonsImage.getId())
 		);
 		String json = objectMapper.writeValueAsString(request);
@@ -225,6 +228,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 				"수정된 설명",
 				20000L,
 				10000L,
+				0L,
 				List.of(imageToKeep.getId()) // 첫 번째 이미지만 남기고 나머지는 삭제
 			);
 			String json = objectMapper.writeValueAsString(request);
@@ -262,7 +266,6 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)
-			.isActive(true)
 			.build());
 
 		// when & then
@@ -303,7 +306,6 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)
-			.isActive(true)
 			.build());
 
 		// when & then
