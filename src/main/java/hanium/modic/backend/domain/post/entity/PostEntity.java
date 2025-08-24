@@ -37,19 +37,24 @@ public class PostEntity extends BaseEntity {
     @Column(name = "non_commercial_price", nullable = false)
     private Long nonCommercialPrice;
 
+    @Column(name = "ticket_price", nullable = false)
+    private Long ticketPrice;
+
     @Builder
     public PostEntity(
         Long userId,
         String title,
         String description,
         Long commercialPrice,
-        Long nonCommercialPrice
+        Long nonCommercialPrice,
+        Long ticketPrice
     ) {
         this.userId = userId;
         this.title = title;
         this.description = description;
         this.commercialPrice = commercialPrice;
         this.nonCommercialPrice = nonCommercialPrice;
+        this.ticketPrice = ticketPrice;
     }
 
     public void updateTitle(String title) {
@@ -61,8 +66,10 @@ public class PostEntity extends BaseEntity {
     public void updateCommercialPrice(Long commercialPrice) {
         this.commercialPrice = commercialPrice;
     }
-
     public void updateNonCommercialPrice(Long nonCommercialPrice) {
         this.nonCommercialPrice = nonCommercialPrice;
+    }
+    public void updateTicketPrice(Long ticketPrice) {
+        this.ticketPrice = ticketPrice;
     }
 }

@@ -53,7 +53,7 @@ public class PostController {
 		return ResponseEntity.status(CREATED)
 			.body(AppResponse.created(CreatePostResponse.of(
 				postService.createPost(user.getId(), request.title(), request.description(), request.commercialPrice(),
-					request.nonCommercialPrice(), request.imageIds()))));
+					request.nonCommercialPrice(), request.ticketPrice(), request.imageIds()))));
 	}
 
 	@GetMapping("/{id}")
@@ -92,7 +92,7 @@ public class PostController {
 	public ResponseEntity<AppResponse<Void>> updatePost(@CurrentUser UserEntity user, @PathVariable long id,
 		@RequestBody @Valid UpdatePostRequest request) {
 		postService.updatePost(user.getId(), id, request.title(), request.description(), request.commercialPrice(),
-			request.nonCommercialPrice(), request.imageIds());
+			request.nonCommercialPrice(), request.ticketPrice(), request.imageIds());
 
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
@@ -112,7 +112,7 @@ public class PostController {
 		@CurrentUser UserEntity user) {
 
 		boolean canReview = postReviewAuthorizationService.canUserReviewPost(user.getId(), postId);
-		
+
 		CanReviewResponse response;
 		if (canReview) {
 			response = CanReviewResponse.allowed();

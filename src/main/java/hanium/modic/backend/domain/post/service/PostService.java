@@ -58,13 +58,16 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds) {
+		final Long ticketPrice,
+		final List<Long> imageIds
+	) {
 		PostEntity postEntity = PostEntity.builder()
 			.userId(userId)
 			.title(title)
 			.description(description)
 			.commercialPrice(commercialPrice)
 			.nonCommercialPrice(nonCommercialPrice)
+			.ticketPrice(ticketPrice)
 			.build();
 
 		PostEntity post = postEntityRepository.save(postEntity);
@@ -204,7 +207,9 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds) {
+		final Long ticketPrice,
+		final List<Long> imageIds
+	) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
@@ -214,6 +219,7 @@ public class PostService {
 		post.updateDescription(description);
 		post.updateCommercialPrice(commercialPrice);
 		post.updateNonCommercialPrice(nonCommercialPrice);
+		post.updateTicketPrice(ticketPrice);
 		postEntityRepository.save(post);
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(postId);

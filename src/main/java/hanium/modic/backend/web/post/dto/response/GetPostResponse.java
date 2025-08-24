@@ -23,6 +23,7 @@ public record GetPostResponse(
 	String description,
 	Long commercialPrice,
 	Long nonCommercialPrice,
+	Long ticketPrice,
 	List<ImageDto> images,
 	// 하트 관련 필드
 	long likeCount,
@@ -61,6 +62,7 @@ public record GetPostResponse(
 			postEntity.getDescription(),
 			postEntity.getCommercialPrice(),
 			postEntity.getNonCommercialPrice(),
+			postEntity.getTicketPrice(),
 			imageDtos,
 			likeCount,
 			isLikedByCurrentUser);
