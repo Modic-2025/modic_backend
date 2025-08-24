@@ -98,8 +98,7 @@ public class AiImageController {
 			request.fileName(),
 			request.imagePath(),
 			request.postId(),
-			userEntity.getId(),
-			request.useTicket()
+			userEntity.getId()
 		);
 
 		return ResponseEntity.status(CREATED)

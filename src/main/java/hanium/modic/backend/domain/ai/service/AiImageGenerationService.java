@@ -1,7 +1,5 @@
 package hanium.modic.backend.domain.ai.service;
 
-import static hanium.modic.backend.common.error.ErrorCode.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,11 +20,8 @@ import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.PostImageService;
-import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.ai.dto.response.RequestAiImageGenerationResponse;
 import lombok.AccessLevel;
@@ -55,8 +50,7 @@ public class AiImageGenerationService {
 		String fileName,
 		String imagePath,
 		Long postId,
-		Long userId,
-		Boolean useTicket
+		Long userId
 	) {
 		// 사용자 권한 검증
 		validateAiRequestPermission(userId, postId);
