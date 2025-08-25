@@ -130,7 +130,7 @@ public class AiImageController {
 		summary = "생성된 AI 이미지 조회 URL 생성",
 		description = "AI가 생성한 최종 이미지를 확인할 수 있는 URL을 반환합니다. 사전에 생성 상태를 조회해야 합니다.",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "생성된 AI 이미지를 찾을 수 없습니다.[A-002]"),
+			@ApiResponse(responseCode = "404", description = "생성된 AI 이미지를 찾을 수 없습니다.[AI-002]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
 			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
@@ -149,7 +149,7 @@ public class AiImageController {
 		summary = "AI 이미지 생성 상태 조회",
 		description = "AI 이미지 생성 요청에 대한 현재 상태를 조회합니다.",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 AI 요청을 찾을 수 없습니다.[A-001]"),
+			@ApiResponse(responseCode = "404", description = "해당 AI 요청을 찾을 수 없습니다.[AI-001]"),
 			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
 	)
