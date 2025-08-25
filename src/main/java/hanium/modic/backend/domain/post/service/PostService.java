@@ -70,6 +70,7 @@ public class PostService {
 			.nonCommercialPrice(nonCommercialPrice)
 			.ticketPrice(ticketPrice)
 			.isAiDerivedPost(false)
+			.parentPostId(null) // 일반 포스트는 부모가 없음
 			.build();
 
 		PostEntity post = postEntityRepository.save(postEntity);
@@ -113,8 +114,11 @@ public class PostService {
 		// 현재 인증된 사용자의 좋아요 여부 확인
 		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
 
+		// AI 파생 포스트 ID 목록 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser);
+			isLikedByCurrentUser, derivedPostIds);
 	}
 
 	@Transactional(readOnly = true)
@@ -142,8 +146,11 @@ public class PostService {
 		// 비로그인 사용자이므로 좋아요 여부는 null로 설정
 		Boolean isLikedByCurrentUser = false;
 
+		// AI 파생 포스트 ID 목록 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser);
+			isLikedByCurrentUser, derivedPostIds);
 	}
 
 	@Transactional(readOnly = true)

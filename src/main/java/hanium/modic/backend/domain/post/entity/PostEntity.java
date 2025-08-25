@@ -43,6 +43,9 @@ public class PostEntity extends BaseEntity {
     @Column(name = "is_ai_derived_post", nullable = false)
     private Boolean isAiDerivedPost;
 
+    @Column(name = "parent_post_id")
+    private Long parentPostId;
+
     @Builder
     public PostEntity(
         Long userId,
@@ -51,7 +54,8 @@ public class PostEntity extends BaseEntity {
         Long commercialPrice,
         Long nonCommercialPrice,
         Long ticketPrice,
-        Boolean isAiDerivedPost
+        Boolean isAiDerivedPost,
+        Long parentPostId
     ) {
         this.userId = userId;
         this.title = title;
@@ -60,6 +64,7 @@ public class PostEntity extends BaseEntity {
         this.nonCommercialPrice = nonCommercialPrice;
         this.ticketPrice = ticketPrice;
         this.isAiDerivedPost = isAiDerivedPost != null ? isAiDerivedPost : false;
+        this.parentPostId = parentPostId;
     }
 
     public void updateTitle(String title) {

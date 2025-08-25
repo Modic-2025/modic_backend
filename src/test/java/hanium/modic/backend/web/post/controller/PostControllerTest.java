@@ -153,7 +153,7 @@ class PostControllerTest extends BaseControllerTest {
 		GetPostResponse response = new GetPostResponse(
 			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L, false,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
-			10L, true);
+			10L, true, List.of());
 
 		when(postService.getPost(postId, testUser.getId())).thenReturn(response);
 
@@ -199,7 +199,7 @@ class PostControllerTest extends BaseControllerTest {
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(any(String.class), anyInt(), anyInt(), PostType.ALL)).thenReturn(pageResponse);
+		when(postService.getPosts(any(String.class), anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")

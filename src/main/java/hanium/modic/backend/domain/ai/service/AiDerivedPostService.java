@@ -54,7 +54,7 @@ public class AiDerivedPostService {
 			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		}
 
-		// AI 파생 포스트 생성
+		// AI 파생 포스트 생성 - parentPostId로 원본 포스트 설정
 		PostEntity aiDerivedPost = PostEntity.builder()
 			.userId(userId)
 			.title(title)
@@ -63,6 +63,7 @@ public class AiDerivedPostService {
 			.nonCommercialPrice(nonCommercialPrice)
 			.ticketPrice(ticketPrice)
 			.isAiDerivedPost(true) // AI 파생 포스트로 설정
+			.parentPostId(createdAiImage.getPostId()) // 원본 포스트 ID 설정
 			.build();
 
 		PostEntity savedPost = postEntityRepository.save(aiDerivedPost);

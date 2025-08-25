@@ -135,6 +135,7 @@ class PostServiceTest {
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn(URL);
 		when(postLikeService.getLikeCount(postId)).thenReturn(10L);
 		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(true);
+		when(postEntityRepository.findIdsByParentPostIdOrderByIdDesc(postId)).thenReturn(List.of());
 
 		// when
 		GetPostResponse response = postService.getPost(postId, currentUserId);
@@ -150,6 +151,7 @@ class PostServiceTest {
 		assertThat(response.likeCount()).isEqualTo(10L);
 		assertThat(response.isLikedByCurrentUser()).isTrue();
 		assertThat(response.images()).hasSize(2);
+		assertThat(response.derivedPostIds()).isEmpty(); // 파생포스트 없음
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
@@ -157,6 +159,7 @@ class PostServiceTest {
 		verify(imageUtil, times(2)).createImageGetUrl(anyString());
 		verify(postLikeService).getLikeCount(postId);
 		verify(postLikeService).isLikedByUser(currentUserId, postId);
+		verify(postEntityRepository).findIdsByParentPostIdOrderByIdDesc(postId);
 	}
 
 	@Test
@@ -175,6 +178,7 @@ class PostServiceTest {
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 		when(postLikeService.getLikeCount(postId)).thenReturn(5L);
 		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(false);
+		when(postEntityRepository.findIdsByParentPostIdOrderByIdDesc(postId)).thenReturn(List.of());
 
 		// when
 		GetPostResponse response = postService.getPost(postId, currentUserId);
@@ -184,6 +188,7 @@ class PostServiceTest {
 		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(5L);
 		assertThat(response.isLikedByCurrentUser()).isFalse();
+		assertThat(response.derivedPostIds()).isEmpty(); // 파생포스트 없음
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
@@ -191,6 +196,7 @@ class PostServiceTest {
 		verify(imageUtil, times(2)).createImageGetUrl(anyString());
 		verify(postLikeService).getLikeCount(postId);
 		verify(postLikeService).isLikedByUser(currentUserId, postId);
+		verify(postEntityRepository).findIdsByParentPostIdOrderByIdDesc(postId);
 	}
 
 	@Test
@@ -598,5 +604,118 @@ class PostServiceTest {
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postEntityRepository, never()).save(any());
 		verify(postImageEntityRepository, never()).findAllByPostId(any());
+	}
+
+	@Test
+	@DisplayName("단일 게시글 조회 성공 - 파생포스트가 있는 원본 포스트")
+	void getPost_WithDerivedPosts_ShouldReturnPostWithDerivedPostIds() {
+		// given
+		final String URL = "https://signed-url.com/image.jpg";
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long postId = 1L;
+		Long currentUserId = 2L;
+		PostEntity mockPost = createMockPostWithId(postId, mockUser);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 1);
+		List<Long> derivedPostIds = List.of(10L, 11L, 12L); // 파생포스트 ID들
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn(URL);
+		when(postLikeService.getLikeCount(postId)).thenReturn(15L);
+		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(false);
+		when(postEntityRepository.findIdsByParentPostIdOrderByIdDesc(postId)).thenReturn(derivedPostIds);
+
+		// when
+		GetPostResponse response = postService.getPost(postId, currentUserId);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.postId()).isEqualTo(mockPost.getId());
+		assertThat(response.isAiDerivedPost()).isFalse();
+		assertThat(response.likeCount()).isEqualTo(15L);
+		assertThat(response.isLikedByCurrentUser()).isFalse();
+		assertThat(response.derivedPostIds()).hasSize(3);
+		assertThat(response.derivedPostIds()).containsExactly(10L, 11L, 12L);
+
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		verify(postLikeService).isLikedByUser(currentUserId, postId);
+		verify(postEntityRepository).findIdsByParentPostIdOrderByIdDesc(postId);
+	}
+
+	@Test
+	@DisplayName("AI 파생 포스트 조회 성공 - 파생포스트는 derivedPostIds가 빈 배열")
+	void getPost_AiDerivedPost_ShouldReturnEmptyDerivedPostIds() {
+		// given
+		final String URL = "https://signed-url.com/image.jpg";
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long postId = 1L;
+		Long currentUserId = 2L;
+		PostEntity mockAiDerivedPost = createMockAiDerivedPostWithId(postId, mockUser); // AI 파생 포스트
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockAiDerivedPost, 1);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockAiDerivedPost));
+		when(userEntityRepository.findById(mockAiDerivedPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(imageUtil.createImageGetUrl(anyString())).thenReturn(URL);
+		when(postLikeService.getLikeCount(postId)).thenReturn(3L);
+		when(postLikeService.isLikedByUser(currentUserId, postId)).thenReturn(true);
+
+		// when
+		GetPostResponse response = postService.getPost(postId, currentUserId);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.postId()).isEqualTo(mockAiDerivedPost.getId());
+		assertThat(response.isAiDerivedPost()).isTrue();
+		assertThat(response.likeCount()).isEqualTo(3L);
+		assertThat(response.isLikedByCurrentUser()).isTrue();
+		assertThat(response.derivedPostIds()).isEmpty(); // AI 파생 포스트이므로 빈 배열
+
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockAiDerivedPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		verify(postLikeService).isLikedByUser(currentUserId, postId);
+	}
+
+	@Test
+	@DisplayName("공개 게시글 조회 성공 - 파생포스트가 있는 원본 포스트")
+	void getPostForPublic_WithDerivedPosts_ShouldReturnPostWithDerivedPostIds() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long postId = 1L;
+		PostEntity mockPost = createMockPostWithId(postId, mockUser);
+		List<PostImageEntity> mockImages = ImageFactory.createMockPostImages(mockPost, 1);
+		List<Long> derivedPostIds = List.of(20L, 21L);
+
+		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(postLikeService.getLikeCount(postId)).thenReturn(25L);
+		when(postEntityRepository.findIdsByParentPostIdOrderByIdDesc(postId)).thenReturn(derivedPostIds);
+
+		// when
+		GetPostResponse response = postService.getPostForPublic(postId);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.postId()).isEqualTo(mockPost.getId());
+		assertThat(response.isAiDerivedPost()).isFalse();
+		assertThat(response.likeCount()).isEqualTo(25L);
+		assertThat(response.isLikedByCurrentUser()).isFalse(); // 비로그인 사용자
+		assertThat(response.derivedPostIds()).hasSize(2);
+		assertThat(response.derivedPostIds()).containsExactly(20L, 21L);
+
+		verify(postEntityRepository).findById(postId);
+		verify(userEntityRepository).findById(mockPost.getUserId());
+		verify(postImageEntityRepository).findAllByPostId(postId);
+		verify(postLikeService).getLikeCount(postId);
+		verify(postEntityRepository).findIdsByParentPostIdOrderByIdDesc(postId);
+		// 비로그인 사용자이므로 isLikedByUser는 호출되지 않음
+		verify(postLikeService, never()).isLikedByUser(any(), any());
 	}
 }

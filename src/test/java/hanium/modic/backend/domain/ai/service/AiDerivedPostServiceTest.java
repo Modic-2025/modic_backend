@@ -87,6 +87,7 @@ class AiDerivedPostServiceTest {
 		assertThat(savedPost.getNonCommercialPrice()).isEqualTo(nonCommercialPrice);
 		assertThat(savedPost.getTicketPrice()).isEqualTo(ticketPrice);
 		assertThat(savedPost.getIsAiDerivedPost()).isTrue();
+		assertThat(savedPost.getParentPostId()).isEqualTo(mockAiImage.getPostId()); // 부모 포스트 ID 검증
 
 		// PostImageEntity 저장 검증
 		ArgumentCaptor<PostImageEntity> imageCaptor = ArgumentCaptor.forClass(PostImageEntity.class);
@@ -168,10 +169,10 @@ class AiDerivedPostServiceTest {
 		UserEntity mockUser = UserFactory.createMockUser(userId);
 		PostEntity mockPost = createMockAiDerivedPostWithId(postId, mockUser);
 
-		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
+		when(postEntityRepository.findById(mockPost.getId())).thenReturn(Optional.of(mockPost));
 
 		// when
-		aiDerivedPostService.deleteAiDerivedPost(userId, postId);
+		aiDerivedPostService.deleteAiDerivedPost(mockUser.getId(), mockPost.getId());
 
 		// then
 		verify(postEntityRepository, times(1)).findById(postId);
@@ -193,7 +194,7 @@ class AiDerivedPostServiceTest {
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_NOT_FOUND_EXCEPTION);
 		verify(postEntityRepository, times(1)).findById(nonExistentPostId);
-		verify(postService, never()).deletePost(any(), any());
+		verify(postService, never()).deletePost(anyLong(), anyLong());
 	}
 
 	@Test
@@ -211,11 +212,11 @@ class AiDerivedPostServiceTest {
 
 		// when & then
 		AppException exception = assertThrows(AppException.class,
-			() -> aiDerivedPostService.deleteAiDerivedPost(userId, postId));
+			() -> aiDerivedPostService.deleteAiDerivedPost(userId, mockPost.getId()));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_ACCESS_DENIED_EXCEPTION);
 		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postService, never()).deletePost(any(), any());
+		verify(postService, never()).deletePost(anyLong(), anyLong());
 	}
 
 	@Test
@@ -232,10 +233,10 @@ class AiDerivedPostServiceTest {
 
 		// when & then
 		AppException exception = assertThrows(AppException.class,
-			() -> aiDerivedPostService.deleteAiDerivedPost(userId, postId));
+			() -> aiDerivedPostService.deleteAiDerivedPost(mockUser.getId(), mockPost.getId()));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_AI_DERIVED_POST_EXCEPTION);
 		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postService, never()).deletePost(any(), any());
+		verify(postService, never()).deletePost(anyLong(), anyLong());
 	}
 }

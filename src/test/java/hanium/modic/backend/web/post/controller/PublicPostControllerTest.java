@@ -68,7 +68,8 @@ class PublicPostControllerTest extends BaseControllerTest {
 			mockPost.getIsAiDerivedPost(),
 			mockImages,
 			10L, // likeCount
-			false
+			false,
+			List.of()
 		);
 
 		when(postService.getPostForPublic(postId)).thenReturn(mockResponse);
