@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(NON_NULL)
 public record GetMyProfileResponse(
+	Long userId,
 	String userEmail,
 	String userName,
 	boolean hasUserImage,

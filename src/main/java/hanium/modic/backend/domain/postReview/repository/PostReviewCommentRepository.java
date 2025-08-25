@@ -13,6 +13,7 @@ public interface PostReviewCommentRepository extends JpaRepository<PostReviewCom
 
 	@Query("""
 			SELECT new hanium.modic.backend.web.postReview.dto.response.PostReviewCommentResponse(
+				c.id,
 				c.userId,
 				u.name,
 				c.createAt,

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(NON_NULL)
 public record PostReviewCommentResponse(
+	Long postReviewCommentId,
 	Long userId,
 	String userName,
 	LocalDateTime createdAt,

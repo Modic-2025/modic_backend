@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
@@ -23,11 +24,14 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("TEST1: 내 프로필 조회 성공")
 	@WithCustomUser(email = "me@test.com")
 	void getMyProfileSuccess() throws Exception {
+		UserEntity user = ContextHolderUtil.getCurrentUser();
+
 		// when: 내 프로필 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles/me"));
 
 		// then: 응답 데이터 검증
 		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userId").value(user.getId()))
 			.andExpect(jsonPath("$.data.userEmail").value("me@test.com"))
 			.andExpect(jsonPath("$.data.userName").exists())
 			.andExpect(jsonPath("$.data.userImageUrl").doesNotExist()) // 프로필 저장 x
@@ -52,6 +56,7 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 
 		// then: 응답 데이터 검증
 		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.userId").value(target.getId()))
 			.andExpect(jsonPath("$.data.userEmail").value(target.getEmail()))
 			.andExpect(jsonPath("$.data.userName").value(target.getName()))
 			.andExpect(jsonPath("$.data.userImageUrl").exists())

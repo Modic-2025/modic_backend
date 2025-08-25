@@ -53,6 +53,7 @@ class ProfileServiceTest {
 		GetMyProfileResponse response = profileService.getMyProfile(me);
 
 		// then
+		assertThat(response.userId()).isEqualTo(me.getId());
 		assertThat(response.userEmail()).isEqualTo(me.getEmail());
 		assertThat(response.userName()).isEqualTo(me.getName());
 		assertThat(response.postCount()).isEqualTo(5L);
@@ -77,6 +78,7 @@ class ProfileServiceTest {
 		GetProfileResponse response = profileService.getProfile(userId);
 
 		// then
+		assertThat(response.userId()).isEqualTo(target.getId());
 		assertThat(response.userEmail()).isEqualTo(target.getEmail());
 		assertThat(response.userName()).isEqualTo(target.getName());
 		assertThat(response.postCount()).isEqualTo(4L);
