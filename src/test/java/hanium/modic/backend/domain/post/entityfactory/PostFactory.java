@@ -37,4 +37,33 @@ public class PostFactory {
 			.isAiDerivedPost(false)
 			.build();
 	}
+
+	public static PostEntity createMockAiDerivedPostWithId(Long id, UserEntity user) {
+		PostEntity post = PostEntity.builder()
+			.userId(user.getId())
+			.title("AI 파생 게시글 " + id)
+			.description("AI로 생성된 게시글 설명 " + id)
+			.commercialPrice(15000L)
+			.nonCommercialPrice(8000L)
+			.ticketPrice(5L)
+			.isAiDerivedPost(true)
+			.build();
+
+		PostEntity spyPost = Mockito.spy(post);
+		when(spyPost.getId()).thenReturn(id);
+
+		return spyPost;
+	}
+
+	public static PostEntity createMockAiDerivedPost(UserEntity user) {
+		return PostEntity.builder()
+			.userId(user.getId())
+			.title("AI 파생 게시글")
+			.description("AI로 생성된 게시글 설명")
+			.commercialPrice(15000L)
+			.nonCommercialPrice(8000L)
+			.ticketPrice(5L)
+			.isAiDerivedPost(true)
+			.build();
+	}
 }
