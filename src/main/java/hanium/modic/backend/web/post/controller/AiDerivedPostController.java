@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
-import hanium.modic.backend.domain.ai.service.AiDerivedPostService;
+import hanium.modic.backend.domain.post.service.AiDerivedPostService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.post.dto.request.CreateAiDerivedPostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;

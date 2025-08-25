@@ -1,5 +1,6 @@
-package hanium.modic.backend.domain.ai.service;
+package hanium.modic.backend.domain.post.service;
 
+import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +13,6 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 
 @Service
@@ -24,6 +24,7 @@ public class AiDerivedPostService {
 	private final PostEntityRepository postEntityRepository;
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final PostService postService;
+	private final AsyncPostStatisticsService asyncPostStatisticsService;
 
 	/**
 	 * AI 파생 포스트 생성
@@ -79,6 +80,9 @@ public class AiDerivedPostService {
 		postImage.updatePost(savedPost);
 
 		postImageEntityRepository.save(postImage);
+
+		// 게시글 통계 초기화 (비동기)
+		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
 
 		return CreatePostResponse.of(savedPost.getId());
 	}
