@@ -20,6 +20,7 @@ import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
@@ -68,6 +69,8 @@ public class PostService {
 			.commercialPrice(commercialPrice)
 			.nonCommercialPrice(nonCommercialPrice)
 			.ticketPrice(ticketPrice)
+			.isAiDerivedPost(false)
+			.parentPostId(null) // 일반 포스트는 부모가 없음
 			.build();
 
 		PostEntity post = postEntityRepository.save(postEntity);
@@ -111,8 +114,11 @@ public class PostService {
 		// 현재 인증된 사용자의 좋아요 여부 확인
 		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
 
+		// AI 파생 포스트 ID 목록 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser);
+			isLikedByCurrentUser, derivedPostIds);
 	}
 
 	@Transactional(readOnly = true)
@@ -140,17 +146,20 @@ public class PostService {
 		// 비로그인 사용자이므로 좋아요 여부는 null로 설정
 		Boolean isLikedByCurrentUser = false;
 
+		// AI 파생 포스트 ID 목록 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser);
+			isLikedByCurrentUser, derivedPostIds);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size) {
+	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size, final PostType postType) {
 
 		// Todo: sort 기능 추가
 
 		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
-		Page<PostEntity> posts = postEntityRepository.findAll(pageable);
+		Page<PostEntity> posts = getPostsByType(pageable, postType);
 
 		if (posts.isEmpty()) {
 			throw new AppException(POST_NOT_FOUND_EXCEPTION);
@@ -239,7 +248,8 @@ public class PostService {
 	// Todo : 권한 검증 로직 개선 필요, AOP 등등
 	private void validatePostRole(
 		final long userId,
-		final long postUserId) {
+		final long postUserId
+	) {
 		if (userId != postUserId) {
 			throw new AppException(POST_ROLE_EXCEPTION);
 		}
@@ -275,5 +285,14 @@ public class PostService {
 			String firstImageUrl = firstImageByPostId.get(post.getId());
 			return new GetSimplePostsResponse(post.getId(), firstImageUrl);
 		});
+	}
+
+	// 포스트 타입에 따라 포스트 목록을 조회
+	private Page<PostEntity> getPostsByType(Pageable pageable, PostType postType) {
+		return switch (postType) {
+			case ORIGINAL -> postEntityRepository.findAllByIsAiDerivedPost(false, pageable);
+			case AI_DERIVED -> postEntityRepository.findAllByIsAiDerivedPost(true, pageable);
+			case ALL -> postEntityRepository.findAll(pageable);
+		};
 	}
 }

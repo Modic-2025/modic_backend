@@ -17,6 +17,8 @@ public class PostFactory {
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
 			.ticketPrice(3L)
+			.isAiDerivedPost(false)
+			.parentPostId(null)
 			.build();
 
 		PostEntity spyPost = Mockito.spy(post);
@@ -33,6 +35,57 @@ public class PostFactory {
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
 			.ticketPrice(3L)
+			.isAiDerivedPost(false)
+			.parentPostId(null)
+			.build();
+	}
+
+	public static PostEntity createMockAiDerivedPostWithId(Long id, UserEntity user) {
+		PostEntity post = PostEntity.builder()
+			.userId(user.getId())
+			.title("AI 파생 게시글 " + id)
+			.description("AI로 생성된 게시글 설명 " + id)
+			.commercialPrice(15000L)
+			.nonCommercialPrice(8000L)
+			.ticketPrice(5L)
+			.isAiDerivedPost(true)
+			.parentPostId(1L) // 기본적으로 포스트 ID 1을 부모로 설정
+			.build();
+
+		PostEntity spyPost = Mockito.spy(post);
+		when(spyPost.getId()).thenReturn(id);
+
+		return spyPost;
+	}
+
+	public static PostEntity createMockAiDerivedPostWithId(Long id, UserEntity user, Long parentPostId) {
+		PostEntity post = PostEntity.builder()
+			.userId(user.getId())
+			.title("AI 파생 게시글 " + id)
+			.description("AI로 생성된 게시글 설명 " + id)
+			.commercialPrice(15000L)
+			.nonCommercialPrice(8000L)
+			.ticketPrice(5L)
+			.isAiDerivedPost(true)
+			.parentPostId(parentPostId)
+			.build();
+
+		PostEntity spyPost = Mockito.spy(post);
+		when(spyPost.getId()).thenReturn(id);
+
+		return spyPost;
+	}
+
+	public static PostEntity createMockAiDerivedPost(UserEntity user) {
+		return PostEntity.builder()
+			.userId(user.getId())
+			.title("AI 파생 게시글")
+			.description("AI로 생성된 게시글 설명")
+			.commercialPrice(15000L)
+			.nonCommercialPrice(8000L)
+			.ticketPrice(5L)
+			.isAiDerivedPost(true)
+			.parentPostId(1L) // 기본적으로 포스트 ID 1을 부모로 설정
 			.build();
 	}
 }

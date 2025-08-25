@@ -65,9 +65,11 @@ class PublicPostControllerTest extends BaseControllerTest {
 			mockPost.getCommercialPrice(),
 			mockPost.getNonCommercialPrice(),
 			mockPost.getTicketPrice(),
+			mockPost.getIsAiDerivedPost(),
 			mockImages,
 			10L, // likeCount
-			false
+			false,
+			List.of()
 		);
 
 		when(postService.getPostForPublic(postId)).thenReturn(mockResponse);
@@ -82,6 +84,7 @@ class PublicPostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.description").value(mockPost.getDescription()))
 			.andExpect(jsonPath("$.data.commercialPrice").value(mockPost.getCommercialPrice()))
 			.andExpect(jsonPath("$.data.nonCommercialPrice").value(mockPost.getNonCommercialPrice()))
+			.andExpect(jsonPath("$.data.isAiDerivedPost").value(false))
 			.andExpect(jsonPath("$.data.likeCount").value(10))
 			.andExpect(jsonPath("$.data.isLikedByCurrentUser").value(false)) // null 값 확인
 			.andExpect(jsonPath("$.data.images").isArray())

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -65,13 +66,23 @@ public class PostController {
 	}
 
 	@GetMapping
-	@Operation(summary = "게시글 목록 조회 API", description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.", responses = {
-		@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")})
+	@Operation(
+		summary = "게시글 목록 조회 API",
+		description = """
+			게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기, 포스트 타입을 입력받습니다.
+			postType은 (ALL, ORIGINAL, AI_DERIVED)가 존재한다.
+			""",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
-		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size) {
-		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
+		@RequestParam(required = false, defaultValue = "ALL") PostType postType
+	) {
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size, postType);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 

@@ -44,6 +44,8 @@ public class AiImageCreatedListener {
 			.imageName(message.imageName())
 			.extension(message.extension())
 			.imagePurpose(ImagePrefix.AI_RESPONSE)
+			.postId(aiRequest.getPostId())
+			.userId(aiRequest.getUserId())
 			.build();
 		createdAiImageRepository.save(created);
 

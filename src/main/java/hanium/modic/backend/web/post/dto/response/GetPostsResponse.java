@@ -14,6 +14,7 @@ public record GetPostsResponse(
 	String description,
 	Long commercialPrice,
 	Long nonCommercialPrice,
+	Boolean isAiDerivedPost,
 	List<ImageDto> images,
 	// 하트 수
 	long likeCount) {
@@ -37,6 +38,7 @@ public record GetPostsResponse(
 			postEntity.getDescription(),
 			postEntity.getCommercialPrice(),
 			postEntity.getNonCommercialPrice(),
+			postEntity.getIsAiDerivedPost(),
 			imageDtos,
 			likeCount);
 	}
