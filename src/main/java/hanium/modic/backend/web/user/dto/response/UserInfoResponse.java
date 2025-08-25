@@ -9,8 +9,8 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 @JsonInclude(NON_NULL)
 public record UserInfoResponse(
 	Long id,
-	String email,
-	String name,
+	String userEmail,
+	String userName,
 	boolean hasUserImage,
 	String userImageUrl
 ) {
