@@ -81,6 +81,10 @@ public enum ErrorCode {
 	REMAINING_GENERATIONS_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-007", "AI 이미지 생성권이 부족합니다."),
 	AI_IMAGE_PERMISSION_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "AI-008", "이미지 생성권 처리에 실패하였습니다."),
 	AI_IMAGE_PERMISSION_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "AI-009", "이미 AI 이미지 생성권을 구매했습니다."),
+	AI_IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "AI-010", "생성된 AI 이미지를 찾을 수 없습니다."),
+	AI_IMAGE_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "AI-011", "AI 이미지에 대한 권한이 없습니다."),
+	POST_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "P-003", "포스트에 대한 접근 권한이 없습니다."),
+	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
 	;
 
 	private final HttpStatus status;

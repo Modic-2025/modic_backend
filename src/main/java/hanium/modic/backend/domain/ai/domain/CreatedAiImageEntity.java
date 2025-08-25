@@ -31,6 +31,12 @@ public class CreatedAiImageEntity extends Image {
 	@Column(name = "request_id", nullable = false, unique = true)
 	private String requestId;
 
+	@Column(name = "post_id", nullable = false)
+	private Long postId;
+
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
+
 	@Builder
 	public CreatedAiImageEntity(
 		String imagePath,
@@ -38,8 +44,12 @@ public class CreatedAiImageEntity extends Image {
 		String imageName,
 		ImageExtension extension,
 		ImagePrefix imagePurpose,
-		String requestId) {
+		String requestId,
+		Long postId,
+		Long userId) {
 		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 		this.requestId = requestId;
+		this.postId = postId;
+		this.userId = userId;
 	}
 }

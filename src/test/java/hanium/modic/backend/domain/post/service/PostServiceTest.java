@@ -34,6 +34,7 @@ import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
@@ -103,6 +104,7 @@ class PostServiceTest {
 		assertThat(savedPost.getDescription()).isEqualTo(description);
 		assertThat(savedPost.getCommercialPrice()).isEqualTo(commercialPrice);
 		assertThat(savedPost.getNonCommercialPrice()).isEqualTo(nonCommercialPrice);
+		assertThat(savedPost.getIsAiDerivedPost()).isFalse();
 
 		// then - PostImageEntity 저장 확인
 		ArgumentCaptor<List<PostImageEntity>> imageCaptor = ArgumentCaptor.forClass(List.class);
@@ -144,6 +146,7 @@ class PostServiceTest {
 		assertThat(response.description()).isEqualTo(mockPost.getDescription());
 		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());
 		assertThat(response.nonCommercialPrice()).isEqualTo(mockPost.getNonCommercialPrice());
+		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(10L);
 		assertThat(response.isLikedByCurrentUser()).isTrue();
 		assertThat(response.images()).hasSize(2);
@@ -178,6 +181,7 @@ class PostServiceTest {
 
 		// then
 		assertThat(response).isNotNull();
+		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(5L);
 		assertThat(response.isLikedByCurrentUser()).isFalse();
 
@@ -234,6 +238,7 @@ class PostServiceTest {
 		assertThat(response.description()).isEqualTo(mockPost.getDescription());
 		assertThat(response.commercialPrice()).isEqualTo(mockPost.getCommercialPrice());
 		assertThat(response.nonCommercialPrice()).isEqualTo(mockPost.getNonCommercialPrice());
+		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(15L);
 		assertThat(response.isLikedByCurrentUser()).isFalse(); // 비로그인 사용자이므로 false
 		assertThat(response.images()).hasSize(expectedImages.size());
@@ -303,7 +308,7 @@ class PostServiceTest {
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// when
-		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size, PostType.ALL);
 
 		// then
 		assertThat(response).isNotNull();
@@ -353,7 +358,7 @@ class PostServiceTest {
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// When
-		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size, PostType.ALL);
 
 		// Then
 		assertThat(response).isNotNull();
@@ -382,7 +387,7 @@ class PostServiceTest {
 
 		// When & Then
 		AppException exception = assertThrows(AppException.class,
-			() -> postService.getPosts(sort, page, size));
+			() -> postService.getPosts(sort, page, size, PostType.ALL));
 		assertEquals(ErrorCode.POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postEntityRepository, times(1)).findAll(any(Pageable.class));

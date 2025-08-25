@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -150,7 +151,7 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L,
+			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L, false,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
 			10L, true);
 
@@ -190,15 +191,15 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostsResponse post1 = new GetPostsResponse(
-			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
+			1L, 1L, "제목1", "설명1", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
 		GetPostsResponse post2 = new GetPostsResponse(
-			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
+			2L, 2L, "제목2", "설명2", 20000L, 8000L, false, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
 
 		List<GetPostsResponse> content = List.of(post1, post2);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(any(String.class), anyInt(), anyInt())).thenReturn(pageResponse);
+		when(postService.getPosts(any(String.class), anyInt(), anyInt(), PostType.ALL)).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -219,13 +220,13 @@ class PostControllerTest extends BaseControllerTest {
 		throws Exception {
 		// given
 		GetPostsResponse post = new GetPostsResponse(
-			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
+			1L, 1L, "제목", "설명", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
 
 		List<GetPostsResponse> content = List.of(post);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(sort, pageNumber, size)).thenReturn(pageResponse);
+		when(postService.getPosts(sort, pageNumber, size, PostType.ALL)).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")

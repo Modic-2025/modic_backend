@@ -24,6 +24,7 @@ public record GetPostResponse(
 	Long commercialPrice,
 	Long nonCommercialPrice,
 	Long ticketPrice,
+	Boolean isAiDerivedPost,
 	List<ImageDto> images,
 	// 하트 관련 필드
 	long likeCount,
@@ -63,6 +64,7 @@ public record GetPostResponse(
 			postEntity.getCommercialPrice(),
 			postEntity.getNonCommercialPrice(),
 			postEntity.getTicketPrice(),
+			postEntity.getIsAiDerivedPost(),
 			imageDtos,
 			likeCount,
 			isLikedByCurrentUser);

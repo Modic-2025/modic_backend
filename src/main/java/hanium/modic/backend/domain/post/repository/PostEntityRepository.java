@@ -10,4 +10,6 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 	long countByUserId(Long userId);
 
 	Page<PostEntity> findAllByUserId(Long userId, Pageable pageable);
+
+	Page<PostEntity> findAllByIsAiDerivedPost(Boolean isAiDerivedPost, Pageable pageable);
 }
