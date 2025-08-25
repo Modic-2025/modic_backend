@@ -1,6 +1,5 @@
 package hanium.modic.backend.web.user.controller;
 
-import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -21,16 +20,15 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.dto.Token;
-import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.service.component.CodeManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.service.UserService;
+import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
+import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
-import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
-import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 
 public class UserControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -62,7 +60,6 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 		UserCreateRequest request = new UserCreateRequest(email, "youth", "qwer1234@#!", code);
 		String json = objectMapper.writeValueAsString(request);
 
-
 		// when
 		mockMvc.perform(post("/api/users")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -92,8 +89,8 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
 			.andExpectAll(jsonPath("$.data.id").value(user.getId()),
-				jsonPath("$.data.email").value(user.getEmail()),
-				jsonPath("$.data.name").value(user.getName()));
+				jsonPath("$.data.userEmail").value(user.getEmail()),
+				jsonPath("$.data.userName").value(user.getName()));
 	}
 
 	@Test

@@ -28,9 +28,9 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 
 		// then: 응답 데이터 검증
 		result.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.email").value("me@test.com"))
-			.andExpect(jsonPath("$.data.nickname").exists())
-			.andExpect(jsonPath("$.data.profileImageUrl").doesNotExist()) // 프로필 저장 x
+			.andExpect(jsonPath("$.data.userEmail").value("me@test.com"))
+			.andExpect(jsonPath("$.data.userName").exists())
+			.andExpect(jsonPath("$.data.userImageUrl").doesNotExist()) // 프로필 저장 x
 			.andExpect(jsonPath("$.data.postCount").isNumber())
 			.andExpect(jsonPath("$.data.followerCount").isNumber())
 			.andExpect(jsonPath("$.data.followingCount").isNumber())
@@ -52,9 +52,9 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 
 		// then: 응답 데이터 검증
 		result.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.email").value(target.getEmail()))
-			.andExpect(jsonPath("$.data.nickname").value(target.getName()))
-			.andExpect(jsonPath("$.data.profileImageUrl").exists())
+			.andExpect(jsonPath("$.data.userEmail").value(target.getEmail()))
+			.andExpect(jsonPath("$.data.userName").value(target.getName()))
+			.andExpect(jsonPath("$.data.userImageUrl").exists())
 			.andExpect(jsonPath("$.data.postCount").isNumber())
 			.andExpect(jsonPath("$.data.followerCount").isNumber())
 			.andExpect(jsonPath("$.data.followingCount").isNumber());

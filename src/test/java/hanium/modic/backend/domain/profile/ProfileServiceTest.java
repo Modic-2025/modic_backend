@@ -53,8 +53,8 @@ class ProfileServiceTest {
 		GetMyProfileResponse response = profileService.getMyProfile(me);
 
 		// then
-		assertThat(response.email()).isEqualTo(me.getEmail());
-		assertThat(response.nickname()).isEqualTo(me.getName());
+		assertThat(response.userEmail()).isEqualTo(me.getEmail());
+		assertThat(response.userName()).isEqualTo(me.getName());
 		assertThat(response.postCount()).isEqualTo(5L);
 		assertThat(response.followingCount()).isEqualTo(3L);
 		assertThat(response.followerCount()).isEqualTo(7L);
@@ -77,8 +77,8 @@ class ProfileServiceTest {
 		GetProfileResponse response = profileService.getProfile(userId);
 
 		// then
-		assertThat(response.email()).isEqualTo(target.getEmail());
-		assertThat(response.nickname()).isEqualTo(target.getName());
+		assertThat(response.userEmail()).isEqualTo(target.getEmail());
+		assertThat(response.userName()).isEqualTo(target.getName());
 		assertThat(response.postCount()).isEqualTo(4L);
 		assertThat(response.followingCount()).isEqualTo(2L);
 		assertThat(response.followerCount()).isEqualTo(9L);
