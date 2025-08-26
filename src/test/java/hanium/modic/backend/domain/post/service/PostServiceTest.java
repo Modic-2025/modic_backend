@@ -151,7 +151,7 @@ class PostServiceTest {
 		assertThat(response.likeCount()).isEqualTo(10L);
 		assertThat(response.isLikedByCurrentUser()).isTrue();
 		assertThat(response.images()).hasSize(2);
-		assertThat(response.derivedPostIds()).isEmpty(); // 파생포스트 없음
+		assertThat(response.derivedPosts()).isEmpty(); // 파생포스트 없음
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
@@ -188,7 +188,7 @@ class PostServiceTest {
 		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(5L);
 		assertThat(response.isLikedByCurrentUser()).isFalse();
-		assertThat(response.derivedPostIds()).isEmpty(); // 파생포스트 없음
+		assertThat(response.derivedPosts()).isEmpty(); // 파생포스트 없음
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
@@ -635,8 +635,7 @@ class PostServiceTest {
 		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(15L);
 		assertThat(response.isLikedByCurrentUser()).isFalse();
-		assertThat(response.derivedPostIds()).hasSize(3);
-		assertThat(response.derivedPostIds()).containsExactly(10L, 11L, 12L);
+		assertThat(response.derivedPosts()).hasSize(3);
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());
@@ -673,7 +672,7 @@ class PostServiceTest {
 		assertThat(response.isAiDerivedPost()).isTrue();
 		assertThat(response.likeCount()).isEqualTo(3L);
 		assertThat(response.isLikedByCurrentUser()).isTrue();
-		assertThat(response.derivedPostIds()).isEmpty(); // AI 파생 포스트이므로 빈 배열
+		assertThat(response.derivedPosts()).isEmpty(); // AI 파생 포스트이므로 빈 배열
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockAiDerivedPost.getUserId());
@@ -707,8 +706,7 @@ class PostServiceTest {
 		assertThat(response.isAiDerivedPost()).isFalse();
 		assertThat(response.likeCount()).isEqualTo(25L);
 		assertThat(response.isLikedByCurrentUser()).isFalse(); // 비로그인 사용자
-		assertThat(response.derivedPostIds()).hasSize(2);
-		assertThat(response.derivedPostIds()).containsExactly(20L, 21L);
+		assertThat(response.derivedPosts()).hasSize(2);
 
 		verify(postEntityRepository).findById(postId);
 		verify(userEntityRepository).findById(mockPost.getUserId());

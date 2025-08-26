@@ -1,6 +1,5 @@
-package hanium.modic.backend.domain.ai.service;
+package hanium.modic.backend.domain.post.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -8,12 +7,15 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.post.service.PostService;
+import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,8 @@ public class AiDerivedPostService {
 	private final PostEntityRepository postEntityRepository;
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final PostService postService;
+	private final AsyncPostStatisticsService asyncPostStatisticsService;
+	private final ImageUtil imageUtil;
 
 	/**
 	 * AI 파생 포스트 생성
@@ -68,17 +72,25 @@ public class AiDerivedPostService {
 
 		PostEntity savedPost = postEntityRepository.save(aiDerivedPost);
 
-		// AI 이미지를 포스트 이미지로 변환
+		// AI 이미지를 포스트 이미지로 별도 저장
+		String imagePath = imageUtil.copyImage(
+			createdAiImage.getImagePath(),
+			ImagePrefix.POST
+		);
+
 		PostImageEntity postImage = PostImageEntity.builder()
-			.imagePath(createdAiImage.getImagePath())
+			.imagePath(imagePath)
 			.fullImageName(createdAiImage.getFullImageName())
 			.imageName(createdAiImage.getImageName())
 			.extension(createdAiImage.getExtension())
-			.imagePurpose(createdAiImage.getImagePurpose())
+			.imagePurpose(ImagePrefix.POST)
 			.build();
 		postImage.updatePost(savedPost);
 
 		postImageEntityRepository.save(postImage);
+
+		// 게시글 통계 초기화 (비동기)
+		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
 
 		return CreatePostResponse.of(savedPost.getId());
 	}

@@ -30,7 +30,8 @@ public record GetPostResponse(
 	long likeCount,
 	Boolean isLikedByCurrentUser, // 로그인하지 않은 경우 null
 	// AI 파생 포스트 ID 목록 (원본 포스트인 경우에만 값이 있음)
-	List<Long> derivedPostIds
+	List<SimplePostDto> derivedPosts
+
 ) {
 	// 기존 메서드 (하트 정보 없음 - 하위호환성)
 	public static GetPostResponse of(
@@ -66,7 +67,7 @@ public record GetPostResponse(
 		List<ImageDto> imageDtos,
 		long likeCount,
 		Boolean isLikedByCurrentUser,
-		List<Long> derivedPostIds
+		List<SimplePostDto> derivedPosts
 	) {
 
 		return new GetPostResponse(
@@ -85,7 +86,7 @@ public record GetPostResponse(
 			imageDtos,
 			likeCount,
 			isLikedByCurrentUser,
-			derivedPostIds);
+			derivedPosts);
 	}
 
 	@Getter
@@ -93,5 +94,12 @@ public record GetPostResponse(
 	public static class ImageDto {
 		private String imageUrl;
 		private Long imageId;
+	}
+
+	@Getter
+	@AllArgsConstructor(access = AccessLevel.PUBLIC)
+	public static class SimplePostDto {
+		private Long postId;
+		private String imageUrl;
 	}
 }

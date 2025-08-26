@@ -20,11 +20,15 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.post.service.AiDerivedPostService;
 import hanium.modic.backend.domain.post.service.PostService;
+import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
@@ -43,6 +47,12 @@ class AiDerivedPostServiceTest {
 
 	@Mock
 	private PostService postService;
+
+	@Mock
+	private ImageUtil imageUtil;
+
+	@Mock
+	private AsyncPostStatisticsService asyncPostStatisticsService;
 
 	@InjectMocks
 	private AiDerivedPostService aiDerivedPostService;
@@ -66,11 +76,12 @@ class AiDerivedPostServiceTest {
 
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
 		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
+		when(imageUtil.copyImage(anyString(), eq(ImagePrefix.POST))).thenReturn("copied-image-path");
+		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
 
 		// when
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
-			userId, createdAiImageId, title, description,
-			commercialPrice, nonCommercialPrice, ticketPrice);
+			userId, createdAiImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
 
 		// then
 		assertThat(response).isNotNull();
@@ -93,11 +104,11 @@ class AiDerivedPostServiceTest {
 		ArgumentCaptor<PostImageEntity> imageCaptor = ArgumentCaptor.forClass(PostImageEntity.class);
 		verify(postImageEntityRepository, times(1)).save(imageCaptor.capture());
 		PostImageEntity savedImage = imageCaptor.getValue();
-		assertThat(savedImage.getImagePath()).isEqualTo(mockAiImage.getImagePath());
+		assertThat(savedImage.getImagePath()).isEqualTo("copied-image-path");
 		assertThat(savedImage.getFullImageName()).isEqualTo(mockAiImage.getFullImageName());
 		assertThat(savedImage.getImageName()).isEqualTo(mockAiImage.getImageName());
 		assertThat(savedImage.getExtension()).isEqualTo(mockAiImage.getExtension());
-		assertThat(savedImage.getImagePurpose()).isEqualTo(mockAiImage.getImagePurpose());
+		assertThat(savedImage.getImagePurpose()).isEqualTo(ImagePrefix.POST);
 
 		verify(createdAiImageRepository, times(1)).findById(createdAiImageId);
 	}

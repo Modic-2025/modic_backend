@@ -24,9 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.service.AiDerivedPostService;
+import hanium.modic.backend.domain.post.service.AiDerivedPostService;
 import hanium.modic.backend.web.post.dto.request.CreateAiDerivedPostRequest;
-import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 
 @WebMvcTest(controllers = AiDerivedPostController.class)
 @AutoConfigureMockMvc(addFilters = false)

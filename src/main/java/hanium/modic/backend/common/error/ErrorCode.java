@@ -72,8 +72,8 @@ public enum ErrorCode {
 	S3_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S-002", "S3 서버에서 에러가 발생하였습니다."),
 
 	// AI
-	AI_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "A-001", "해당 AI 요청을 찾을 수 없습니다."),
-	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "A-002", "생성된 AI 이미지를 찾을 수 없습니다."),
+	AI_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-001", "해당 AI 요청을 찾을 수 없습니다."),
+	CREATED_AI_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-002", "생성된 AI 이미지를 찾을 수 없습니다."),
 	AI_IMAGE_DATA_INCONSISTENCY(HttpStatus.INTERNAL_SERVER_ERROR, "A-003", "AI 이미지 데이터 일관성 오류가 발생했습니다."),
 	AI_IMAGE_PERMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "AI-004", "AI 이미지 생성권을 구매한 이력이 없습니다."),
 	AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "AI-005", "티켓 처리에 실패했습니다."),
