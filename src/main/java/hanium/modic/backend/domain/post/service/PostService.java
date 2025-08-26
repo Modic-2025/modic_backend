@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -114,11 +115,28 @@ public class PostService {
 		// 현재 인증된 사용자의 좋아요 여부 확인
 		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
 
-		// AI 파생 포스트 ID 목록 조회
+		// AI 파생 포스트의 id와 ImageUrl 조회
 		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
 
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 찾기
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
+			.map(postId -> {
+				String firstImageUrl = firstImageByPostId.get(postId);
+				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+			})
+			.toList();
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, derivedPostIds);
+			isLikedByCurrentUser, derivedPosts);
 	}
 
 	@Transactional(readOnly = true)
@@ -146,15 +164,33 @@ public class PostService {
 		// 비로그인 사용자이므로 좋아요 여부는 null로 설정
 		Boolean isLikedByCurrentUser = false;
 
-		// AI 파생 포스트 ID 목록 조회
+		// AI 파생 포스트의 id와 ImageUrl 조회
 		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
 
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 찾기
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
+			.map(postId -> {
+				String firstImageUrl = firstImageByPostId.get(postId);
+				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+			})
+			.toList();
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, derivedPostIds);
+			isLikedByCurrentUser, derivedPosts);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size, final PostType postType) {
+	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size,
+		final PostType postType) {
 
 		// Todo: sort 기능 추가
 
