@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.io.ByteArrayInputStream;
+import java.util.Optional;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.request.CreateAiDerivedPostRequest;
@@ -55,63 +57,70 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 	@WithCustomUser(email = "test@email.com")
 	@DisplayName("AI 파생 포스트 생성 성공 - 통합 테스트")
 	void createAiDerivedPost_Success_IntegrationTest() throws Exception {
-		// given
-		UserEntity currentUser = ContextHolderUtil.getCurrentUser();
+		try {
+			// given
+			UserEntity currentUser = ContextHolderUtil.getCurrentUser();
 
-		// CreatedAiImageEntity 생성 및 저장
-		CreatedAiImageEntity createdAiImage = CreatedAiImageEntity.builder()
-			.userId(currentUser.getId())
-			.postId(999L) // 임시 값
-			.requestId("test-request-123")
-			.imagePath("imagePath")
-			.fullImageName("ai-image-full.png")
-			.imageName("ai-image")
-			.extension(ImageExtension.PNG)
-			.imagePurpose(ImagePrefix.AI_RESPONSE)
-			.build();
-		createdAiImage = createdAiImageRepository.save(createdAiImage);
+			// CreatedAiImageEntity 생성 및 저장
+			CreatedAiImageEntity createdAiImage = CreatedAiImageEntity.builder()
+				.userId(currentUser.getId())
+				.postId(999L) // 임시 값
+				.requestId("test-request-123")
+				.imagePath("imagePath")
+				.fullImageName("ai-image-full.png")
+				.imageName("ai-image")
+				.extension(ImageExtension.PNG)
+				.imagePurpose(ImagePrefix.AI_RESPONSE)
+				.build();
+			createdAiImage = createdAiImageRepository.save(createdAiImage);
+			uploadImage("imagePath", "imageContent1");
 
-		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
-			createdAiImage.getId(),
-			"AI Generated Post",
-			"This is an AI derived post created from integration test",
-			2000L,
-			1000L,
-			300L
-		);
+			CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
+				createdAiImage.getId(),
+				"AI Generated Post",
+				"This is an AI derived post created from integration test",
+				2000L,
+				1000L,
+				300L
+			);
 
-		String json = objectMapper.writeValueAsString(request);
+			String json = objectMapper.writeValueAsString(request);
 
-		// when
-		ResultActions result = mockMvc.perform(post("/api/ai/derived-posts")
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(json));
+			// when
+			ResultActions result = mockMvc.perform(post("/api/ai/derived-posts")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json));
 
-		// then
-		result.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.data.postId").exists());
+			// then
+			result.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.data.postId").exists());
 
-		// 데이터베이스에서 검증
-		PostEntity savedPost = postEntityRepository.findAll().stream()
-			.filter(post -> "AI Generated Post".equals(post.getTitle()))
-			.findFirst()
-			.orElseThrow(() -> new AssertionError("AI 파생 포스트가 데이터베이스에 저장되지 않았습니다"));
+			// 데이터베이스에서 검증
+			PostEntity savedPost = postEntityRepository.findAll().stream()
+				.filter(post -> "AI Generated Post".equals(post.getTitle()))
+				.findFirst()
+				.orElseThrow(() -> new AssertionError("AI 파생 포스트가 데이터베이스에 저장되지 않았습니다"));
 
-		assertThat(savedPost.getUserId()).isEqualTo(currentUser.getId());
-		assertThat(savedPost.getTitle()).isEqualTo("AI Generated Post");
-		assertThat(savedPost.getDescription()).isEqualTo("This is an AI derived post created from integration test");
-		assertThat(savedPost.getCommercialPrice()).isEqualTo(2000L);
-		assertThat(savedPost.getNonCommercialPrice()).isEqualTo(1000L);
-		assertThat(savedPost.getTicketPrice()).isEqualTo(300L);
-		assertThat(savedPost.getIsAiDerivedPost()).isTrue();
+			assertThat(savedPost.getUserId()).isEqualTo(currentUser.getId());
+			assertThat(savedPost.getTitle()).isEqualTo("AI Generated Post");
+			assertThat(savedPost.getDescription()).isEqualTo(
+				"This is an AI derived post created from integration test");
+			assertThat(savedPost.getCommercialPrice()).isEqualTo(2000L);
+			assertThat(savedPost.getNonCommercialPrice()).isEqualTo(1000L);
+			assertThat(savedPost.getTicketPrice()).isEqualTo(300L);
+			assertThat(savedPost.getIsAiDerivedPost()).isTrue();
 
-		// 포스트 이미지 검증
-		PostImageEntity savedPostImage = postImageEntityRepository.findAllByPostId(savedPost.getId()).get(0);
-		assertThat(savedPostImage.getImagePath()).isEqualTo("imagePath");
-		assertThat(savedPostImage.getFullImageName()).isEqualTo("ai-image-full.png");
-		assertThat(savedPostImage.getImageName()).isEqualTo("ai-image");
-		assertThat(savedPostImage.getExtension()).isEqualTo(ImageExtension.PNG);
-		assertThat(savedPostImage.getImagePurpose()).isEqualTo(ImagePrefix.AI_RESPONSE);
+			// 포스트 이미지 검증
+			PostImageEntity savedPostImage = postImageEntityRepository.findAllByPostId(savedPost.getId()).get(0);
+			assertThat(savedPostImage.getFullImageName()).isEqualTo("ai-image-full.png");
+			assertThat(savedPostImage.getImageName()).isEqualTo("ai-image");
+			assertThat(savedPostImage.getExtension()).isEqualTo(ImageExtension.PNG);
+			assertThat(savedPostImage.getImagePurpose()).isEqualTo(ImagePrefix.POST);
+
+			deleteImage(savedPostImage.getImagePath());
+		} finally {
+			deleteImage("imagePath");
+		}
 	}
 
 	@Test
@@ -353,5 +362,22 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		// 포스트가 생성되지 않았는지 확인
 		long postCount = postEntityRepository.count();
 		assertThat(postCount).isEqualTo(0);
+	}
+
+	private void uploadImage(String filePath, String content) {
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentLength(content.length());
+		metadata.setContentType("image/jpeg");
+
+		amazonS3.putObject(
+			s3Properties.getBucketName(),
+			filePath,
+			new ByteArrayInputStream(content.getBytes()),
+			metadata
+		);
+	}
+
+	private void deleteImage(String filePath) {
+		amazonS3.deleteObject(s3Properties.getBucketName(), filePath);
 	}
 }
