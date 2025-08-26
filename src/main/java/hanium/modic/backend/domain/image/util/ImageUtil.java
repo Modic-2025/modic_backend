@@ -22,4 +22,7 @@ public interface ImageUtil {
 
 	// FullImageName 파싱
 	ParsedImageName parseFullImageName(String fullFileName);
+
+	// 이미지 복사
+	String copyImage(String sourceImagePath, ImagePrefix destinationPrefix);
 }

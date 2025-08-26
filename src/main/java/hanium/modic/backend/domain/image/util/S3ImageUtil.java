@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.cloudfront.CloudFrontUrlSigner;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
@@ -178,5 +179,22 @@ public class S3ImageUtil implements ImageUtil {
 		if (imagePath == null || imagePath.isEmpty()) {
 			throw new AppException(INVALID_IMAGE_FILE_PATH_EXCEPTION);
 		}
+	}
+
+	// 이미지 복사 및 생성된 경로 반환
+	@Override
+	public String  copyImage(String sourcePath, ImagePrefix destinationPrefix) {
+		String destinationPath = createPath(destinationPrefix);
+
+		// 복사 요청 생성 및 실행
+		CopyObjectRequest request = new CopyObjectRequest(
+			s3Properties.getBucketName(),
+			sourcePath,
+			s3Properties.getBucketName(),
+			destinationPath
+		);
+		amazonS3Client.copyObject(request);
+
+		return destinationPath;
 	}
 }
