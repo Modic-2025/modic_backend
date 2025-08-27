@@ -2,15 +2,18 @@ package hanium.modic.backend.web.ai.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.domain.ai.service.AiImagePermissionService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.BuyAiImagePermissionRequest;
+import hanium.modic.backend.web.ai.dto.response.AiImagePermissionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,5 +69,23 @@ public class AiImagePermissionController {
 		aiImagePermissionService.buyAiImagePermissionByTicket(user.getId(), request.postId());
 
 		return ResponseEntity.ok().build();
+	}
+
+	@Operation(
+		summary = "AI 이미지 생성권 남은 횟수 조회",
+		description = "특정 포스트에 대한 사용자의 AI 이미지 생성권 남은 횟수를 조회합니다.(구매한 이력이 없으면 AI-004 에러)",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]"),
+			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
+		}
+	)
+	@GetMapping("/remaining-generations")
+	public ResponseEntity<AiImagePermissionResponse> getRemainingGenerations(
+		@CurrentUser UserEntity user,
+		@RequestParam Long postId
+	) {
+		AiImagePermissionResponse response = aiImagePermissionService.getRemainingGenerations(user.getId(), postId);
+
+		return ResponseEntity.ok(response);
 	}
 }

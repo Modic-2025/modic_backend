@@ -13,6 +13,7 @@ import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.user.service.UserCoinService;
+import hanium.modic.backend.web.ai.dto.response.AiImagePermissionResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -70,5 +71,19 @@ public class AiImagePermissionService {
 		} catch (LockException e) {
 			throw new AppException(AI_IMAGE_PERMISSION_FAIL_EXCEPTION);
 		}
+	}
+
+	// 유저의 특정 포스트에 대한 남은 생성 횟수 조회
+	@Transactional(readOnly = true)
+	public AiImagePermissionResponse getRemainingGenerations(final Long userId, final Long postId) {
+		AiImagePermissionEntity aiImagePermission = aiImagePermissionRepository.findByUserIdAndPostId(userId,
+				postId)
+			.orElseThrow(() -> new AppException(AI_IMAGE_PERMISSION_NOT_FOUND));
+
+		return new AiImagePermissionResponse(
+			aiImagePermission.getId(),
+			aiImagePermission.getRemainingGenerations()
+		);
+
 	}
 }
