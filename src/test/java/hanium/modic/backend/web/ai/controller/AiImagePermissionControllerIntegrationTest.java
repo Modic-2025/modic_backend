@@ -268,4 +268,65 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		// then
 		resultActions.andExpect(status().isBadRequest());
 	}
+
+	@Test
+	@WithCustomUser(email = "test@test.com")
+	@DisplayName("AI 이미지 생성권 남은 횟수 조회 - 성공")
+	void getRemainingGenerations_Success() throws Exception {
+		// given
+		UserEntity user = getCurrentUserWithCoin(0L);
+		PostEntity post = createTestPost(user);
+		
+		// AI 이미지 권한 생성
+		AiImagePermissionEntity permission = AiImagePermissionEntity.builder()
+			.userId(user.getId())
+			.postId(post.getId())
+			.remainingGenerations(15)
+			.build();
+		aiImagePermissionRepository.save(permission);
+
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/api/ai/image-permissions/remaining-generations")
+			.param("postId", post.getId().toString()));
+
+		// then
+		resultActions.andExpect(status().isOk())
+			.andExpect(jsonPath("$.aiImagePermissionId").value(permission.getId()))
+			.andExpect(jsonPath("$.remainingGenerations").value(15));
+	}
+
+	@Test
+	@WithCustomUser(email = "test@test.com")
+	@DisplayName("AI 이미지 생성권 남은 횟수 조회 - 구매한 이력이 없음")
+	void getRemainingGenerations_PermissionNotFound() throws Exception {
+		// given
+		UserEntity user = getCurrentUserWithCoin(0L);
+		PostEntity post = createTestPost(user);
+
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/api/ai/image-permissions/remaining-generations")
+			.param("postId", post.getId().toString()));
+
+		// then
+		resultActions.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value(AI_IMAGE_PERMISSION_NOT_FOUND.getCode()))
+			.andExpect(jsonPath("$.message").value(AI_IMAGE_PERMISSION_NOT_FOUND.getMessage()));
+	}
+
+	@Test
+	@WithCustomUser(email = "test@test.com")
+	@DisplayName("AI 이미지 생성권 남은 횟수 조회 - 존재하지 않는 포스트")
+	void getRemainingGenerations_PostNotExist() throws Exception {
+		// given
+		Long nonExistentPostId = 9999L;
+
+		// when
+		ResultActions resultActions = mockMvc.perform(get("/api/ai/image-permissions/remaining-generations")
+			.param("postId", nonExistentPostId.toString()));
+
+		// then
+		resultActions.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value(AI_IMAGE_PERMISSION_NOT_FOUND.getCode()))
+			.andExpect(jsonPath("$.message").value(AI_IMAGE_PERMISSION_NOT_FOUND.getMessage()));
+	}
 }
