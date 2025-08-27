@@ -13,7 +13,7 @@ import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.domain.ai.service.AiImagePermissionService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.BuyAiImagePermissionRequest;
-import hanium.modic.backend.web.ai.dto.response.AiImagePermissionResponse;
+import hanium.modic.backend.web.ai.dto.response.GetRemainingGenerationsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -80,11 +80,11 @@ public class AiImagePermissionController {
 		}
 	)
 	@GetMapping("/remaining-generations")
-	public ResponseEntity<AiImagePermissionResponse> getRemainingGenerations(
+	public ResponseEntity<GetRemainingGenerationsResponse> getRemainingGenerations(
 		@CurrentUser UserEntity user,
 		@RequestParam Long postId
 	) {
-		AiImagePermissionResponse response = aiImagePermissionService.getRemainingGenerations(user.getId(), postId);
+		GetRemainingGenerationsResponse response = aiImagePermissionService.getRemainingGenerations(user.getId(), postId);
 
 		return ResponseEntity.ok(response);
 	}

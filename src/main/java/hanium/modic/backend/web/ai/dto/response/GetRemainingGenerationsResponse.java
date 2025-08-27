@@ -1,8 +1,6 @@
 package hanium.modic.backend.web.ai.dto.response;
 
-import java.time.LocalDateTime;
-
-public record AiImagePermissionResponse(
+public record GetRemainingGenerationsResponse(
 	Long aiImagePermissionId,
 	Integer remainingGenerations
 ) {
