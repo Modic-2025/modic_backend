@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
@@ -18,6 +19,7 @@ import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
+import hanium.modic.backend.domain.ai.service.EmitterService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
@@ -45,6 +47,7 @@ public class AiImageController {
 
 	private final AiImageService aiImageService;
 	private final AiImageGenerationService aiImageGenerationService;
+	private final EmitterService emitterService;
 
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
@@ -74,6 +77,7 @@ public class AiImageController {
 		summary = "AI 이미지 생성 요청",
 		description = """
 			사용자가 업로드한 이미지를 기반으로 AI 이미지 생성을 요청합니다. 참조 이미지(Post ID)와 함께 전송되며, 요청 ID를 반환합니다.
+			이미지 생성 요청 직후 SSE 구독을 통해 생성 상태를 실시간으로 확인할 수 있습니다.
 			생성권을 구매한 적이 없으면 AI-004
 			생성권을 구매했으나 다 사용했으면 AI-007
 			""",
@@ -91,8 +95,8 @@ public class AiImageController {
 	)
 	public ResponseEntity<AppResponse<RequestAiImageGenerationResponse>> requestAiImageGeneration(
 		@RequestBody @Valid AiImageGenerationRequest request,
-		@CurrentUser UserEntity userEntity) {
-
+		@CurrentUser UserEntity userEntity
+	) {
 		RequestAiImageGenerationResponse response = aiImageGenerationService.processImageGeneration(
 			request.imageUsagePurpose(),
 			request.fileName(),
@@ -103,6 +107,26 @@ public class AiImageController {
 
 		return ResponseEntity.status(CREATED)
 			.body(AppResponse.created(response));
+	}
+
+	// AI 이미지 생성 상태 실시간 구독 (SSE)
+	@GetMapping("/sse/{requestId}")
+	@Operation(
+		summary = "AI 이미지 생성 상태 실시간 구독 (SSE)",
+		description = """
+			AI 이미지 생성 요청 후, 해당 요청 ID로 SSE 구독을 시작해야 실시간으로 이미지를 받을 수 있습니다.
+			서버는 이미지 생성 완료 시 SSE를 통해 이미지를 전송하고 서버연결을 끊습니다.
+			"""
+	)
+	public SseEmitter subscribe(@PathVariable String requestId) {
+		SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+		emitterService.addEmitter(requestId, emitter);
+
+		emitter.onCompletion(() -> emitterService.removeEmitter(requestId));
+		emitter.onTimeout(() -> emitterService.removeEmitter(requestId));
+		emitter.onError((e) -> emitterService.removeEmitter(requestId));
+
+		return emitter;
 	}
 
 	// AI 요청 이미지 URL 조회
@@ -118,7 +142,8 @@ public class AiImageController {
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
 		@PathVariable Long imageId,
-		@CurrentUser UserEntity userEntity) {
+		@CurrentUser UserEntity userEntity
+	) {
 		String imageGetUrl = aiImageGenerationService.createImageGetUrl(imageId, userEntity.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
@@ -137,7 +162,8 @@ public class AiImageController {
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createAiImageGetUrl(
 		@PathVariable String requestId,
-		@CurrentUser UserEntity userEntity) {
+		@CurrentUser UserEntity userEntity
+	) {
 		String imageGetUrl = aiImageGenerationService.createAiImageGetUrl(requestId, userEntity.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(new CreateImageGetUrlResponse(imageGetUrl)));
@@ -155,7 +181,8 @@ public class AiImageController {
 	)
 	public ResponseEntity<AppResponse<AiRequestStatusResponse>> getAiRequestStatus(
 		@PathVariable String requestId,
-		@CurrentUser UserEntity userEntity) {
+		@CurrentUser UserEntity userEntity
+	) {
 		AiImageStatus status = aiImageGenerationService.getAiImageStatus(userEntity.getId(), requestId);
 		return ResponseEntity.ok(AppResponse.ok(new AiRequestStatusResponse(status)));
 	}
@@ -169,8 +196,8 @@ public class AiImageController {
 	public ResponseEntity<AppResponse<PageResponse<MyGeneratedAiImageResponse>>> getMyGeneratedImages(
 		@RequestParam(defaultValue = "0") @Min(value = 0, message = "페이지는 0 이상이어야 합니다.") int page,
 		@RequestParam(defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") int size,
-		@CurrentUser UserEntity userEntity) {
-
+		@CurrentUser UserEntity userEntity
+	) {
 		PageResponse<MyGeneratedAiImageResponse> response = aiImageGenerationService.getMyGeneratedImages(
 			userEntity.getId(), page, size);
 
