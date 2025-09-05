@@ -18,6 +18,8 @@ public interface AiRequestRepository extends JpaRepository<AiRequestEntity, Long
 
 	boolean existsByRequestIdAndUserId(String requestId, Long userId);
 
+	boolean existsByRequestId(String requestId);
+
 	// 사용자별 AI 요청 조회 (상태별, 페이지네이션, 최신순 정렬)
 	Page<AiRequestEntity> findAllByUserIdAndStatusOrderByRequestIdDesc(Long userId, AiImageStatus status,
 		Pageable pageable);

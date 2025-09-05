@@ -16,7 +16,7 @@ import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.ai.service.CreatedAiImageService;
-import hanium.modic.backend.domain.ai.service.EmitterService;
+import hanium.modic.backend.domain.ai.service.AiRequestEmitterService;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class AiImageCreatedListener {
 
 	private final CreatedAiImageRepository createdAiImageRepository;
 	private final AiRequestRepository aiRequestRepository;
-	private final EmitterService emitterService;
+	private final AiRequestEmitterService aiRequestEmitterService;
 	private final CreatedAiImageService createdAiImageService;
 
 	@Transactional
@@ -60,7 +60,7 @@ public class AiImageCreatedListener {
 		String imageUrl = createdAiImageService.createImageGetUrl(created.getId());
 
 		// 클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 이미지를 응답한다.
-		emitterService.sendToClient(
+		aiRequestEmitterService.sendToClient(
 			message.requestId(),
 			new ImageResultMessageDto(message.requestId(), imageUrl)
 		);
