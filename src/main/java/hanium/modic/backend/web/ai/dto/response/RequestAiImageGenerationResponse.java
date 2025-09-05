@@ -6,7 +6,6 @@ public record RequestAiImageGenerationResponse(
 	Long imageId,
 	String requestId
 ) {
-
 	public static RequestAiImageGenerationResponse from(AiRequestEntity aiRequestEntity) {
 		return new RequestAiImageGenerationResponse(
 			aiRequestEntity.getId(),
