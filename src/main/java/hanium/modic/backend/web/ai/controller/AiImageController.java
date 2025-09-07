@@ -19,7 +19,7 @@ import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
-import hanium.modic.backend.domain.ai.service.EmitterService;
+import hanium.modic.backend.domain.ai.service.AiRequestEmitterService;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
@@ -47,7 +47,7 @@ public class AiImageController {
 
 	private final AiImageService aiImageService;
 	private final AiImageGenerationService aiImageGenerationService;
-	private final EmitterService emitterService;
+	private final AiRequestEmitterService aiRequestEmitterService;
 
 	// AI 요청 이미지 저장 URL 생성
 	@PostMapping("/save-url")
@@ -118,13 +118,16 @@ public class AiImageController {
 			서버는 이미지 생성 완료 시 SSE를 통해 이미지를 전송하고 서버연결을 끊습니다.
 			"""
 	)
-	public SseEmitter subscribe(@PathVariable String requestId) {
+	public SseEmitter subscribe(
+		@PathVariable String requestId,
+		@CurrentUser UserEntity userEntity
+	) {
 		SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-		emitterService.addEmitter(requestId, emitter);
+		aiRequestEmitterService.addEmitter(userEntity.getId(), requestId, emitter);
 
-		emitter.onCompletion(() -> emitterService.removeEmitter(requestId));
-		emitter.onTimeout(() -> emitterService.removeEmitter(requestId));
-		emitter.onError((e) -> emitterService.removeEmitter(requestId));
+		emitter.onCompletion(() -> aiRequestEmitterService.removeEmitter(requestId));
+		emitter.onTimeout(() -> aiRequestEmitterService.removeEmitter(requestId));
+		emitter.onError((e) -> aiRequestEmitterService.removeEmitter(requestId));
 
 		return emitter;
 	}

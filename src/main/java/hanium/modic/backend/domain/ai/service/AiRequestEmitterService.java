@@ -1,14 +1,26 @@
 package hanium.modic.backend.domain.ai.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.ai.domain.AiRequestEntity;
+import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
+import lombok.RequiredArgsConstructor;
+
 @Service
-public class EmitterService {
+@RequiredArgsConstructor
+public class AiRequestEmitterService {
+
+	private final AiRequestRepository aiRequestRepository;
 
 	/**
 	 * SseEmitter 관리 맵
@@ -17,7 +29,14 @@ public class EmitterService {
 	private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
 	// requestId와 SseEmitter를 ,emitter관리 맵에 저장
-	public void addEmitter(String requestId, SseEmitter emitter) {
+	public void addEmitter(Long userId, String requestId, SseEmitter emitter) {
+		AiRequestEntity aiRequest = aiRequestRepository.findByRequestId(requestId)
+			.orElseThrow(() -> new AppException(ErrorCode.AI_REQUEST_NOT_FOUND));
+
+		if (!Objects.equals(aiRequest.getUserId(), userId)) {
+			throw new AppException(USER_ROLE_EXCEPTION);
+		}
+
 		emitters.put(requestId, emitter);
 	}
 

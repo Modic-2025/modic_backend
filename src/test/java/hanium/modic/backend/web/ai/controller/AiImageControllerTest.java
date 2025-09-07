@@ -31,7 +31,7 @@ import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.service.AiImageGenerationService;
 import hanium.modic.backend.domain.ai.service.AiImageService;
-import hanium.modic.backend.domain.ai.service.EmitterService;
+import hanium.modic.backend.domain.ai.service.AiRequestEmitterService;
 import hanium.modic.backend.web.ai.dto.request.AiImageGenerationRequest;
 import hanium.modic.backend.web.ai.dto.response.MyGeneratedAiImageResponse;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
@@ -49,7 +49,7 @@ class AiImageControllerTest extends BaseControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 	@MockitoBean
-	private EmitterService emitterService;
+	private AiRequestEmitterService aiRequestEmitterService;
 
 	@ParameterizedTest
 	@DisplayName("AI 요청 이미지 Url 생성 실패 - 필수값 누락 시 400 응답")
