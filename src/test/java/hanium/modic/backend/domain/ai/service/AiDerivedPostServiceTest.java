@@ -76,7 +76,6 @@ class AiDerivedPostServiceTest {
 
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
 		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
-		when(imageUtil.copyImage(anyString(), eq(ImagePrefix.POST))).thenReturn("copied-image-path");
 		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
 
 		// when
@@ -104,7 +103,7 @@ class AiDerivedPostServiceTest {
 		ArgumentCaptor<PostImageEntity> imageCaptor = ArgumentCaptor.forClass(PostImageEntity.class);
 		verify(postImageEntityRepository, times(1)).save(imageCaptor.capture());
 		PostImageEntity savedImage = imageCaptor.getValue();
-		assertThat(savedImage.getImagePath()).isEqualTo("copied-image-path");
+		assertThat(savedImage.getImagePath()).isEqualTo(mockAiImage.getImagePath()); // s3 이미지는 같은 것을 사용
 		assertThat(savedImage.getFullImageName()).isEqualTo(mockAiImage.getFullImageName());
 		assertThat(savedImage.getImageName()).isEqualTo(mockAiImage.getImageName());
 		assertThat(savedImage.getExtension()).isEqualTo(mockAiImage.getExtension());

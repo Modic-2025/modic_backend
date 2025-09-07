@@ -31,6 +31,6 @@ public class CreatedAiImageService {
 			.orElseThrow(() -> new AppException(ErrorCode.CREATED_AI_IMAGE_NOT_FOUND));
 
 		createdAiImageRepository.delete(createdAiImageEntity);
-		imageUtil.deleteImage(createdAiImageEntity.getImagePath());
+		// s3 이미지는 삭제 x
 	}
 }

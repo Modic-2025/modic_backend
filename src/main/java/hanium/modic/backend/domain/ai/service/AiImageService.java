@@ -12,7 +12,6 @@ import hanium.modic.backend.domain.ai.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.repository.AiRequestRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.image.dto.ParsedImageName;
 import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
@@ -47,7 +46,7 @@ public class AiImageService extends ImageService {
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
 		aiRequestRepository.delete(image);
-		imageUtil.deleteImage(image.getImagePath());
+		// s3 이미지는 삭제 x
 	}
 
 	// AI 요청 이미지 저장
@@ -74,15 +73,6 @@ public class AiImageService extends ImageService {
 				.userId(userId)
 				.postId(postId)
 				.build());
-	}
-
-	// 요청 상태 업데이트
-	@Transactional
-	public void updateRequestStatus(String requestId, AiImageStatus status) {
-		AiRequestEntity request = aiRequestRepository.findByRequestId(requestId)
-			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-
-		request.updateStatus(status);
 	}
 
 	// 이미지 경로가 중복되면 에러 (요청 이미지)

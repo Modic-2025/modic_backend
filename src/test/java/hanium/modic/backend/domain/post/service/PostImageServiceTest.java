@@ -102,7 +102,6 @@ class PostImageServiceTest {
 
 		when(postImageEntityRepository.findById(imageId)).thenReturn(Optional.of(postImageEntity));
 		doNothing().when(postImageEntityRepository).delete(postImageEntity);
-		doNothing().when(imageUtil).deleteImage(imagePath);
 
 		// when
 		postImageService.deleteImage(imageId);
@@ -110,7 +109,7 @@ class PostImageServiceTest {
 		// then
 		verify(postImageEntityRepository, times(1)).findById(imageId);
 		verify(postImageEntityRepository, times(1)).delete(postImageEntity);
-		verify(imageUtil, times(1)).deleteImage(imagePath);
+		verify(imageUtil, never()).deleteImage(imagePath); // S3 이미지는 삭제하지 않음
 	}
 
 	@Test
@@ -412,13 +411,12 @@ class PostImageServiceTest {
 		}
 
 		doNothing().when(postImageEntityRepository).deleteAllByIds(imageIds);
-		doNothing().when(imageUtil).deleteImages(imagePaths);
 
 		// when
 		postImageService.deleteImages(images);
 
 		// then
 		verify(postImageEntityRepository, times(1)).deleteAllByIds(imageIds);
-		verify(imageUtil, times(1)).deleteImages(imagePaths);
+		verify(imageUtil, never()).deleteImages(imagePaths); // S3 이미지는 삭제하지 않음
 	}
 }
