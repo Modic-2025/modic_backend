@@ -72,14 +72,9 @@ public class AiDerivedPostService {
 
 		PostEntity savedPost = postEntityRepository.save(aiDerivedPost);
 
-		// AI 이미지를 포스트 이미지로 별도 저장
-		String imagePath = imageUtil.copyImage(
-			createdAiImage.getImagePath(),
-			ImagePrefix.POST
-		);
-
+		// 파생 포스트 이미지 저장
 		PostImageEntity postImage = PostImageEntity.builder()
-			.imagePath(imagePath)
+			.imagePath(createdAiImage.getImagePath()) // 기존 AI 이미지 경로 사용, AI 이미지 Entity 삭제되어도 S3는 삭제 x
 			.fullImageName(createdAiImage.getFullImageName())
 			.imageName(createdAiImage.getImageName())
 			.extension(createdAiImage.getExtension())

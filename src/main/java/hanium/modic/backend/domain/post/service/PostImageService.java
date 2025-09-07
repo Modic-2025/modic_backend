@@ -45,7 +45,7 @@ public class PostImageService extends ImageService {
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
 		postImageEntityRepository.delete(image);
-		imageUtil.deleteImage(image.getImagePath()); // s3는 비동기로 삭제, 트랜잭션 무관
+		// s3 이미지는 삭제 x
 	}
 
 	// 여러 이미지 삭제
@@ -63,7 +63,7 @@ public class PostImageService extends ImageService {
 			.toList();
 
 		postImageEntityRepository.deleteAllByIds(ids);
-		imageUtil.deleteImages(imagePaths); // s3는 비동기로 삭제, 트랜잭션 무관
+		// s3 이미지는 삭제 x
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
