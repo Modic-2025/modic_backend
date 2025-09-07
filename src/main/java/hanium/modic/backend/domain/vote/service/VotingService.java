@@ -47,8 +47,6 @@ public class VotingService {
 	 */
 	public VoteParticipationResponse participateVote(Long voteId, Long userId, VoteDecision decision) {
 		try {
-			final VoteParticipationResponse[] result = new VoteParticipationResponse[1];
-			
 			lockManager.voteSummaryLock(voteId, () -> {
 				// 1. 투표 존재 및 상태 확인
 				SimilarityVoteEntity vote = similarityVoteRepository.findById(voteId)
@@ -84,23 +82,11 @@ public class VotingService {
 				updateVoteSummary(voteId, decision, voteProperties.getHumanVoteWeight().intValue());
 
 				// 8. 투표 완료 확인 및 처리
-				boolean isCompleted = checkAndCompleteVote(voteId);
-
-				// 9. 응답 생성
-				SimilarityVoteSummaryEntity summary = voteSummaryRepository.findByVoteId(voteId)
-					.orElseThrow(() -> new AppException(VOTE_SUMMARY_NOT_FOUND_EXCEPTION));
-
-				result[0] = VoteParticipationResponse.of(
-					voteId,
-					decision,
-					summary.getApproveWeight(),
-					summary.getDenyWeight(),
-					summary.getTotalWeight(),
-					isCompleted
-				);
+				checkAndCompleteVote(voteId);
 			});
 			
-			return result[0];
+			// 9. 단순한 응답 생성
+			return VoteParticipationResponse.of(voteId);
 		} catch (LockException e) {
 			log.error("투표 참여 락 획득 실패: voteId={}, userId={}", voteId, userId, e);
 			throw new AppException(VOTE_UPDATE_FAIL_EXCEPTION);
