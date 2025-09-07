@@ -85,6 +85,16 @@ public enum ErrorCode {
 	AI_IMAGE_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "AI-011", "AI 이미지에 대한 권한이 없습니다."),
 	POST_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "P-003", "포스트에 대한 접근 권한이 없습니다."),
 	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
+
+	// Vote
+	VOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "V-001", "해당 투표를 찾을 수 없습니다."),
+	DUPLICATE_VOTE_EXCEPTION(HttpStatus.BAD_REQUEST, "V-002", "이미 투표에 참여했습니다."),
+	VOTE_ALREADY_COMPLETED_EXCEPTION(HttpStatus.BAD_REQUEST, "V-003", "이미 완료된 투표입니다."),
+	VOTE_PERMISSION_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "V-004", "투표 권한이 없습니다."),
+	VOTE_NOT_IN_PROGRESS_EXCEPTION(HttpStatus.BAD_REQUEST, "V-005", "진행 중인 투표가 아닙니다."),
+	VOTE_DAILY_LIMIT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "V-006", "일일 투표 한도를 초과했습니다."),
+	VOTE_SUMMARY_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "V-007", "투표 집계 정보를 찾을 수 없습니다."),
+	VOTE_UPDATE_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "V-008", "투표 집계 업데이트에 실패했습니다."),
 	;
 
 	private final HttpStatus status;
