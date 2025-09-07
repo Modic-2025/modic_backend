@@ -157,28 +157,46 @@ public class VotingService {
 	}
 
 	/**
-	 * 투표 권한 검증
+	 * 투표 권한 검증 (타입 안전한 방식으로 개선)
 	 * 파생 이미지 생성자와 원작 이미지 소유자는 투표 불가능
 	 * 
 	 * @param voteId 투표 ID
 	 * @param userId 사용자 ID
 	 */
 	private void validateVotePermission(Long voteId, Long userId) {
-		Object[] permissionInfo = similarityVoteRepository.findVotePermissionInfo(voteId);
+		// 각각의 ID를 별도로 조회 (타입 안전성 보장)
+		Long creatorId = similarityVoteRepository.findDerivedImageCreatorId(voteId)
+			.orElseThrow(() -> {
+				log.error("파생 이미지 생성자 ID 조회 실패: voteId={}", voteId);
+				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
+			});
+			
+		Long ownerId = similarityVoteRepository.findOriginalImageOwnerId(voteId)
+			.orElseThrow(() -> {
+				log.error("원작 이미지 소유자 ID 조회 실패: voteId={}", voteId);
+				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
+			});
 		
-		if (permissionInfo == null || permissionInfo.length != 2) {
+		// 명확한 변수명으로 권한 검증
+		if (isRestrictedUser(userId, creatorId, ownerId)) {
+			log.warn("투표 권한 거부: voteId={}, userId={}, creatorId={}, ownerId={}", 
+				voteId, userId, creatorId, ownerId);
 			throw new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
 		}
 		
-		Long derivedImageCreatorId = (Long)permissionInfo[0]; // 파생 이미지 생성자 ID
-		Long originalImageOwnerId = (Long)permissionInfo[1];  // 원작 이미지 소유자 ID
-		
-		// 파생 이미지 생성자 또는 원작 이미지 소유자는 투표 불가능
-		if (userId.equals(derivedImageCreatorId) || userId.equals(originalImageOwnerId)) {
-			log.warn("투표 권한 없음: voteId={}, userId={}, creatorId={}, ownerId={}", 
-				voteId, userId, derivedImageCreatorId, originalImageOwnerId);
-			throw new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
-		}
+		log.debug("투표 권한 검증 통과: voteId={}, userId={}", voteId, userId);
+	}
+
+	/**
+	 * 권한 검증 로직을 별도 메서드로 분리 (테스트 용이성)
+	 * 
+	 * @param userId 현재 사용자 ID
+	 * @param creatorId 파생 이미지 생성자 ID
+	 * @param ownerId 원작 이미지 소유자 ID
+	 * @return 제한된 사용자 여부
+	 */
+	private boolean isRestrictedUser(Long userId, Long creatorId, Long ownerId) {
+		return userId.equals(creatorId) || userId.equals(ownerId);
 	}
 
 	/**

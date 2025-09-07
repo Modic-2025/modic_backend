@@ -55,14 +55,23 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 	long countInProgressVotes();
 
 	/**
-	 * 투표 권한 확인용 - 파생 이미지 생성자 ID와 원작 이미지 소유자 ID 조회
-	 * 파생 이미지 생성자 (CreatedAiImageEntity.userId)와 
-	 * 원작 이미지 소유자 (PostImageEntity -> PostEntity.userId)를 조회
+	 * 파생 이미지 생성자 ID 조회 (타입 안전)
+	 * @param voteId 투표 ID
+	 * @return 파생 이미지 생성자의 사용자 ID
 	 */
-	@Query("SELECT cai.userId, p.userId FROM SimilarityVoteEntity sv " +
+	@Query("SELECT cai.userId FROM SimilarityVoteEntity sv " +
 		"JOIN CreatedAiImageEntity cai ON cai.id = sv.derivedImageId " +
+		"WHERE sv.id = :voteId")
+	Optional<Long> findDerivedImageCreatorId(@Param("voteId") Long voteId);
+
+	/**
+	 * 원작 이미지 소유자 ID 조회 (타입 안전)
+	 * @param voteId 투표 ID  
+	 * @return 원작 이미지 소유자의 사용자 ID
+	 */
+	@Query("SELECT p.userId FROM SimilarityVoteEntity sv " +
 		"JOIN PostImageEntity pi ON pi.id = sv.originalImageId " +
 		"JOIN PostEntity p ON p.id = pi.postId " +
 		"WHERE sv.id = :voteId")
-	Object[] findVotePermissionInfo(@Param("voteId") Long voteId);
+	Optional<Long> findOriginalImageOwnerId(@Param("voteId") Long voteId);
 }
