@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.ai.controller;
+package hanium.modic.backend.web.ticket.controller;
 
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -17,15 +17,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
-import hanium.modic.backend.domain.ai.service.AiRequestTicketService;
-import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
+import hanium.modic.backend.domain.ticket.service.TicketService;
+import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
 
-@WebMvcTest(AiRequestTicketController.class)
+@WebMvcTest(TicketController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AiRequestTicketControllerTest extends BaseControllerTest {
+class TicketControllerTest extends BaseControllerTest {
 
 	@MockitoBean
-	private AiRequestTicketService aiRequestTicketService;
+	private TicketService ticketService;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -41,7 +41,7 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 		LocalDateTime nextReset = LocalDateTime.of(2025, 1, 24, 15, 30, 0);
 		GetTicketInformationResponse expectedResponse = GetTicketInformationResponse.of(3, nextReset);
 
-		given(aiRequestTicketService.getTicketInformation(userId))
+		given(ticketService.getTicketInformation(userId))
 			.willReturn(expectedResponse);
 
 		// when & then
@@ -50,7 +50,7 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(3))
 			.andExpect(jsonPath("$.data.nextReset").value("2025-01-24T15:30:00"));
 
-		then(aiRequestTicketService).should().getTicketInformation(userId);
+		then(ticketService).should().getTicketInformation(userId);
 	}
 
 	@Test
@@ -61,7 +61,7 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 		LocalDateTime nextReset = LocalDateTime.of(2025, 1, 24, 15, 30, 0);
 		GetTicketInformationResponse expectedResponse = GetTicketInformationResponse.of(0, nextReset);
 
-		given(aiRequestTicketService.getTicketInformation(userId))
+		given(ticketService.getTicketInformation(userId))
 			.willReturn(expectedResponse);
 
 		// when & then
@@ -70,7 +70,7 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(0))
 			.andExpect(jsonPath("$.data.nextReset").value("2025-01-24T15:30:00"));
 
-		then(aiRequestTicketService).should().getTicketInformation(userId);
+		then(ticketService).should().getTicketInformation(userId);
 	}
 
 	@Test
@@ -83,7 +83,7 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 		LocalDateTime nextReset = LocalDateTime.of(2025, 1, 24, 15, 30, 0);
 		GetTicketInformationResponse expectedResponse = GetTicketInformationResponse.of(2, nextReset);
 
-		given(aiRequestTicketService.getTicketInformation(differentUserId))
+		given(ticketService.getTicketInformation(differentUserId))
 			.willReturn(expectedResponse);
 
 		// when & then
@@ -92,6 +92,6 @@ class AiRequestTicketControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.ticketCount").value(2))
 			.andExpect(jsonPath("$.data.nextReset").value("2025-01-24T15:30:00"));
 
-		then(aiRequestTicketService).should().getTicketInformation(differentUserId);
+		then(ticketService).should().getTicketInformation(differentUserId);
 	}
 }

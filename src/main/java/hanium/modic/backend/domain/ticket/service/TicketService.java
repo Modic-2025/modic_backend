@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.ai.service;
+package hanium.modic.backend.domain.ticket.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
@@ -8,28 +8,28 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
-import hanium.modic.backend.domain.ai.domain.AiRequestTicketEntity;
-import hanium.modic.backend.domain.ai.repository.AiRequestTicketRepository;
-import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
+import hanium.modic.backend.domain.ticket.entity.TicketEntity;
+import hanium.modic.backend.domain.ticket.repository.TicketRepository;
+import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AiRequestTicketService {
+public class TicketService {
 
-	private final AiRequestTicketRepository aiRequestTicketRepository;
+	private final TicketRepository ticketRepository;
 	private final LockManager lockManager;
 
 	// 티켓 관련 정보 조회
 	public GetTicketInformationResponse getTicketInformation(Long userId) {
-		AiRequestTicketEntity ticket = getTicketEntity(userId);
+		TicketEntity ticket = getTicketEntity(userId);
 		return GetTicketInformationResponse.of(ticket.getTicketCount(), ticket.getLastIssuedAt().plusDays(1));
 	}
 
 	// 티켓 엔티티 조회, 만료되면 갱신
 	@Transactional
-	public AiRequestTicketEntity getTicketEntity(long userId) {
-		return aiRequestTicketRepository.findByUserId(userId)
+	public TicketEntity getTicketEntity(long userId) {
+		return ticketRepository.findByUserId(userId)
 			.map(this::refreshTicketIfExpired)
 			.orElseGet(() -> createInitialTicket(userId));
 	}
@@ -40,12 +40,12 @@ public class AiRequestTicketService {
 		try {
 			lockManager.aiRequestTicketLock(userId, () -> {
 				// 티켓 조회, 티켓 만료 체크, 만료되면 티켓 초기화, 재진입 가능 락이라 refreshTicketsIfExpired 메서드에서 락 호출 가능.
-				AiRequestTicketEntity userTicket = getTicketEntity(userId);
+				TicketEntity userTicket = getTicketEntity(userId);
 
 
 				// 티켓 차감, 잔여 티켓이 없으면 예외 발생
 				userTicket.decreaseTicket(ticketPrice);
-				aiRequestTicketRepository.save(userTicket);
+				ticketRepository.save(userTicket);
 			});
 		} catch (LockException e) {
 			throw new AppException(AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION);
@@ -53,13 +53,13 @@ public class AiRequestTicketService {
 	}
 
 	// 티켓이 만료되면 초기화
-	private AiRequestTicketEntity refreshTicketIfExpired(AiRequestTicketEntity userTicket) {
+	private TicketEntity refreshTicketIfExpired(TicketEntity userTicket) {
 		try {
 			lockManager.aiRequestTicketLock(userTicket.getUserId(), () -> {
 				if (userTicket.isTicketExpired()) {
 					userTicket.resetTickets();
 				}
-				aiRequestTicketRepository.save(userTicket);
+				ticketRepository.save(userTicket);
 			});
 		} catch (LockException e) {
 			throw new AppException(AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION);
@@ -70,11 +70,11 @@ public class AiRequestTicketService {
 
 	// 사용자가 티켓을 생성 및 저장
 	@Transactional
-	public AiRequestTicketEntity createInitialTicket(Long userId) {
-		AiRequestTicketEntity newUserTicket = AiRequestTicketEntity.builder()
+	public TicketEntity createInitialTicket(Long userId) {
+		TicketEntity newUserTicket = TicketEntity.builder()
 			.userId(userId)
 			.build();
 
-		return aiRequestTicketRepository.save(newUserTicket);
+		return ticketRepository.save(newUserTicket);
 	}
 }

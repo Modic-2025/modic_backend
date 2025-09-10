@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.ai.controller;
+package hanium.modic.backend.web.ticket.controller;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -13,16 +13,16 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.WithCustomUser;
-import hanium.modic.backend.domain.ai.domain.AiRequestTicketEntity;
-import hanium.modic.backend.domain.ai.repository.AiRequestTicketRepository;
+import hanium.modic.backend.domain.ticket.entity.TicketEntity;
+import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
+import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
 
-class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
+class TicketControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
-	private AiRequestTicketRepository aiRequestTicketRepository;
+	private TicketRepository ticketRepository;
 
 	@Autowired
 	private UserEntityRepository userRepository;
@@ -52,7 +52,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		assertThat(ticketInfo.nextReset()).isBefore(LocalDateTime.now().plusDays(1).plusMinutes(1));
 
 		// 데이터베이스에 저장되었는지 확인
-		AiRequestTicketEntity savedTicket = aiRequestTicketRepository.findByUserId(1L).orElse(null);
+		TicketEntity savedTicket = ticketRepository.findByUserId(1L).orElse(null);
 		assertThat(savedTicket).isNotNull();
 		assertThat(savedTicket.getTicketCount()).isEqualTo(3);
 		assertThat(savedTicket.getUserId()).isEqualTo(1L);
@@ -63,11 +63,11 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("통합 테스트 - 기존 티켓이 있을 때 조회")
 	void getUserTicketInformation_IntegrationTest_WithExistingTicket() throws Exception {
 		// given - 기존 티켓 생성 (2개 남음)
-		AiRequestTicketEntity existingTicket = AiRequestTicketEntity.builder()
+		TicketEntity existingTicket = TicketEntity.builder()
 			.userId(1L)
 			.build();
 		existingTicket.decreaseTicket(1); // 1개 소모하여 2개로 만들기
-		aiRequestTicketRepository.save(existingTicket);
+		ticketRepository.save(existingTicket);
 
 		// when & then
 		ResultActions resultActions = mockMvc.perform(get("/api/ai/tickets/me"));
@@ -88,7 +88,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("통합 테스트 - 만료된 티켓이 자동 갱신되는지 확인")
 	void getUserTicketInformation_IntegrationTest_ExpiredTicketRefresh() throws Exception {
 		// given - 만료된 티켓 생성
-		AiRequestTicketEntity expiredTicket = AiRequestTicketEntity.builder()
+		TicketEntity expiredTicket = TicketEntity.builder()
 			.userId(1L)
 			.build();
 
@@ -104,7 +104,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 			throw new RuntimeException(e);
 		}
 
-		aiRequestTicketRepository.save(expiredTicket);
+		ticketRepository.save(expiredTicket);
 
 		// when & then
 		ResultActions resultActions = mockMvc.perform(get("/api/ai/tickets/me"));
@@ -121,7 +121,7 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		assertThat(ticketInfo.nextReset()).isAfter(LocalDateTime.now());
 
 		// 데이터베이스에서도 갱신되었는지 확인
-		AiRequestTicketEntity refreshedTicket = aiRequestTicketRepository.findByUserId(1L).orElse(null);
+		TicketEntity refreshedTicket = ticketRepository.findByUserId(1L).orElse(null);
 		assertThat(refreshedTicket).isNotNull();
 		assertThat(refreshedTicket.getTicketCount()).isEqualTo(3);
 		assertThat(refreshedTicket.getLastIssuedAt()).isAfter(LocalDateTime.now().minusMinutes(1));
@@ -132,11 +132,11 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("통합 테스트 - 다른 사용자 티켓과 격리되는지 확인")
 	void getUserTicketInformation_IntegrationTest_UserIsolation() throws Exception {
 		// given - 다른 사용자(ID: 999)의 티켓 생성
-		AiRequestTicketEntity otherUserTicket = AiRequestTicketEntity.builder()
+		TicketEntity otherUserTicket = TicketEntity.builder()
 			.userId(999L)
 			.build();
 		otherUserTicket.decreaseTicket(1); // 1개 소모하여 2개로 만들기
-		aiRequestTicketRepository.save(otherUserTicket);
+		ticketRepository.save(otherUserTicket);
 
 		// when - 현재 사용자(ID: 1)로 조회
 		ResultActions resultActions = mockMvc.perform(get("/api/ai/tickets/me"));
@@ -152,12 +152,12 @@ class AiRequestTicketControllerIntegrationTest extends BaseIntegrationTest {
 		assertThat(ticketInfo.ticketCount()).isEqualTo(3);
 
 		// 다른 사용자 티켓은 영향받지 않아야 함
-		AiRequestTicketEntity otherTicketAfter = aiRequestTicketRepository.findByUserId(999L).orElse(null);
+		TicketEntity otherTicketAfter = ticketRepository.findByUserId(999L).orElse(null);
 		assertThat(otherTicketAfter).isNotNull();
 		assertThat(otherTicketAfter.getTicketCount()).isEqualTo(2); // 여전히 2개
 
 		// 현재 사용자의 새 티켓이 생성되었는지 확인
-		AiRequestTicketEntity currentUserTicket = aiRequestTicketRepository.findByUserId(1L).orElse(null);
+		TicketEntity currentUserTicket = ticketRepository.findByUserId(1L).orElse(null);
 		assertThat(currentUserTicket).isNotNull();
 		assertThat(currentUserTicket.getTicketCount()).isEqualTo(3);
 	}

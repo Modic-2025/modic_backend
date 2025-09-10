@@ -1,7 +1,7 @@
-package hanium.modic.backend.domain.ai.domain;
+package hanium.modic.backend.domain.ticket.entity;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
-import static hanium.modic.backend.domain.ai.enums.AiRequestTicketConstants.*;
+import static hanium.modic.backend.domain.ticket.enums.TicketConstants.*;
 
 import java.time.LocalDateTime;
 
@@ -18,11 +18,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "ai_request_tickets")
+@Table(name = "tickets")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AiRequestTicketEntity extends BaseEntity {
+public class TicketEntity extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class AiRequestTicketEntity extends BaseEntity {
 	private LocalDateTime lastIssuedAt;
 
 	@Builder
-	private AiRequestTicketEntity(Long userId) {
+	private TicketEntity(Long userId) {
 		this.userId = userId;
 		this.ticketCount = FREE_TICKET_COUNT_PER_DAY;
 		this.lastIssuedAt = LocalDateTime.now();

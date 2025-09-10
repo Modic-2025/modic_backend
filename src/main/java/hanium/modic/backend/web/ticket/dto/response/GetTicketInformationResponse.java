@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.ai.dto.response;
+package hanium.modic.backend.web.ticket.dto.response;
 
 import java.time.LocalDateTime;
 

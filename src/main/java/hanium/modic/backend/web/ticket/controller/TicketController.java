@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.ai.controller;
+package hanium.modic.backend.web.ticket.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
-import hanium.modic.backend.domain.ai.service.AiRequestTicketService;
+import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
+import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,9 +21,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/ai/tickets")
 @Validated
-public class AiRequestTicketController {
+public class TicketController {
 
-	private final AiRequestTicketService aiRequestTicketService;
+	private final TicketService ticketService;
 
 	// 사용자 티켓 정보 조회
 	@GetMapping("/me")
@@ -37,7 +37,7 @@ public class AiRequestTicketController {
 	public ResponseEntity<AppResponse<GetTicketInformationResponse>> getUserTicketInformation(
 		@CurrentUser UserEntity userEntity
 	) {
-		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(userEntity.getId());
+		GetTicketInformationResponse response = ticketService.getTicketInformation(userEntity.getId());
 
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}

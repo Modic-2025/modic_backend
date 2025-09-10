@@ -1,8 +1,8 @@
-package hanium.modic.backend.domain.ai.enums;
+package hanium.modic.backend.domain.ticket.enums;
 
-public final class AiRequestTicketConstants {
+public final class TicketConstants {
 
-	private AiRequestTicketConstants() {
+	private TicketConstants() {
 		// Prevent instantiation
 	}
 

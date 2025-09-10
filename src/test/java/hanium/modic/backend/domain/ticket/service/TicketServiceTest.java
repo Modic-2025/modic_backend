@@ -1,6 +1,6 @@
-package hanium.modic.backend.domain.ai.service;
+package hanium.modic.backend.domain.ticket.service;
 
-import static hanium.modic.backend.domain.ai.enums.AiRequestTicketConstants.*;
+import static hanium.modic.backend.domain.ticket.enums.TicketConstants.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.LocalDateTime;
@@ -18,18 +18,18 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.domain.AiRequestTicketEntity;
-import hanium.modic.backend.domain.ai.repository.AiRequestTicketRepository;
+import hanium.modic.backend.domain.ticket.entity.TicketEntity;
+import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.web.ai.dto.response.GetTicketInformationResponse;
+import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
 
-class AiRequestTicketServiceTest extends BaseIntegrationTest {
-
-	@Autowired
-	private AiRequestTicketService aiRequestTicketService;
+class TicketServiceTest extends BaseIntegrationTest {
 
 	@Autowired
-	private AiRequestTicketRepository aiRequestTicketRepository;
+	private TicketService ticketService;
+
+	@Autowired
+	private TicketRepository ticketRepository;
 
 	private static final Long TEST_USER_ID = 1L;
 	private static final Long TEST_USER_ID_2 = 2L;
@@ -42,7 +42,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		UserEntity user = ContextHolderUtil.getCurrentUser();
 
 		// when
-		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(user.getId());
+		GetTicketInformationResponse response = ticketService.getTicketInformation(user.getId());
 
 		// then
 		assertThat(response.ticketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY);
@@ -50,7 +50,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		assertThat(response.nextReset()).isBefore(LocalDateTime.now().plusDays(1).plusMinutes(1));
 
 		// 데이터베이스에 저장되었는지 확인
-		AiRequestTicketEntity savedTicket = aiRequestTicketRepository.findByUserId(user.getId()).orElse(null);
+		TicketEntity savedTicket = ticketRepository.findByUserId(user.getId()).orElse(null);
 		assertThat(savedTicket).isNotNull();
 		assertThat(savedTicket.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY);
 		assertThat(savedTicket.getUserId()).isEqualTo(user.getId());
@@ -63,14 +63,14 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		// given
 		UserEntity user = ContextHolderUtil.getCurrentUser();
 
-		AiRequestTicketEntity existingTicket = AiRequestTicketEntity.builder()
+		TicketEntity existingTicket = TicketEntity.builder()
 			.userId(user.getId())
 			.build();
 		existingTicket.decreaseTicket(2); // 2개로 만들기
-		aiRequestTicketRepository.save(existingTicket);
+		ticketRepository.save(existingTicket);
 
 		// when
-		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(user.getId());
+		GetTicketInformationResponse response = ticketService.getTicketInformation(user.getId());
 
 		// then
 		assertThat(response.ticketCount()).isEqualTo(1);
@@ -81,7 +81,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("티켓 정보 조회 - 기존 티켓이 만료되었을 때 갱신")
 	void getTicketInformation_RefreshesExpiredTicket() {
 		// given - 만료된 티켓 생성 (어제 발급)
-		AiRequestTicketEntity expiredTicket = AiRequestTicketEntity.builder()
+		TicketEntity expiredTicket = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
 		expiredTicket.decreaseTicket(2); // 티켓 소모
@@ -95,17 +95,17 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 			throw new RuntimeException(e);
 		}
 
-		aiRequestTicketRepository.save(expiredTicket);
+		ticketRepository.save(expiredTicket);
 
 		// when
-		GetTicketInformationResponse response = aiRequestTicketService.getTicketInformation(TEST_USER_ID);
+		GetTicketInformationResponse response = ticketService.getTicketInformation(TEST_USER_ID);
 
 		// then - 티켓이 갱신되어야 함
 		assertThat(response.ticketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY);
 		assertThat(response.nextReset()).isAfter(LocalDateTime.now());
 
 		// 데이터베이스의 티켓도 갱신되었는지 확인
-		AiRequestTicketEntity refreshedTicket = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		TicketEntity refreshedTicket = ticketRepository.findByUserId(TEST_USER_ID).orElse(null);
 		assertThat(refreshedTicket).isNotNull();
 		assertThat(refreshedTicket.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY);
 		assertThat(refreshedTicket.getLastIssuedAt()).isAfter(LocalDateTime.now().minusMinutes(1));
@@ -115,16 +115,16 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("티켓 소모 - 정상적으로 티켓 소모")
 	void useTicket_Success() {
 		// given
-		AiRequestTicketEntity ticket = AiRequestTicketEntity.builder()
+		TicketEntity ticket = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
-		aiRequestTicketRepository.save(ticket);
+		ticketRepository.save(ticket);
 
 		// when
-		aiRequestTicketService.useTicket(TEST_USER_ID, 1);
+		ticketService.useTicket(TEST_USER_ID, 1);
 
 		// then
-		AiRequestTicketEntity updatedTicket = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		TicketEntity updatedTicket = ticketRepository.findByUserId(TEST_USER_ID).orElse(null);
 		assertThat(updatedTicket).isNotNull();
 		assertThat(updatedTicket.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY - 1);
 	}
@@ -133,16 +133,16 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("티켓 소모 - 티켓이 없을 때 예외 발생")
 	void useTicket_ThrowsException_WhenNoTicketsLeft() {
 		// given - 티켓을 모두 소모한 상태
-		AiRequestTicketEntity ticket = AiRequestTicketEntity.builder()
+		TicketEntity ticket = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
 
 		// 모든 티켓 소모
 		ticket.decreaseTicket(FREE_TICKET_COUNT_PER_DAY);
-		aiRequestTicketRepository.save(ticket);
+		ticketRepository.save(ticket);
 
 		// when & then
-		assertThatThrownBy(() -> aiRequestTicketService.useTicket(TEST_USER_ID, 1L))
+		assertThatThrownBy(() -> ticketService.useTicket(TEST_USER_ID, 1L))
 			.isInstanceOf(AppException.class)
 			.hasMessage(ErrorCode.AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION.getMessage());
 	}
@@ -151,7 +151,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("티켓 소모 - 만료된 티켓이 자동으로 갱신되고 소모됨")
 	void useTicket_RefreshesExpiredTicketAndUses() {
 		// given - 만료된 티켓 (모두 소모된 상태)
-		AiRequestTicketEntity expiredTicket = AiRequestTicketEntity.builder()
+		TicketEntity expiredTicket = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
 
@@ -167,13 +167,13 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 			throw new RuntimeException(e);
 		}
 
-		aiRequestTicketRepository.save(expiredTicket);
+		ticketRepository.save(expiredTicket);
 
 		// when
-		aiRequestTicketService.useTicket(TEST_USER_ID, 1);
+		ticketService.useTicket(TEST_USER_ID, 1);
 
 		// then - 갱신된 후 1개 소모되어 2개 남아야 함
-		AiRequestTicketEntity updatedTicket = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		TicketEntity updatedTicket = ticketRepository.findByUserId(TEST_USER_ID).orElse(null);
 		assertThat(updatedTicket).isNotNull();
 		assertThat(updatedTicket.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY - 1);
 		assertThat(updatedTicket.getLastIssuedAt()).isAfter(LocalDateTime.now().minusMinutes(1));
@@ -183,10 +183,10 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("동시성 테스트 - 같은 사용자가 동시에 티켓 소모")
 	void useTicket_ConcurrencyTest_SameUser() throws InterruptedException {
 		// given
-		AiRequestTicketEntity ticket = AiRequestTicketEntity.builder()
+		TicketEntity ticket = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
-		aiRequestTicketRepository.save(ticket);
+		ticketRepository.save(ticket);
 
 		int threadCount = (int)FREE_TICKET_COUNT_PER_DAY; // 3개 스레드로 정확히 티켓 수만큼
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -196,7 +196,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executor.execute(() -> {
 				try {
-					aiRequestTicketService.useTicket(TEST_USER_ID, 1);
+					ticketService.useTicket(TEST_USER_ID, 1);
 				} catch (AppException e) {
 					// 티켓 부족 예외는 예상되는 상황
 				} finally {
@@ -209,7 +209,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		shutdownExecutor(executor);
 
 		// then - 모든 티켓이 소모되어야 함
-		AiRequestTicketEntity finalTicket = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		TicketEntity finalTicket = ticketRepository.findByUserId(TEST_USER_ID).orElse(null);
 		assertThat(finalTicket).isNotNull();
 		assertThat(finalTicket.getTicketCount()).isEqualTo(MINIMUM_TICKET_COUNT);
 	}
@@ -218,14 +218,14 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 	@DisplayName("동시성 테스트 - 다른 사용자들이 동시에 티켓 소모")
 	void useTicket_ConcurrencyTest_DifferentUsers() throws InterruptedException {
 		// given - 두 사용자 각각 티켓 생성
-		AiRequestTicketEntity ticket1 = AiRequestTicketEntity.builder()
+		TicketEntity ticket1 = TicketEntity.builder()
 			.userId(TEST_USER_ID)
 			.build();
-		AiRequestTicketEntity ticket2 = AiRequestTicketEntity.builder()
+		TicketEntity ticket2 = TicketEntity.builder()
 			.userId(TEST_USER_ID_2)
 			.build();
-		aiRequestTicketRepository.save(ticket1);
-		aiRequestTicketRepository.save(ticket2);
+		ticketRepository.save(ticket1);
+		ticketRepository.save(ticket2);
 
 		int threadCount = 2;
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -234,7 +234,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		// when - 각각 다른 사용자가 동시에 티켓 소모
 		executor.execute(() -> {
 			try {
-				aiRequestTicketService.useTicket(TEST_USER_ID, 1);
+				ticketService.useTicket(TEST_USER_ID, 1);
 			} finally {
 				latch.countDown();
 			}
@@ -242,7 +242,7 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				aiRequestTicketService.useTicket(TEST_USER_ID_2, 1);
+				ticketService.useTicket(TEST_USER_ID_2, 1);
 			} finally {
 				latch.countDown();
 			}
@@ -252,8 +252,8 @@ class AiRequestTicketServiceTest extends BaseIntegrationTest {
 		shutdownExecutor(executor);
 
 		// then - 각 사용자의 티켓이 1개씩 소모되어야 함
-		AiRequestTicketEntity finalTicket1 = aiRequestTicketRepository.findByUserId(TEST_USER_ID).orElse(null);
-		AiRequestTicketEntity finalTicket2 = aiRequestTicketRepository.findByUserId(TEST_USER_ID_2).orElse(null);
+		TicketEntity finalTicket1 = ticketRepository.findByUserId(TEST_USER_ID).orElse(null);
+		TicketEntity finalTicket2 = ticketRepository.findByUserId(TEST_USER_ID_2).orElse(null);
 
 		assertThat(finalTicket1).isNotNull();
 		assertThat(finalTicket1.getTicketCount()).isEqualTo(FREE_TICKET_COUNT_PER_DAY - 1);
