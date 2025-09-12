@@ -17,6 +17,9 @@ import hanium.modic.backend.domain.vote.enums.VoteStatus;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteResultRepository;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
+import hanium.modic.backend.domain.post.entity.PostEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.web.vote.dto.response.VoteParticipationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ public class VotingService {
 	private final SimilarityVoteRepository similarityVoteRepository;
 	private final SimilarityVoteResultRepository voteResultRepository;
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
+	private final PostEntityRepository postEntityRepository;
 	private final LockManager lockManager;
 	private final VoteProperties voteProperties;
 
@@ -136,10 +140,59 @@ public class VotingService {
 				vote.updateStatus(VoteStatus.COMPLETED);
 				similarityVoteRepository.save(vote);
 				log.info("투표 완료 처리: voteId={}", voteId);
+				
+				// 연결된 파생 게시물의 상태 업데이트
+				updateDerivedPostStatus(voteId);
 			}
 		}
 		
 		return isCompleted;
+	}
+
+	/**
+	 * 투표 완료 시 연결된 파생 게시물의 상태를 업데이트합니다.
+	 * 
+	 * @param voteId 완료된 투표 ID
+	 */
+	private void updateDerivedPostStatus(Long voteId) {
+		try {
+			// 1. 투표 정보 조회
+			SimilarityVoteEntity vote = similarityVoteRepository.findById(voteId)
+				.orElseThrow(() -> new AppException(VOTE_NOT_FOUND_EXCEPTION));
+
+			// 2. 연결된 파생 포스트가 있는지 확인
+			Long derivedPostId = vote.getDerivedPostId();
+			if (derivedPostId == null) {
+				log.debug("투표에 연결된 파생 포스트가 없음: voteId={}", voteId);
+				return;
+			}
+
+			// 3. 파생 포스트 조회
+			PostEntity derivedPost = postEntityRepository.findById(derivedPostId).orElse(null);
+			if (derivedPost == null || !derivedPost.getIsAiDerivedPost()) {
+				log.warn("유효하지 않은 파생 포스트: postId={}, voteId={}", derivedPostId, voteId);
+				return;
+			}
+
+			// 4. 투표 결과 조회
+			SimilarityVoteSummaryEntity voteSummary = voteSummaryRepository.findByVoteId(voteId)
+				.orElseThrow(() -> new AppException(VOTE_SUMMARY_NOT_FOUND_EXCEPTION));
+
+			// 5. 투표 결과에 따른 포스트 상태 업데이트
+			PostStatus newStatus = (voteSummary.getFinalDecision() == VoteDecision.APPROVE) 
+				? PostStatus.APPROVED 
+				: PostStatus.REJECTED;
+			
+			derivedPost.updateDerivedPostStatus(newStatus);
+			postEntityRepository.save(derivedPost);
+			
+			log.info("파생 포스트 상태 업데이트 완료: postId={}, voteId={}, finalDecision={}, newStatus={}", 
+				derivedPostId, voteId, voteSummary.getFinalDecision(), newStatus);
+				
+		} catch (Exception e) {
+			log.error("파생 포스트 상태 업데이트 실패: voteId={}", voteId, e);
+			// 투표 완료는 성공했으므로 예외를 던지지 않고 로그만 남김
+		}
 	}
 
 	/**
