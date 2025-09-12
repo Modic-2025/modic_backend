@@ -45,6 +45,7 @@ public class AiDerivedPostController {
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
 			currentUser.getId(),
 			request.createdAiImageId(),
+			request.originalImageId(),
 			request.title(),
 			request.description(),
 			request.commercialPrice(),
