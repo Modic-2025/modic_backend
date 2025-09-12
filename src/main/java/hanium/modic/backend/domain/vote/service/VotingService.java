@@ -83,7 +83,7 @@ public class VotingService {
 				log.info("투표 참여: voteId={}, userId={}, decision={}", voteId, userId, decision);
 
 				// 7. 즉시 집계 업데이트
-				updateVoteSummary(voteId, decision, voteProperties.getHumanVoteWeight().intValue());
+				updateVoteSummary(voteId, decision, voteProperties.getHumanVoteWeight());
 
 				// 8. 투표 완료 확인 및 처리
 				checkAndCompleteVote(voteId);
@@ -115,8 +115,8 @@ public class VotingService {
 			summary.addDenyWeight((long)weight);
 		}
 
-		// 최종 결정 업데이트
-		summary.updateFinalDecision();
+		// 최종 결정 업데이트 (임계치 기반)
+		summary.updateFinalDecision(voteProperties.getMinTotalWeight());
 
 		voteSummaryRepository.save(summary);
 		log.debug("투표 집계 업데이트 완료: voteId={}, decision={}, weight={}", voteId, decision, weight);

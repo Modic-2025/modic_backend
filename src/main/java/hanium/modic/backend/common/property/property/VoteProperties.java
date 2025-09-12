@@ -10,9 +10,9 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "vote.similarity")
 public class VoteProperties {
 
-	private Long minTotalWeight;
-	private Long aiVoteWeight;
-	private Long humanVoteWeight;
+	private int minTotalWeight;
+	private int aiVoteWeight;
+	private int humanVoteWeight;
 	private Boolean enableAiAssessment;
-	private Long maxVotesPerUserPerDay;
+	private int maxVotesPerUserPerDay;
 }

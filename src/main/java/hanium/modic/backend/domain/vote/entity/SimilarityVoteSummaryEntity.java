@@ -86,12 +86,12 @@ public class SimilarityVoteSummaryEntity extends BaseEntity {
 		this.aiDecision = aiDecision;
 	}
 
-	public void updateFinalDecision() {
-		// 투표가 완료된 경우에만 최종 결정을 업데이트
-		if (this.totalWeight > 0) {
+	public void updateFinalDecision(long minTotalWeight) {
+		// 최소 총 가중치에 도달한 경우에만 최종 결정을 업데이트
+		if (this.totalWeight >= minTotalWeight) {
 			this.finalDecision = this.approveWeight > this.denyWeight ? VoteDecision.APPROVE : VoteDecision.DENY;
 		} else {
-			this.finalDecision = VoteDecision.PENDING; // 아직 투표가 없는 경우 대기 상태 유지
+			this.finalDecision = VoteDecision.PENDING; // 아직 임계치에 도달하지 않은 경우 대기 상태 유지
 		}
 	}
 }

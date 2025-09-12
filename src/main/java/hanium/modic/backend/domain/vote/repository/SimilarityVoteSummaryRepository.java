@@ -21,7 +21,7 @@ public interface SimilarityVoteSummaryRepository extends JpaRepository<Similarit
 	 */
 	@Query("SELECT COUNT(svs) > 0 FROM SimilarityVoteSummaryEntity svs " +
 		"WHERE svs.voteId = :voteId AND svs.totalWeight >= :minTotalWeight")
-	boolean isVoteCompleted(@Param("voteId") Long voteId, @Param("minTotalWeight") Long minTotalWeight);
+	boolean isVoteCompleted(@Param("voteId") Long voteId, @Param("minTotalWeight") int minTotalWeight);
 
 	/**
 	 * AI 판단 결과가 있는지 확인
