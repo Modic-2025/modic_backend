@@ -42,6 +42,8 @@ public enum ErrorCode {
 	// Post
 	POST_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "P-001", "해당 포스트를 찾을 수 없습니다."),
 	POST_ROLE_EXCEPTION(HttpStatus.FORBIDDEN, "P-002", "포스트에 대한 권한이 없습니다."),
+	POST_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "P-003", "포스트에 대한 접근 권한이 없습니다."),
+	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
 
 	// Post Like
 	CANNOT_LIKE_OWN_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "PL-001", "자신의 게시글에는 하트를 할 수 없습니다."),
@@ -83,11 +85,13 @@ public enum ErrorCode {
 	AI_IMAGE_PERMISSION_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "AI-009", "이미 AI 이미지 생성권을 구매했습니다."),
 	AI_IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "AI-010", "생성된 AI 이미지를 찾을 수 없습니다."),
 	AI_IMAGE_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "AI-011", "AI 이미지에 대한 권한이 없습니다."),
-	POST_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "P-003", "포스트에 대한 접근 권한이 없습니다."),
-	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
+
+	// AI Chat
+	AI_CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-001", "AI 채팅방을 찾을 수 없습니다."),
 	;
 
 	private final HttpStatus status;
 	private final String code;
 	private final String message;
+
 }

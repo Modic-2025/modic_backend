@@ -5,8 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
-import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
+import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class AiDerivedPostService {
 
-	private final CreatedAiImageRepository createdAiImageRepository;
+	private final AiChatImageRepository AiChatImageRepository;
 	private final PostEntityRepository postEntityRepository;
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final PostService postService;
@@ -51,7 +51,7 @@ public class AiDerivedPostService {
 		Long ticketPrice
 	) {
 		// 생성된 AI 이미지 조회 후 및 소유자 검증
-		CreatedAiImageEntity createdAiImage = createdAiImageRepository.findById(createdAiImageId)
+		AiChatImageEntity createdAiImage = AiChatImageRepository.findById(createdAiImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
 
 		if (!createdAiImage.getUserId().equals(userId)) {

@@ -4,3 +4,4 @@ public record CallbackImageSaveUrlResponse(
 	Long imageId
 ) {
 }
+
