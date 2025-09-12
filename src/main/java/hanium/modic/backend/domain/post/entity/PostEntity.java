@@ -1,8 +1,11 @@
 package hanium.modic.backend.domain.post.entity;
 
 import hanium.modic.backend.common.entity.BaseEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,6 +49,10 @@ public class PostEntity extends BaseEntity {
     @Column(name = "parent_post_id")
     private Long parentPostId;
 
+    @Column(name = "derived_post_status")
+    @Enumerated(EnumType.STRING)
+    private PostStatus derivedPostStatus;
+
     @Builder
     public PostEntity(
         Long userId,
@@ -55,7 +62,8 @@ public class PostEntity extends BaseEntity {
         Long nonCommercialPrice,
         Long ticketPrice,
         Boolean isAiDerivedPost,
-        Long parentPostId
+        Long parentPostId,
+        PostStatus derivedPostStatus
     ) {
         this.userId = userId;
         this.title = title;
@@ -65,6 +73,7 @@ public class PostEntity extends BaseEntity {
         this.ticketPrice = ticketPrice;
         this.isAiDerivedPost = isAiDerivedPost != null ? isAiDerivedPost : false;
         this.parentPostId = parentPostId;
+        this.derivedPostStatus = derivedPostStatus;
     }
 
     public void updateTitle(String title) {
@@ -81,5 +90,15 @@ public class PostEntity extends BaseEntity {
     }
     public void updateTicketPrice(Long ticketPrice) {
         this.ticketPrice = ticketPrice;
+    }
+    
+    /**
+     * AI 파생 게시물의 상태를 업데이트합니다.
+     * 투표 시스템에서 투표 완료 시 호출됩니다.
+     * 
+     * @param status 새로운 상태 (PENDING, APPROVED, REJECTED)
+     */
+    public void updateDerivedPostStatus(PostStatus status) {
+        this.derivedPostStatus = status;
     }
 }
