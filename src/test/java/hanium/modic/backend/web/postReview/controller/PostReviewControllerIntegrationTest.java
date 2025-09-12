@@ -19,8 +19,8 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
-import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
-import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -51,7 +51,7 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 	private PostReviewImageRepository postReviewImageRepository;
 
 	@Autowired
-	private AiImagePermissionRepository aiImagePermissionRepository;
+	private AiChatRoomRepository aiChatRoomRepository;
 
 	@Autowired
 	private AmazonS3 amazonS3;
@@ -69,7 +69,7 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(postOwner));
 
 		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
-		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+		aiChatRoomRepository.save(AiChatRoomEntity.builder()
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)

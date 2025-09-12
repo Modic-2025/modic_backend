@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -23,15 +22,15 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
-import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
-import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
+import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
+import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.request.CreateAiDerivedPostRequest;
@@ -49,7 +48,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 	@Autowired
-	private CreatedAiImageRepository createdAiImageRepository;
+	private AiChatImageRepository AiChatImageRepository;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -62,17 +61,19 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 			UserEntity currentUser = ContextHolderUtil.getCurrentUser();
 
 			// CreatedAiImageEntity 생성 및 저장
-			CreatedAiImageEntity createdAiImage = CreatedAiImageEntity.builder()
+			AiChatImageEntity createdAiImage = AiChatImageEntity.builder()
 				.userId(currentUser.getId())
 				.postId(999L) // 임시 값
-				.requestId("test-request-123")
+				.aiChatRoomId(999L) // 임시 값
 				.imagePath("imagePath")
 				.fullImageName("ai-image-full.png")
 				.imageName("ai-image")
 				.extension(ImageExtension.PNG)
 				.imagePurpose(ImagePrefix.AI_RESPONSE)
+				.fromOriginImage(true)
+				.status(AiImageStatus.RESPONSE)
 				.build();
-			createdAiImage = createdAiImageRepository.save(createdAiImage);
+			createdAiImage = AiChatImageRepository.save(createdAiImage);
 			uploadImage("imagePath", "imageContent1");
 
 			CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
@@ -168,17 +169,19 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		otherUser = userEntityRepository.save(otherUser);
 
 		// 다른 사용자의 AI 이미지 생성
-		CreatedAiImageEntity otherUserAiImage = CreatedAiImageEntity.builder()
+		AiChatImageEntity otherUserAiImage = AiChatImageEntity.builder()
 			.userId(otherUser.getId())
 			.postId(999L)
-			.requestId("other-user-request")
+			.aiChatRoomId(999L) // 임시 값
 			.imagePath("test/other-user-ai-image.png")
 			.fullImageName("other-user-ai-image.png")
 			.imageName("other-ai-image")
 			.extension(ImageExtension.PNG)
 			.imagePurpose(ImagePrefix.AI_RESPONSE)
+			.fromOriginImage(true)
+			.status(AiImageStatus.RESPONSE)
 			.build();
-		otherUserAiImage = createdAiImageRepository.save(otherUserAiImage);
+		otherUserAiImage = AiChatImageRepository.save(otherUserAiImage);
 
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			otherUserAiImage.getId(),

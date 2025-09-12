@@ -22,6 +22,7 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
@@ -33,8 +34,7 @@ import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
-import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 
@@ -51,7 +51,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private UserEntityRepository userEntityRepository;
 	@Autowired
-	private AiImagePermissionRepository aiImagePermissionRepository;
+	private AiChatRoomRepository aiChatRoomRepository;
 
 	@Test
 	@DisplayName("게시물 등록 요청 API")
@@ -262,7 +262,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(postOwner));
 
 		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
-		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+		aiChatRoomRepository.save(AiChatRoomEntity.builder()
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)
@@ -302,7 +302,7 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(user));
 
 		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
-		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+		aiChatRoomRepository.save(AiChatRoomEntity.builder()
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)

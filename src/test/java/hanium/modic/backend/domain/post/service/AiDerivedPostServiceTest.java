@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.ai.service;
+package hanium.modic.backend.domain.post.service;
 
 import static hanium.modic.backend.domain.ai.entityfactory.AiFactory.*;
 import static hanium.modic.backend.domain.post.entityfactory.PostFactory.*;
@@ -18,16 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
-import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
+import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
+import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.post.service.AiDerivedPostService;
-import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
@@ -37,7 +35,7 @@ import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 class AiDerivedPostServiceTest {
 
 	@Mock
-	private CreatedAiImageRepository createdAiImageRepository;
+	private AiChatImageRepository createdAiImageRepository;
 
 	@Mock
 	private PostEntityRepository postEntityRepository;
@@ -70,7 +68,7 @@ class AiDerivedPostServiceTest {
 		Long ticketPrice = 300L;
 
 		UserEntity mockUser = UserFactory.createMockUser(userId);
-		CreatedAiImageEntity mockAiImage = createMockCreatedAiImageWithId(
+		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
 			createdAiImageId, userId, 1L, "request-123");
 		PostEntity mockSavedPost = createMockPostWithId(1L, mockUser);
 
@@ -152,7 +150,7 @@ class AiDerivedPostServiceTest {
 		Long ticketPrice = 300L;
 
 		// 다른 사용자의 AI 이미지
-		CreatedAiImageEntity mockAiImage = createMockCreatedAiImageWithId(
+		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
 			createdAiImageId, otherUserId, 1L, "request-123");
 
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
