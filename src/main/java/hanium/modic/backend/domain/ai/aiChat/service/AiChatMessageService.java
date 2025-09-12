@@ -96,26 +96,6 @@ public class AiChatMessageService {
 		}
 	}
 
-	// AI 응답 메세지 저장
-	@Transactional
-	public ChatMessageResponse saveAiMessage(Long userId, Long postId, String textContent) {
-		// 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(userId, postId);
-
-		// 메시지 저장
-		AiChatMessageEntity message = AiChatMessageEntity.builder()
-			.userId(userId)
-			.postId(postId)
-
-			.messageOrder(messageOrder)
-			.senderType(SenderType.AI)
-			.textContent(textContent)
-			.build();
-
-		message = aiChatMessageRepository.save(message);
-		return ChatMessageResponse.from(message);
-	}
-
 	// 채팅 메시지 페이징 조회
 	@Transactional(readOnly = true)
 	public PageResponse<ChatMessageResponse> getMessages(Long userId, Long postId, int page, int size) {
@@ -130,7 +110,11 @@ public class AiChatMessageService {
 
 		// 엔티티 → DTO 변환
 		Page<ChatMessageResponse> responsePage = messagePage.map(msg -> {
-			Optional.ofNullable(msg.getAiChatImageId());
+			// 이미지 없는 경우
+			if (msg.getAiChatImageId() == null) {
+				return ChatMessageResponse.from(msg, null);
+			}
+			// 이미지 있는 경우, URL 생성
 			String imageUrl = aiChatImageService.createImageGetUrl(msg.getAiChatImageId());
 			return ChatMessageResponse.from(msg, imageUrl);
 		});

@@ -85,6 +85,7 @@ public enum ErrorCode {
 	AI_IMAGE_PERMISSION_ALREADY_EXISTS_EXCEPTION(HttpStatus.CONFLICT, "AI-009", "이미 AI 이미지 생성권을 구매했습니다."),
 	AI_IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "AI-010", "생성된 AI 이미지를 찾을 수 없습니다."),
 	AI_IMAGE_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "AI-011", "AI 이미지에 대한 권한이 없습니다."),
+	AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI-012", "AI 서버와의 통신 중 에러가 발생하였습니다."),
 
 	// AI Chat
 	AI_CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-001", "AI 채팅방을 찾을 수 없습니다."),

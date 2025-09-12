@@ -3,28 +3,31 @@ package hanium.modic.backend.domain.ai.aiServer.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import javax.annotation.Nullable;
-
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.sse.service.EmitterService;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
-import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiChatRequestDto;
+import hanium.modic.backend.domain.ai.aiServer.dto.GptChatResponseDto;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
+import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.RequestCategory;
+import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -44,6 +47,8 @@ public class AiServerService {
 	private final AiImagePermissionService aiImagePermissionService;
 	private final AiChatImageRepository aiChatImageRepository;
 	private final AiChatMessageRepository aiChatMessageRepository;
+	private final ChatClient chatClient;
+	private final EmitterService emitterService;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	@Transactional
@@ -60,7 +65,7 @@ public class AiServerService {
 		// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
 		RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
 
-		if (requestCategory == RequestCategory.CHAT_RESPONSE) {
+		if (requestCategory == RequestCategory.CHAT_GENERATION) {
 			// 채팅응답일 경우 채팅 생성 요청
 			requestChatCreation(chatMessage);
 		} else {
@@ -72,16 +77,91 @@ public class AiServerService {
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	private RequestCategory classifyRequestCategory(String message) {
 
-		// TODO: AiAgent 연동 로직 추가
+		String systemPrompt = """
+			You are a classifier. 
+			Given a user input, decide whether it is:
+			- "IMAGE_GENERATION" if the user is asking to generate an image
+			- "CHAT_GENERATION" if it is a normal conversation
+			Only return one of the two exact words.
+			""";
 
-		return RequestCategory.CHAT_RESPONSE;
+		String response = chatClient.prompt()
+			.system(systemPrompt)
+			.user(message)
+			.call()
+			.content()
+			.trim();
+
+		return RequestCategory.valueOf(response);
 	}
 
 	// 채팅응답일 경우 채팅 생성 요청
 	private void requestChatCreation(
 		AiChatMessageEntity chatMessage
 	) {
-		// TODO: gpt 요청 로직 추가, 이중화 필요, 이 부분은 비동기 처리 필요.
+		GptChatResponseDto response = requestChatCreationToServer(
+			chatMessage.getTextContent(),
+			aiChatRoomService.getChatRoom(chatMessage.getUserId(), chatMessage.getPostId()).chatSummary()
+		);
+
+		final Long userId = chatMessage.getUserId();
+		final Long postId = chatMessage.getPostId();
+
+		// 채팅 저장
+		// 다음 메시지 순서 조회
+		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(userId, postId);
+
+		// 메시지 저장
+		AiChatMessageEntity message = AiChatMessageEntity.builder()
+			.userId(userId)
+			.postId(postId)
+			.aiChatRoomId(chatMessage.getAiChatRoomId())
+			.messageOrder(messageOrder)
+			.senderType(SenderType.AI)
+			.textContent(response.response())
+			.aiChatImageId(null)
+			.requestId(chatMessage.getRequestId())
+			.status(AiImageStatus.RESPONSE)
+			.build();
+
+		aiChatMessageRepository.save(message);
+		// 채팅룸 요약 업데이트
+		aiChatRoomService.updateChatSummary(userId, postId, response.newSummary());
+
+		// TODO: 실시간 응답으로 바꿔야 함.
+		emitterService.sendToClient(
+			chatMessage.getRequestId(),
+			response.response()
+		);
+	}
+
+	private GptChatResponseDto requestChatCreationToServer(
+		String textContent,
+		String chatSummary
+	) {
+		String systemPrompt = """
+			You are a helpful AI assistant.
+			- Use the given chat summary as context.
+			- Respond naturally to the new user message.
+			- Also update the chat summary by including this new interaction.
+			- Speak Korean.
+			
+			Return the result strictly as JSON including response and newSummary fields
+			""";
+
+		String resultJson = chatClient.prompt()
+			.system(systemPrompt)
+			.user("Chat summary so far: " + chatSummary + "\nUser message: " + textContent)
+			.call()
+			.content();
+
+		// JSON 파싱 (간단히 Jackson ObjectMapper 사용)
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(resultJson, GptChatResponseDto.class);
+		} catch (Exception e) {
+			throw new AppException(ErrorCode.AI_SERVER_ERROR);
+		}
 	}
 
 	// 이미지 생성용인 경우 이미지 생성 요청

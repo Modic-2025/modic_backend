@@ -59,4 +59,12 @@ public class AiChatRoomService {
 			throw new AppException(AI_IMAGE_PERMISSION_NOT_FOUND);
 		}
 	}
+
+	public void updateChatSummary(Long userId, Long postId, String s) {
+		AiChatRoomEntity aiChatRoom = aiChatRoomRepository
+			.findByUserIdAndPostId(userId, postId)
+			.orElseThrow(() -> new AppException(AI_IMAGE_PERMISSION_NOT_FOUND));
+		aiChatRoom.updateChatSummary(s);
+		aiChatRoomRepository.save(aiChatRoom);
+	}
 }
