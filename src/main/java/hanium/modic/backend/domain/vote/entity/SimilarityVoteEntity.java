@@ -38,6 +38,9 @@ public class SimilarityVoteEntity extends BaseEntity {
 	@Column(name = "derived_image_id", nullable = false)
 	private Long derivedImageId;
 
+	@Column(name = "derived_post_id")
+	private Long derivedPostId;
+
 	@Column(name = "vote_type", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private VoteType voteType;
@@ -50,11 +53,13 @@ public class SimilarityVoteEntity extends BaseEntity {
 	public SimilarityVoteEntity(
 		Long originalImageId,
 		Long derivedImageId,
+		Long derivedPostId,
 		VoteType voteType,
 		VoteStatus status
 	) {
 		this.originalImageId = originalImageId;
 		this.derivedImageId = derivedImageId;
+		this.derivedPostId = derivedPostId;
 		this.voteType = voteType;
 		this.status = status;
 	}
