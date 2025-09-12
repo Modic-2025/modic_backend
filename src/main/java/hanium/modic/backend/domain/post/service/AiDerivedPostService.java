@@ -103,6 +103,7 @@ public class AiDerivedPostService {
 		SimilarityVoteEntity similarityVote = SimilarityVoteEntity.builder()
 			.originalImageId(originalImageId)
 			.derivedImageId(createdAiImageId)
+			.derivedPostId(savedPost.getId()) // 생성된 파생 포스트 ID 연결
 			.voteType(VoteType.SIMILARITY_CHECK)
 			.status(VoteStatus.PENDING) // AI 평가 대기 상태
 			.build();
