@@ -22,29 +22,4 @@ public interface SimilarityVoteSummaryRepository extends JpaRepository<Similarit
 	@Query("SELECT COUNT(svs) > 0 FROM SimilarityVoteSummaryEntity svs " +
 		"WHERE svs.voteId = :voteId AND svs.totalWeight >= :minTotalWeight")
 	boolean isVoteCompleted(@Param("voteId") Long voteId, @Param("minTotalWeight") int minTotalWeight);
-
-	/**
-	 * AI 판단 결과가 있는지 확인
-	 */
-	@Query("SELECT COUNT(svs) > 0 FROM SimilarityVoteSummaryEntity svs " +
-		"WHERE svs.voteId = :voteId AND svs.aiDecision IS NOT NULL")
-	boolean hasAiDecision(@Param("voteId") Long voteId);
-
-	/**
-	 * 최종 결정이 완료된 투표 수
-	 */
-	@Query("SELECT COUNT(svs) FROM SimilarityVoteSummaryEntity svs WHERE svs.finalDecision IS NOT NULL")
-	long countCompletedVotes();
-
-	/**
-	 * 승인된 투표 수
-	 */
-	@Query("SELECT COUNT(svs) FROM SimilarityVoteSummaryEntity svs WHERE svs.finalDecision = 'APPROVE'")
-	long countApprovedVotes();
-
-	/**
-	 * 거부된 투표 수  
-	 */
-	@Query("SELECT COUNT(svs) FROM SimilarityVoteSummaryEntity svs WHERE svs.finalDecision = 'DENY'")
-	long countDeniedVotes();
 }
