@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
-import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
+import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
+import hanium.modic.backend.domain.ai.repository.CreatedAiImageRepository;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -31,7 +31,7 @@ public class VoteQueryService {
 	private final SimilarityVoteRepository similarityVoteRepository;
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 	private final PostImageEntityRepository postImageEntityRepository;
-	private final AiChatImageRepository aiChatImageRepository;
+	private final CreatedAiImageRepository createdAiImageRepository;
 	private final ImageUtil imageUtil;
 
 	public VoteSummaryResponse getVoteResults(Long voteId) {
@@ -64,7 +64,7 @@ public class VoteQueryService {
 		String originalImageUrl = imageUtil.createImageGetUrl(originalImage.getImagePath());
 
 		// 생성된 AI 이미지 조회 및 URL 생성
-		AiChatImageEntity derivedImage = aiChatImageRepository.findById(vote.getDerivedImageId())
+		CreatedAiImageEntity derivedImage = createdAiImageRepository.findById(vote.getDerivedImageId())
 			.orElseThrow(() -> new AppException(VOTE_NOT_FOUND_EXCEPTION));
 
 		String derivedImageUrl = imageUtil.createImageGetUrl(derivedImage.getImagePath());
