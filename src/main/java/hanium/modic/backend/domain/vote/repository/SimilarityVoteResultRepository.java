@@ -1,14 +1,10 @@
 package hanium.modic.backend.domain.vote.repository;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteResultEntity;
-import hanium.modic.backend.domain.vote.enums.VoteDecision;
 
 public interface SimilarityVoteResultRepository extends JpaRepository<SimilarityVoteResultEntity, Long> {
 
@@ -23,6 +19,9 @@ public interface SimilarityVoteResultRepository extends JpaRepository<Similarity
 	 */
 	@Query("SELECT COUNT(svr) FROM SimilarityVoteResultEntity svr " +
 		"WHERE svr.userId = :userId " +
-		"AND DATE(svr.createAt) = CURRENT_DATE")
-	long countTodayVotesByUserId(@Param("userId") Long userId);
+		"AND svr.createAt >= :startOfDay " +
+		"AND svr.createAt < :startOfNextDay")
+	long countTodayVotesByUserId(@Param("userId") Long userId,
+		@Param("startOfDay") java.time.LocalDateTime startOfDay,
+		@Param("startOfNextDay") java.time.LocalDateTime startOfNextDay);
 }
