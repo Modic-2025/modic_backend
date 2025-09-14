@@ -14,23 +14,6 @@ import hanium.modic.backend.domain.vote.enums.VoteStatus;
 public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEntity, Long> {
 
 	/**
-	 * 상태별 투표 조회
-	 */
-	Page<SimilarityVoteEntity> findAllByStatus(VoteStatus status, Pageable pageable);
-
-	/**
-	 * 랜덤 투표 목록 조회 (의미있는 페이지네이션)
-	 * IN_PROGRESS 상태의 투표만 대상
-	 */
-	@Query(value = "SELECT * FROM similarity_vote sv " +
-		"WHERE sv.status = 'IN_PROGRESS' " +
-		"ORDER BY RAND() " +
-		"LIMIT ?1",
-		countQuery = "SELECT COUNT(*) FROM similarity_vote sv WHERE sv.status = 'IN_PROGRESS'",
-		nativeQuery = true)
-	Page<SimilarityVoteEntity> findRandomVotesForParticipation(Pageable pageable);
-
-	/**
 	 * 단일 랜덤 투표 조회 (효율적인 단일 조회)
 	 * IN_PROGRESS 상태의 투표 중 1건만 반환
 	 */
@@ -40,30 +23,6 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 		"LIMIT 1",
 		nativeQuery = true)
 	Optional<SimilarityVoteEntity> findRandomVoteForParticipation();
-
-	/**
-	 * 원본 이미지 ID와 파생 이미지 ID로 투표 찾기
-	 */
-	Optional<SimilarityVoteEntity> findByOriginalImageIdAndDerivedImageId(
-		Long originalImageId, 
-		Long derivedImageId
-	);
-
-	/**
-	 * 파생 이미지 ID로 투표 조회 (AI 생성 이미지에 대한 투표)
-	 */
-	Optional<SimilarityVoteEntity> findByDerivedImageId(Long derivedImageId);
-
-	/**
-	 * 상태별 투표 개수 조회
-	 */
-	long countByStatus(VoteStatus status);
-
-	/**
-	 * IN_PROGRESS 상태 투표 중 랜덤 조회를 위한 총 개수
-	 */
-	@Query("SELECT COUNT(sv) FROM SimilarityVoteEntity sv WHERE sv.status = 'IN_PROGRESS'")
-	long countInProgressVotes();
 
 	/**
 	 * 파생 이미지 생성자 ID 조회 (타입 안전)
