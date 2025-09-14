@@ -18,6 +18,7 @@ import hanium.modic.backend.domain.vote.service.VoteQueryService;
 import hanium.modic.backend.domain.vote.service.VotingService;
 import hanium.modic.backend.web.vote.dto.request.VoteParticipationRequest;
 import hanium.modic.backend.web.vote.dto.response.VoteParticipationResponse;
+import hanium.modic.backend.web.vote.dto.response.VoteDetailResponse;
 import hanium.modic.backend.web.vote.dto.response.VoteSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,6 +34,15 @@ public class VoteController {
 
 	private final VoteQueryService voteQueryService;
 	private final VotingService votingService;
+
+	@GetMapping("/random")
+	@Operation(summary = "랜덤 투표 조회", description = "참여 가능한 랜덤한 투표 1건을 조회합니다. 원본 이미지(A)와 생성된 이미지(B)의 presigned URL을 포함합니다.")
+	@ApiResponse(responseCode = "200", description = "투표 조회 성공")
+	@ApiResponse(responseCode = "404", description = "참여 가능한 투표가 없습니다.[V-009]")
+	public ResponseEntity<AppResponse<VoteDetailResponse>> getRandomVote() {
+		VoteDetailResponse response = voteQueryService.getRandomVoteForParticipation();
+		return ok(AppResponse.ok(response));
+	}
 
 	@GetMapping("/{voteId}/results")
 	@Operation(summary = "투표 결과 조회", description = "특정 투표의 집계 결과를 조회합니다.")

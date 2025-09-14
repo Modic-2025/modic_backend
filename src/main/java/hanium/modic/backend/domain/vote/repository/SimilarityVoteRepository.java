@@ -25,10 +25,21 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 	@Query(value = "SELECT * FROM similarity_vote sv " +
 		"WHERE sv.status = 'IN_PROGRESS' " +
 		"ORDER BY RAND() " +
-		"LIMIT ?1", 
+		"LIMIT ?1",
 		countQuery = "SELECT COUNT(*) FROM similarity_vote sv WHERE sv.status = 'IN_PROGRESS'",
 		nativeQuery = true)
 	Page<SimilarityVoteEntity> findRandomVotesForParticipation(Pageable pageable);
+
+	/**
+	 * 단일 랜덤 투표 조회 (효율적인 단일 조회)
+	 * IN_PROGRESS 상태의 투표 중 1건만 반환
+	 */
+	@Query(value = "SELECT * FROM similarity_vote sv " +
+		"WHERE sv.status = 'IN_PROGRESS' " +
+		"ORDER BY RAND() " +
+		"LIMIT 1",
+		nativeQuery = true)
+	Optional<SimilarityVoteEntity> findRandomVoteForParticipation();
 
 	/**
 	 * 원본 이미지 ID와 파생 이미지 ID로 투표 찾기
@@ -59,8 +70,8 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 	 * @param voteId 투표 ID
 	 * @return 파생 이미지 생성자의 사용자 ID
 	 */
-	@Query("SELECT cai.userId FROM SimilarityVoteEntity sv " +
-		"JOIN CreatedAiImageEntity cai ON cai.id = sv.derivedImageId " +
+	@Query("SELECT aci.userId FROM SimilarityVoteEntity sv " +
+		"JOIN AiChatImageEntity aci ON aci.id = sv.derivedImageId " +
 		"WHERE sv.id = :voteId")
 	Optional<Long> findDerivedImageCreatorId(@Param("voteId") Long voteId);
 

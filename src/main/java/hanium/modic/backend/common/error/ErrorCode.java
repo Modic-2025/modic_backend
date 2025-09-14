@@ -95,6 +95,7 @@ public enum ErrorCode {
 	VOTE_DAILY_LIMIT_EXCEEDED_EXCEPTION(HttpStatus.BAD_REQUEST, "V-006", "일일 투표 한도를 초과했습니다."),
 	VOTE_SUMMARY_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "V-007", "투표 집계 정보를 찾을 수 없습니다."),
 	VOTE_UPDATE_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "V-008", "투표 집계 업데이트에 실패했습니다."),
+	NO_AVAILABLE_VOTES_EXCEPTION(HttpStatus.NOT_FOUND, "V-009", "참여 가능한 투표가 없습니다."),
 	;
 
 	private final HttpStatus status;
