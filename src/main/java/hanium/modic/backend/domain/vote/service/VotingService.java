@@ -2,6 +2,9 @@ package hanium.modic.backend.domain.vote.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +46,7 @@ public class VotingService {
 
 	/**
 	 * 투표 참여 메서드
-	 * 
+	 *
 	 * @param voteId   투표 ID
 	 * @param userId   사용자 ID
 	 * @param decision 투표 결정 (APPROVE/DENY)
@@ -88,7 +91,7 @@ public class VotingService {
 				// 8. 투표 완료 확인 및 처리
 				checkAndCompleteVote(voteId);
 			});
-			
+
 			// 9. 단순한 응답 생성
 			return VoteParticipationResponse.of(voteId);
 		} catch (LockException e) {
@@ -99,7 +102,7 @@ public class VotingService {
 
 	/**
 	 * 투표 집계 업데이트 메서드 (분산락 내부에서 실행)
-	 * 
+	 *
 	 * @param voteId   투표 ID
 	 * @param decision 투표 결정
 	 * @param weight   투표 가중치
@@ -124,34 +127,34 @@ public class VotingService {
 
 	/**
 	 * 투표 완료 체크 및 상태 업데이트
-	 * 
+	 *
 	 * @param voteId 투표 ID
 	 * @return 투표 완료 여부
 	 */
 	private boolean checkAndCompleteVote(Long voteId) {
 		boolean isCompleted = voteSummaryRepository.isVoteCompleted(voteId, voteProperties.getMinTotalWeight());
-		
+
 		if (isCompleted) {
 			// 투표 상태를 COMPLETED로 변경
 			SimilarityVoteEntity vote = similarityVoteRepository.findById(voteId)
 				.orElseThrow(() -> new AppException(VOTE_NOT_FOUND_EXCEPTION));
-			
+
 			if (vote.getStatus() == VoteStatus.IN_PROGRESS) {
 				vote.updateStatus(VoteStatus.COMPLETED);
 				similarityVoteRepository.save(vote);
 				log.info("투표 완료 처리: voteId={}", voteId);
-				
+
 				// 연결된 파생 게시물의 상태 업데이트
 				updateDerivedPostStatus(voteId);
 			}
 		}
-		
+
 		return isCompleted;
 	}
 
 	/**
 	 * 투표 완료 시 연결된 파생 게시물의 상태를 업데이트합니다.
-	 * 
+	 *
 	 * @param voteId 완료된 투표 ID
 	 */
 	private void updateDerivedPostStatus(Long voteId) {
@@ -179,16 +182,16 @@ public class VotingService {
 				.orElseThrow(() -> new AppException(VOTE_SUMMARY_NOT_FOUND_EXCEPTION));
 
 			// 5. 투표 결과에 따른 포스트 상태 업데이트
-			PostStatus newStatus = (voteSummary.getFinalDecision() == VoteDecision.APPROVE) 
-				? PostStatus.APPROVED 
+			PostStatus newStatus = (voteSummary.getFinalDecision() == VoteDecision.APPROVE)
+				? PostStatus.APPROVED
 				: PostStatus.REJECTED;
-			
+
 			derivedPost.updateDerivedPostStatus(newStatus);
 			postEntityRepository.save(derivedPost);
-			
-			log.info("파생 포스트 상태 업데이트 완료: postId={}, voteId={}, finalDecision={}, newStatus={}", 
+
+			log.info("파생 포스트 상태 업데이트 완료: postId={}, voteId={}, finalDecision={}, newStatus={}",
 				derivedPostId, voteId, voteSummary.getFinalDecision(), newStatus);
-				
+
 		} catch (Exception e) {
 			log.error("파생 포스트 상태 업데이트 실패: voteId={}", voteId, e);
 			// 투표 완료는 성공했으므로 예외를 던지지 않고 로그만 남김
@@ -198,7 +201,7 @@ public class VotingService {
 	/**
 	 * 투표 권한 검증 (타입 안전한 방식으로 개선)
 	 * 파생 이미지 생성자와 원작 이미지 소유자는 투표 불가능
-	 * 
+	 *
 	 * @param voteId 투표 ID
 	 * @param userId 사용자 ID
 	 */
@@ -209,26 +212,26 @@ public class VotingService {
 				log.error("파생 이미지 생성자 ID 조회 실패: voteId={}", voteId);
 				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
 			});
-			
+
 		Long ownerId = similarityVoteRepository.findOriginalImageOwnerId(voteId)
 			.orElseThrow(() -> {
 				log.error("원작 이미지 소유자 ID 조회 실패: voteId={}", voteId);
 				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
 			});
-		
+
 		// 명확한 변수명으로 권한 검증
 		if (isRestrictedUser(userId, creatorId, ownerId)) {
-			log.warn("투표 권한 거부: voteId={}, userId={}, creatorId={}, ownerId={}", 
+			log.warn("투표 권한 거부: voteId={}, userId={}, creatorId={}, ownerId={}",
 				voteId, userId, creatorId, ownerId);
 			throw new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
 		}
-		
+
 		log.debug("투표 권한 검증 통과: voteId={}, userId={}", voteId, userId);
 	}
 
 	/**
 	 * 권한 검증 로직을 별도 메서드로 분리 (테스트 용이성)
-	 * 
+	 *
 	 * @param userId 현재 사용자 ID
 	 * @param creatorId 파생 이미지 생성자 ID
 	 * @param ownerId 원작 이미지 소유자 ID
@@ -240,14 +243,18 @@ public class VotingService {
 
 	/**
 	 * 일일 투표 제한 체크
-	 * 
+	 *
 	 * @param userId 사용자 ID
 	 */
 	private void validateDailyVoteLimit(Long userId) {
-		long todayVoteCount = voteResultRepository.countTodayVotesByUserId(userId);
-		
+		LocalDate today = java.time.LocalDate.now();
+		LocalDateTime startOfDay = today.atStartOfDay();
+		LocalDateTime startOfNextDay = today.plusDays(1).atStartOfDay();
+
+		long todayVoteCount = voteResultRepository.countTodayVotesByUserId(userId, startOfDay, startOfNextDay);
+
 		if (todayVoteCount >= voteProperties.getMaxVotesPerUserPerDay()) {
-			log.warn("일일 투표 한도 초과: userId={}, todayCount={}, maxLimit={}", 
+			log.warn("일일 투표 한도 초과: userId={}, todayCount={}, maxLimit={}",
 				userId, todayVoteCount, voteProperties.getMaxVotesPerUserPerDay());
 			throw new AppException(VOTE_DAILY_LIMIT_EXCEEDED_EXCEPTION);
 		}
