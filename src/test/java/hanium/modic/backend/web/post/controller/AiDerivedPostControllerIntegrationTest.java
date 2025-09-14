@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +30,6 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.request.CreateAiDerivedPostRequest;
@@ -77,6 +75,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 
 			CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 				createdAiImage.getId(),
+				1L,
 				"AI Generated Post",
 				"This is an AI derived post created from integration test",
 				2000L,
@@ -130,6 +129,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			999L, // 존재하지 않는 AI 이미지 ID
+			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -182,6 +182,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			otherUserAiImage.getId(),
+			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -266,7 +267,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("AI 파생 포스트 삭제 실패 - 포스트 접근 권한 없음")
 	void deleteAiDerivedPost_PostAccessDenied_IntegrationTest() throws Exception {
 		// given
-		UserEntity currentUser = ContextHolderUtil.getCurrentUser();
+		ContextHolderUtil.getCurrentUser();
 
 		// 다른 사용자 생성
 		UserEntity otherUser = UserEntity.builder()
@@ -335,6 +336,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		CreateAiDerivedPostRequest invalidRequest = new CreateAiDerivedPostRequest(
 			null, // AI 이미지 ID 누락
+			null, // 원본 이미지 ID 누락
 			null, // 제목 누락
 			null, // 설명 누락
 			-1L,  // 음수 상업적 가격
@@ -352,6 +354,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.reason").isArray())
 			.andExpect(jsonPath("$.reason[*]").value(Matchers.hasItems(
 				"생성된 AI 이미지 ID는 필수입니다.",
+				"원본 이미지 ID는 필수입니다.",
 				"제목은 필수입니다.",
 				"설명은 필수입니다.",
 				"상업적 가격은 0 이상이어야 합니다.",

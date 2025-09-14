@@ -56,7 +56,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
 
 		verify(aiDerivedPostService, never()).createAiDerivedPost(
-			anyLong(), anyLong(), anyString(), anyString(), anyLong(), anyLong(), anyLong());
+			anyLong(), anyLong(), anyLong(), anyString(), anyString(), anyLong(), anyLong(), anyLong());
 	}
 
 	static Stream<Arguments> invalidCreateAiDerivedPostRequests() {
@@ -64,6 +64,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					null,
+					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -75,6 +76,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
+					1L,
 					1L,
 					null,
 					"This is an AI derived post",
@@ -88,6 +90,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
+					1L,
 					"",
 					"This is an AI derived post",
 					2000L,
@@ -99,6 +102,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
+					1L,
 					1L,
 					"AI Generated Post",
 					null,
@@ -112,6 +116,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
+					1L,
 					"AI Generated Post",
 					"",
 					2000L,
@@ -123,6 +128,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
+					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -136,6 +142,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
+					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					-1L,
@@ -147,6 +154,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
+					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -160,6 +168,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
+					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -172,6 +181,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
+					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -183,6 +193,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
+					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -202,6 +213,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			999L,
+			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -210,7 +222,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		);
 
 		when(aiDerivedPostService.createAiDerivedPost(
-			anyLong(), eq(request.createdAiImageId()), eq(request.title()),
+			anyLong(), eq(request.createdAiImageId()), eq(request.originalImageId()), eq(request.title()),
 			eq(request.description()), eq(request.commercialPrice()),
 			eq(request.nonCommercialPrice()), eq(request.ticketPrice())
 		)).thenThrow(new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
@@ -231,6 +243,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			1L,
+			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -239,7 +252,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		);
 
 		when(aiDerivedPostService.createAiDerivedPost(
-			anyLong(), eq(request.createdAiImageId()), eq(request.title()),
+			anyLong(), eq(request.createdAiImageId()), eq(request.originalImageId()), eq(request.title()),
 			eq(request.description()), eq(request.commercialPrice()),
 			eq(request.nonCommercialPrice()), eq(request.ticketPrice())
 		)).thenThrow(new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION));

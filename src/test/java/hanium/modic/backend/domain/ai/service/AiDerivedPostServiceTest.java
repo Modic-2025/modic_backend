@@ -29,6 +29,11 @@ import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.post.service.AiDerivedPostService;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
+import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
+import hanium.modic.backend.domain.vote.enums.VoteStatus;
+import hanium.modic.backend.domain.vote.enums.VoteType;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
@@ -54,6 +59,12 @@ class AiDerivedPostServiceTest {
 	@Mock
 	private AsyncPostStatisticsService asyncPostStatisticsService;
 
+	@Mock
+	private SimilarityVoteRepository similarityVoteRepository;
+
+	@Mock
+	private SimilarityVoteSummaryRepository voteSummaryRepository;
+
 	@InjectMocks
 	private AiDerivedPostService aiDerivedPostService;
 
@@ -63,6 +74,7 @@ class AiDerivedPostServiceTest {
 		// given
 		Long userId = 1L;
 		Long createdAiImageId = 100L;
+		Long originalImageId = 200L;
 		String title = "AI Generated Post";
 		String description = "This is an AI derived post";
 		Long commercialPrice = 2000L;
@@ -77,10 +89,20 @@ class AiDerivedPostServiceTest {
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
 		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
 		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
+		when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenAnswer(invocation -> {
+			SimilarityVoteEntity arg = invocation.getArgument(0);
+			return SimilarityVoteEntity.builder()
+				.originalImageId(arg.getOriginalImageId())
+				.derivedImageId(arg.getDerivedImageId())
+				.derivedPostId(1L)
+				.voteType(VoteType.SIMILARITY_CHECK)
+				.status(VoteStatus.PENDING)
+				.build();
+		});
 
 		// when
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
-			userId, createdAiImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
+			userId, createdAiImageId, originalImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
 
 		// then
 		assertThat(response).isNotNull();
@@ -118,6 +140,7 @@ class AiDerivedPostServiceTest {
 		// given
 		Long userId = 1L;
 		Long nonExistentAiImageId = 999L;
+		Long originalImageId = 200L;
 		String title = "AI Generated Post";
 		String description = "This is an AI derived post";
 		Long commercialPrice = 2000L;
@@ -129,7 +152,7 @@ class AiDerivedPostServiceTest {
 		// when & then
 		AppException exception = assertThrows(AppException.class,
 			() -> aiDerivedPostService.createAiDerivedPost(
-				userId, nonExistentAiImageId, title, description,
+				userId, nonExistentAiImageId, originalImageId, title, description,
 				commercialPrice, nonCommercialPrice, ticketPrice));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION);
@@ -145,6 +168,7 @@ class AiDerivedPostServiceTest {
 		Long userId = 1L;
 		Long otherUserId = 2L;
 		Long createdAiImageId = 100L;
+		Long originalImageId = 200L;
 		String title = "AI Generated Post";
 		String description = "This is an AI derived post";
 		Long commercialPrice = 2000L;
@@ -160,7 +184,7 @@ class AiDerivedPostServiceTest {
 		// when & then
 		AppException exception = assertThrows(AppException.class,
 			() -> aiDerivedPostService.createAiDerivedPost(
-				userId, createdAiImageId, title, description,
+				userId, createdAiImageId, originalImageId, title, description,
 				commercialPrice, nonCommercialPrice, ticketPrice));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
