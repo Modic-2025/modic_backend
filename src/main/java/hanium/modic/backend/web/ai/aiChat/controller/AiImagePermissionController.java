@@ -31,13 +31,11 @@ public class AiImagePermissionController {
 
 	@Operation(
 		summary = "코인으로 AI 이미지 생성권 구매",
-		description = "코인을 사용하여 AI 이미지 생성권을 구매합니다. 기본 3회 생성 가능합니다.",
+		description = "코인을 사용하여 AI 이미지 생성권을 구매합니다. 기본 20회 생성 가능합니다.",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]"),
 			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
 			@ApiResponse(responseCode = "400", description = "코인이 부족합니다.[U-004]"),
-			@ApiResponse(responseCode = "500", description = "코인 송금에 실패하였습니다.[U-006]"),
-			@ApiResponse(responseCode = "409", description = "이미 AI 이미지 생성권을 구매했습니다.[AI-009]")
+			@ApiResponse(responseCode = "500", description = "코인 송금에 실패하였습니다.[U-006]")
 		}
 	)
 	@PostMapping("/buy-with-coin")
@@ -52,13 +50,11 @@ public class AiImagePermissionController {
 
 	@Operation(
 		summary = "티켓으로 AI 이미지 생성권 구매",
-		description = "티켓을 사용하여 AI 이미지 생성권을 구매합니다. 기본 3회 생성 가능합니다.",
+		description = "티켓을 사용하여 AI 이미지 생성권을 구매합니다. 기본 20회 생성 가능합니다.",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]"),
 			@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]"),
 			@ApiResponse(responseCode = "400", description = "티켓이 부족합니다.[AI-006]"),
-			@ApiResponse(responseCode = "500", description = "티켓 처리에 실패했습니다.[AI-005]"),
-			@ApiResponse(responseCode = "409", description = "이미 AI 이미지 생성권을 구매했습니다.[AI-009]")
+			@ApiResponse(responseCode = "500", description = "티켓 처리에 실패했습니다.[AI-005]")
 		}
 	)
 	@PostMapping("/buy-with-ticket")
@@ -75,7 +71,6 @@ public class AiImagePermissionController {
 		summary = "AI 이미지 생성권 남은 횟수 조회",
 		description = "특정 포스트에 대한 사용자의 AI 이미지 생성권 남은 횟수를 조회합니다.(구매한 이력이 없으면 AI-004 에러)",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]"),
 			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
 		}
 	)

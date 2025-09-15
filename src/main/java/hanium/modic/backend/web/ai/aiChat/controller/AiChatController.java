@@ -73,8 +73,11 @@ public class AiChatController {
 			이미지는 사전에 업로드되어 있어야 하며, 업로드된 이미지 ID를 함께 전송해야 합니다.
 			""",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]"),
-			@ApiResponse(responseCode = "400", description = "AI 이미지 생성권이 부족합니다.[AI-007]")
+			@ApiResponse(responseCode = "404", description = "AI 채팅방을 찾을 수 없습니다.[AC-001]"),
+			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]"),
+			@ApiResponse(responseCode = "400", description = "AI 이미지 생성권이 부족합니다.[AI-007]"),
+			@ApiResponse(responseCode = "500", description = "AI 서버와의 통신 중 에러가 발생하였습니다.[AI-012]"),
+			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
 	)
 	@PostMapping("/messages")
@@ -102,7 +105,8 @@ public class AiChatController {
 			
 			""",
 		responses = {
-			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
+			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]"),
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
 		}
 	)
 	@GetMapping("/messages")
@@ -144,7 +148,10 @@ public class AiChatController {
 		description = """
 			AI 이미지 생성 요청 후, 해당 요청 ID로 SSE 구독을 시작해야 실시간으로 이미지를 받을 수 있습니다.
 			서버는 이미지 생성 완료 시 SSE를 통해 이미지를 전송하고 서버연결을 끊습니다.
-			"""
+			""",
+		responses = {
+			@ApiResponse(responseCode = "403", description = "유저 권한 오류[C-002]")
+		}
 	)
 	public SseEmitter subscribe(
 		@PathVariable String requestId,

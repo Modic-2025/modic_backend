@@ -80,6 +80,7 @@ public class AiChatImageController {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 이름입니다.[I-003]"),
+			@ApiResponse(responseCode = "404", description = "AI 채팅방을 찾을 수 없습니다.[AC-001]"),
 			@ApiResponse(responseCode = "409", description = "이미지 경로가 중복되었습니다.[I-005]")
 		}
 	)
