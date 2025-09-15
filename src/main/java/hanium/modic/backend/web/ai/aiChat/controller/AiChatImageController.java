@@ -92,7 +92,7 @@ public class AiChatImageController {
 		Long id = aiChatImageService.saveImage(
 			userEntity.getId(),
 			postId,
-			request.imageUsagePurpose(),
+			ImagePrefix.AI_REQUEST,
 			request.fileName(),
 			request.imagePath()
 		).getId();
