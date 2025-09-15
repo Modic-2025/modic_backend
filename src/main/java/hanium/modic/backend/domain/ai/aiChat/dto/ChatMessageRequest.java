@@ -5,7 +5,6 @@ package hanium.modic.backend.domain.ai.aiChat.dto;
  */
 public record ChatMessageRequest(
 	String textContent,
-	Long aiChatImageId, // 이미지 첨부 시에만 (optional)
-	Boolean isImageGeneration // 이미지 생성 요청 여부
+	Long aiChatImageId // 이미지 첨부 시에만 (optional)
 ) {
 }

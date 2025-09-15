@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,9 @@ import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiChatRequestDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.GptChatResponseDto;
+import hanium.modic.backend.domain.ai.aiServer.dto.ClassifyRequestCategoryDto;
+import hanium.modic.backend.domain.ai.aiServer.dto.chatGpt.ChatGPTResponse;
+import hanium.modic.backend.domain.ai.aiServer.dto.chatGpt.GptChatResponseDto;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.RequestCategory;
@@ -47,8 +48,9 @@ public class AiServerService {
 	private final AiImagePermissionService aiImagePermissionService;
 	private final AiChatImageRepository aiChatImageRepository;
 	private final AiChatMessageRepository aiChatMessageRepository;
-	private final ChatClient chatClient;
+	private final AiChatService aiChatService;
 	private final EmitterService emitterService;
+	private final ObjectMapper	 objectMapper;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	@Transactional
@@ -64,7 +66,7 @@ public class AiServerService {
 
 		// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
 		RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
-
+		log.info("Classified request category: {}", requestCategory);
 		if (requestCategory == RequestCategory.CHAT_GENERATION) {
 			// 채팅응답일 경우 채팅 생성 요청
 			requestChatCreation(chatMessage);
@@ -78,21 +80,15 @@ public class AiServerService {
 	private RequestCategory classifyRequestCategory(String message) {
 
 		String systemPrompt = """
-			You are a classifier. 
+			You are a classifier.
 			Given a user input, decide whether it is:
 			- "IMAGE_GENERATION" if the user is asking to generate an image
 			- "CHAT_GENERATION" if it is a normal conversation
 			Only return one of the two exact words.
 			""";
 
-		String response = chatClient.prompt()
-			.system(systemPrompt)
-			.user(message)
-			.call()
-			.content()
-			.trim();
-
-		return RequestCategory.valueOf(response);
+		String category = aiChatService.prompt(systemPrompt, message);
+		return RequestCategory.valueOf(category);
 	}
 
 	// 채팅응답일 경우 채팅 생성 요청
@@ -149,16 +145,13 @@ public class AiServerService {
 			Return the result strictly as JSON including response and newSummary fields
 			""";
 
-		String resultJson = chatClient.prompt()
-			.system(systemPrompt)
-			.user("Chat summary so far: " + chatSummary + "\nUser message: " + textContent)
-			.call()
-			.content();
+		String jsonResponse = aiChatService.prompt(
+			systemPrompt,
+			"Chat summary so far: " + chatSummary + "\nUser message: " + textContent
+		);
 
-		// JSON 파싱 (간단히 Jackson ObjectMapper 사용)
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readValue(resultJson, GptChatResponseDto.class);
+			return objectMapper.readValue(jsonResponse, GptChatResponseDto.class);
 		} catch (Exception e) {
 			throw new AppException(ErrorCode.AI_SERVER_ERROR);
 		}

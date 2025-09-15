@@ -1,7 +1,6 @@
 package hanium.modic.backend.domain.ai.aiChat.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -80,12 +79,23 @@ public class AiChatMessageService {
 			aiChatImages = aiChatImageRepository.findById(request.aiChatImageId())
 				.map(List::of)
 				.orElse(List.of());
+			// 이미지들이 자신의 것인지 확인
+			validateAiChatImagesOwnership(userId, aiChatImages);
 		}
 
 		// Ai 요청
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
 		return new SendUserMessageResponse(requestId);
+	}
+
+	// 이미지들이 자신의 것인지 확인
+	private void validateAiChatImagesOwnership(Long userId, List<AiChatImageEntity> aiChatImages) {
+		for (AiChatImageEntity image : aiChatImages) {
+			if (!image.getUserId().equals(userId)) {
+				throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
+			}
+		}
 	}
 
 	// aiChatImageId가 존재하면 해당 엔티티 존재 검증(null 허용)
