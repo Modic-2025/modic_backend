@@ -5,17 +5,11 @@ import static hanium.modic.backend.domain.image.domain.ImagePrefix.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.io.ByteArrayInputStream;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.ResultActions;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
@@ -33,11 +27,15 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.common.image.dto.request.CallbackImageSaveUrlRequest;
 import hanium.modic.backend.web.common.image.dto.request.CreateImageSaveUrlRequest;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
-	private AmazonS3 amazonS3;
+	private S3Client s3Client;
 	@Autowired
 	private S3Properties s3Properties;
 	@Autowired
@@ -176,20 +174,24 @@ public class PostImageControllerIntegrationTest extends BaseIntegrationTest {
 	}
 
 	private void uploadImage(String filePath, String content) {
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentLength(content.length());
-		metadata.setContentType("image/jpeg");
+		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+			.bucket(s3Properties.getBucketName())
+			.key(filePath)
+			.contentType("image/jpeg")
+			.build();
 
-		amazonS3.putObject(
-			s3Properties.getBucketName(),
-			filePath,
-			new ByteArrayInputStream(content.getBytes()),
-			metadata
+		s3Client.putObject(
+			putObjectRequest,
+			RequestBody.fromString(content)
 		);
 	}
 
 	private void deleteImage(String filePath) {
-		amazonS3.deleteObject(s3Properties.getBucketName(), filePath);
-	}
+		DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+			.bucket(s3Properties.getBucketName())
+			.key(filePath)
+			.build();
 
+		s3Client.deleteObject(deleteObjectRequest);
+	}
 }

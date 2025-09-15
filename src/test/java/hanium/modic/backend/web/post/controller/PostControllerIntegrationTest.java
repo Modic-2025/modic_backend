@@ -14,9 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
@@ -37,11 +34,15 @@ import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 class PostControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
-	private AmazonS3 amazonS3;
+	private S3Client s3Client;
 	@Autowired
 	private S3Properties s3Properties;
 	@Autowired
@@ -315,20 +316,25 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.data.canReview").value(false));
 	}
 
-	private void uploadImage(String filePath, String content) {
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentLength(content.length());
-		metadata.setContentType("image/jpeg");
+	private void uploadImage(String filePath, String  content) {
+		PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+			.bucket(s3Properties.getBucketName())
+			.key(filePath)
+			.contentType("image/jpeg")
+			.build();
 
-		amazonS3.putObject(
-			s3Properties.getBucketName(),
-			filePath,
-			new ByteArrayInputStream(content.getBytes()),
-			metadata
+		s3Client.putObject(
+			putObjectRequest,
+			RequestBody.fromString(content)
 		);
 	}
 
 	private void deleteImage(String filePath) {
-		amazonS3.deleteObject(s3Properties.getBucketName(), filePath);
+		DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+			.bucket(s3Properties.getBucketName())
+			.key(filePath)
+			.build();
+
+		s3Client.deleteObject(deleteObjectRequest);
 	}
 }

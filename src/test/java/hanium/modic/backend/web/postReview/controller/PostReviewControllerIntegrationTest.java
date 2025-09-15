@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import com.amazonaws.services.s3.AmazonS3;
-
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
@@ -35,6 +33,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.postReview.dto.request.CreatePostReviewRequest;
+import software.amazon.awssdk.services.s3.S3Client;
 
 class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -54,7 +53,7 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 	private AiChatRoomRepository aiChatRoomRepository;
 
 	@Autowired
-	private AmazonS3 amazonS3;
+	private S3Client s3Client;
 
 	@Autowired
 	private S3Properties s3Properties;
