@@ -30,6 +30,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,12 +54,13 @@ public class AiChatController {
 			AI 이미지 생성권이 있어야 합니다.(생성권을 다 소모하더라도 조회는 가능합니다.)
 			""",
 		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
 		}
 	)
 	@GetMapping("/room")
 	public ResponseEntity<AppResponse<GetChatRoomResponse>> getChatRoom(
-		@Parameter(description = "포스트 ID") @PathVariable Long postId,
+		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@CurrentUser UserEntity user
 	) {
 		GetChatRoomResponse response = aiChatRoomService.getChatRoom(user.getId(), postId);
@@ -82,7 +85,7 @@ public class AiChatController {
 	)
 	@PostMapping("/messages")
 	public ResponseEntity<AppResponse<SendUserMessageResponse>> sendUserMessage(
-		@Parameter(description = "ai chat room ID") @PathVariable Long postId,
+		@Parameter(description = "ai chat room ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Valid @RequestBody ChatMessageRequest request,
 		@CurrentUser UserEntity user
 	) {
@@ -111,7 +114,7 @@ public class AiChatController {
 	)
 	@GetMapping("/messages")
 	public ResponseEntity<AppResponse<PageResponse<ChatMessageResponse>>> getChatMessages(
-		@Parameter(description = "포스트 ID") @PathVariable Long postId,
+		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Parameter(description = "페이지 번호 (0부터 시작)")
 		@RequestParam(defaultValue = "0") @Min(0) int page,
 		@Parameter(description = "페이지 크기 (최대 50)")
@@ -128,12 +131,13 @@ public class AiChatController {
 		summary = "채팅 컨텍스트 초기화",
 		description = "채팅 컨텍스트를 초기화합니다. 기존 채팅 내역은 유지되지만 AI가 참조하지 않습니다.",
 		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
 		}
 	)
 	@PostMapping("/context/reset")
 	public ResponseEntity<AppResponse<ChatContextResetResponse>> resetContext(
-		@Parameter(description = "포스트 ID") @PathVariable Long postId,
+		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@CurrentUser UserEntity user) {
 
 		ChatContextResetResponse response = aiChatRoomService.resetContext(user.getId(), postId);
@@ -150,11 +154,12 @@ public class AiChatController {
 			서버는 이미지 생성 완료 시 SSE를 통해 이미지를 전송하고 서버연결을 끊습니다.
 			""",
 		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "403", description = "유저 권한 오류[C-002]")
 		}
 	)
 	public SseEmitter subscribe(
-		@PathVariable String requestId,
+		@PathVariable @NotBlank(message = "요청 ID는 필수입니다.") String requestId,
 		@CurrentUser UserEntity userEntity
 	) {
 		// SSE 연결 생성 및 Emitter 등록

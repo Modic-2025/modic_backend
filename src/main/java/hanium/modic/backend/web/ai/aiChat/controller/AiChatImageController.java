@@ -34,6 +34,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "AI 이미지 API", description = "AI 이미지 생성 및 관리 API")
@@ -54,6 +55,7 @@ public class AiChatImageController {
 			이미지 업로드 후, 콜백 API를 통해 이미지 저장을 완료해야 합니다.
 			""",
 		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 이름입니다.[I-003]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
 			@ApiResponse(responseCode = "400", description = "이미지가 저장되지 않았습니다.[I-001]")
@@ -86,7 +88,7 @@ public class AiChatImageController {
 	)
 	public ResponseEntity<AppResponse<CallbackImageSaveUrlResponse>> callbackImageSaveUrl(
 		@RequestBody @Valid CallbackImageSaveUrlRequest request,
-		@RequestParam(required = true) Long postId,
+		@RequestParam(required = true) @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@CurrentUser UserEntity userEntity
 	) {
 		Long id = aiChatImageService.saveImage(
@@ -107,13 +109,14 @@ public class AiChatImageController {
 		summary = "AI 이미지 조회 URL 생성(사용자가 올린 이미지, AI 생성 이미지 모두 포함)",
 		description = "사용자가 업로드한 요청 이미지를 임시로 확인할 수 있는 S3 Presigned URL을 반환합니다.",
 		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
 			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]"),
 			@ApiResponse(responseCode = "400", description = "잘못된 이미지 파일 경로입니다.[I-004]"),
 			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
 	)
 	public ResponseEntity<AppResponse<CreateImageGetUrlResponse>> createImageGetUrl(
-		@PathVariable Long imageId,
+		@PathVariable @Positive(message = "이미지 ID는 양수여야 합니다.") Long imageId,
 		@CurrentUser UserEntity userEntity
 	) {
 		String imageGetUrl = aiChatImageService.validateImageOwnerAndCreateImageGetUrl(imageId, userEntity.getId());
