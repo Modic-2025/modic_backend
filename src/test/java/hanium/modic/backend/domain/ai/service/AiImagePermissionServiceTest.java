@@ -17,11 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
-import hanium.modic.backend.domain.ai.domain.AiImagePermissionEntity;
-import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
+import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
@@ -36,13 +38,13 @@ class AiImagePermissionServiceTest {
 	private UserCoinService userCoinService;
 
 	@Mock
-	private AiRequestTicketService aiRequestTicketService;
+	private TicketService ticketService;
 
 	@Mock
 	private PostEntityRepository postRepository;
 
 	@Mock
-	private AiImagePermissionRepository aiImagePermissionRepository;
+	private AiChatRoomRepository aiChatRoomRepository;
 
 	@Mock
 	private LockManager lockManager;
@@ -55,7 +57,7 @@ class AiImagePermissionServiceTest {
 		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
 
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
+		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 
 		// when
@@ -63,7 +65,7 @@ class AiImagePermissionServiceTest {
 
 		// then
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
+		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
 		verify(userCoinService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
 	}
 
@@ -83,7 +85,7 @@ class AiImagePermissionServiceTest {
 		assertEquals(POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository, never()).upsertAndIncrease(anyLong(), anyLong(), anyInt());
+		verify(aiChatRoomRepository, never()).upsertAndIncrease(anyLong(), anyLong(), anyInt());
 		verify(userCoinService, never()).consumeCoin(anyLong(), anyLong());
 	}
 
@@ -95,7 +97,7 @@ class AiImagePermissionServiceTest {
 		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
 
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
+		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION))
 			.when(userCoinService).consumeCoin(anyLong(), anyLong());
@@ -107,7 +109,7 @@ class AiImagePermissionServiceTest {
 		assertEquals(USER_COIN_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
+		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
 		verify(userCoinService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
 	}
 
@@ -119,7 +121,7 @@ class AiImagePermissionServiceTest {
 		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
 
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
+		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 
 		// when
@@ -127,8 +129,8 @@ class AiImagePermissionServiceTest {
 
 		// then
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(aiRequestTicketService).useTicket(testUser.getId(), testPost.getTicketPrice());
+		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
+		verify(ticketService).useTicket(testUser.getId(), testPost.getTicketPrice());
 	}
 
 	@Test
@@ -147,8 +149,8 @@ class AiImagePermissionServiceTest {
 		assertEquals(POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository, never()).upsertAndIncrease(any(), any(), anyInt());
-		verify(aiRequestTicketService, never()).useTicket(anyLong(), anyLong());
+		verify(aiChatRoomRepository, never()).upsertAndIncrease(any(), any(), anyInt());
+		verify(ticketService, never()).useTicket(anyLong(), anyLong());
 	}
 
 	@Test
@@ -159,10 +161,10 @@ class AiImagePermissionServiceTest {
 		PostEntity testPost = PostFactory.createMockPostWithId(1L, testUser);
 
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
-		when(aiImagePermissionRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
+		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION))
-			.when(aiRequestTicketService).useTicket(anyLong(), anyLong());
+			.when(ticketService).useTicket(anyLong(), anyLong());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, 
@@ -171,8 +173,8 @@ class AiImagePermissionServiceTest {
 		assertEquals(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
-		verify(aiImagePermissionRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(aiRequestTicketService).useTicket(testUser.getId(), testPost.getTicketPrice());
+		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
+		verify(ticketService).useTicket(testUser.getId(), testPost.getTicketPrice());
 	}
 
 	@Test
@@ -182,13 +184,13 @@ class AiImagePermissionServiceTest {
 		final Long userId = 1L;
 		final Long postId = 1L;
 
-		AiImagePermissionEntity permission = AiImagePermissionEntity.builder()
+		AiChatRoomEntity permission = AiChatRoomEntity.builder()
 			.userId(userId)
 			.postId(postId)
 			.remainingGenerations(3)
 			.build();
 
-		when(aiImagePermissionRepository.findByUserIdAndPostId(anyLong(), anyLong()))
+		when(aiChatRoomRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.of(permission));
 		
 		doAnswer(invocation -> {
@@ -202,8 +204,8 @@ class AiImagePermissionServiceTest {
 
 		// then
 		verify(lockManager).aiImagePermissionLock(eq(userId), eq(postId), any(Runnable.class));
-		verify(aiImagePermissionRepository).findByUserIdAndPostId(userId, postId);
-		verify(aiImagePermissionRepository).save(permission);
+		verify(aiChatRoomRepository).findByUserIdAndPostId(userId, postId);
+		verify(aiChatRoomRepository).save(permission);
 		assertThat(permission.getRemainingGenerations()).isEqualTo(2);
 	}
 
@@ -214,7 +216,7 @@ class AiImagePermissionServiceTest {
 		final Long userId = 1L;
 		final Long postId = 1L;
 
-		when(aiImagePermissionRepository.findByUserIdAndPostId(anyLong(), anyLong()))
+		when(aiChatRoomRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.empty());
 		
 		doAnswer(invocation -> {
@@ -230,7 +232,7 @@ class AiImagePermissionServiceTest {
 		assertEquals(AI_IMAGE_PERMISSION_NOT_FOUND, exception.getErrorCode());
 
 		verify(lockManager).aiImagePermissionLock(eq(userId), eq(postId), any(Runnable.class));
-		verify(aiImagePermissionRepository).findByUserIdAndPostId(userId, postId);
-		verify(aiImagePermissionRepository, never()).save(any());
+		verify(aiChatRoomRepository).findByUserIdAndPostId(userId, postId);
+		verify(aiChatRoomRepository, never()).save(any());
 	}
 }

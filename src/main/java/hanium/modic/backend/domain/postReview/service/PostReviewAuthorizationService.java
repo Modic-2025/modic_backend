@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class PostReviewAuthorizationService {
 
-	private final AiImagePermissionRepository aiImagePermissionRepository;
+	private final AiChatRoomRepository aiChatRoomRepository;
 	private final PostEntityRepository postEntityRepository;
 
 	/**
@@ -40,7 +40,7 @@ public class PostReviewAuthorizationService {
 		}
 
 		// AiImagePermission 존재 여부 확인 (해당 그림체를 사용한 이력이 있는지)
-		return aiImagePermissionRepository.existsByUserIdAndPostId(userId, postId);
+		return aiChatRoomRepository.existsByUserIdAndPostId(userId, postId);
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class PostReviewAuthorizationService {
 		}
 
 		// AiImagePermission 존재 여부 확인 (해당 그림체를 사용한 이력이 있는지)
-		if (!aiImagePermissionRepository.existsByUserIdAndPostId(userId, postId)) {
+		if (!aiChatRoomRepository.existsByUserIdAndPostId(userId, postId)) {
 			throw new AppException(ErrorCode.POST_REVIEW_PERMISSION_DENIED_EXCEPTION);
 		}
 	}

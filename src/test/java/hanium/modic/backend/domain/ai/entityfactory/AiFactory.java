@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.ai.entityfactory;
 
-import hanium.modic.backend.domain.ai.domain.CreatedAiImageEntity;
+import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 
@@ -9,11 +9,10 @@ public class AiFactory {
 	/**
 	 * Mock AI 이미지를 생성한다.
 	 */
-	public static CreatedAiImageEntity createMockCreatedAiImage(Long userId, Long postId, String requestId) {
-		return CreatedAiImageEntity.builder()
+	public static AiChatImageEntity createMockCreatedAiImage(Long userId, Long postId, String requestId) {
+		return AiChatImageEntity.builder()
 			.userId(userId)
 			.postId(postId)
-			.requestId(requestId)
 			.imagePath("test/path/ai-image.png")
 			.fullImageName("ai-image-full-name.png")
 			.imageName("ai-image")
@@ -25,10 +24,10 @@ public class AiFactory {
 	/**
 	 * ID를 가진 Mock AI 이미지를 생성한다.
 	 */
-	public static CreatedAiImageEntity createMockCreatedAiImageWithId(Long id, Long userId, Long postId, String requestId) {
-		CreatedAiImageEntity entity = createMockCreatedAiImage(userId, postId, requestId);
+	public static AiChatImageEntity createMockCreatedAiImageWithId(Long id, Long userId, Long postId, String requestId) {
+		AiChatImageEntity entity = createMockCreatedAiImage(userId, postId, requestId);
 		try {
-			var field = CreatedAiImageEntity.class.getDeclaredField("id");
+			var field = AiChatImageEntity.class.getDeclaredField("id");
 			field.setAccessible(true);
 			field.set(entity, id);
 		} catch (Exception e) {
