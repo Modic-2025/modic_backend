@@ -47,6 +47,9 @@ public class AiChatMessageService {
 	// 사용자의 메시지,이미지 저장 후 AI 요청
 	@Transactional
 	public SendUserMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
+		// 메시지랑 이미지 둘 다 비어있으면 에러
+		validateRequestMessageNotEmpty(request);
+
 		// 채팅방 조회
 		AiChatRoomEntity aiChatRoom = aiChatRoomRepository.findByUserIdAndPostId(userId, postId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_CHAT_ROOM_NOT_FOUND));
@@ -87,6 +90,16 @@ public class AiChatMessageService {
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
 		return new SendUserMessageResponse(requestId);
+	}
+
+	// 요청 메세지가 비어있는지 검증
+	private void validateRequestMessageNotEmpty(ChatMessageRequest request) {
+		boolean isEmptyTextContext = request.textContent() == null || request.textContent().trim().isEmpty();
+		boolean isEmptyImageId = request.aiChatImageId() == null;
+
+		if (isEmptyTextContext && isEmptyImageId) {
+			throw new AppException(ErrorCode.EMPTY_CHAT_MESSAGE_EXCEPTION);
+		}
 	}
 
 	// 이미지들이 자신의 것인지 확인
