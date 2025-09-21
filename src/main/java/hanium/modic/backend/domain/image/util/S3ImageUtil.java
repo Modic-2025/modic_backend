@@ -13,6 +13,9 @@ import java.util.stream.Collectors;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.services.cloudfront.CloudFrontUrlSigner;
+
+import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.property.property.CloudFrontProperties;
 import hanium.modic.backend.common.property.property.S3Properties;
@@ -134,28 +137,27 @@ public class S3ImageUtil implements ImageUtil {
 	public String createImageGetUrl(String resourcePath) {
 		try {
 			String domain = cloudFrontProperties.getDomain();
+			// 도메인에 프로토콜이 포함된 경우 제거
 			if (domain.startsWith("https://")) {
 				domain = domain.substring(8);
 			} else if (domain.startsWith("http://")) {
 				domain = domain.substring(7);
 			}
-
+			// 경로는 선행 슬래시 보장
 			String path = resourcePath.startsWith("/") ? resourcePath : ("/" + resourcePath);
 			String resourceUrl = HTTPS + domain + path;
 
-			Instant expires = Instant.now().plus(EXPIRATION_TIME);
+			Date expires = Date.from(Instant.now().plus(EXPIRATION_TIME));
 
-			String signedUrl = CloudFrontUrlSigner.getSignedUrl(
+			return CloudFrontUrlSigner.getSignedURLWithCannedPolicy(
 				resourceUrl,
 				cloudFrontProperties.getKeyPairId(),
 				pk,
-				Date.from(expires).toInstant()
+				expires
 			);
-
-			return signedUrl;
 		} catch (Exception e) {
 			log.error("서명 URL 생성 중 에러 발생: {}", e.getMessage(), e);
-			throw new AppException(S3_SERVER_ERROR);
+			throw new AppException(ErrorCode.S3_SERVER_ERROR);
 		}
 	}
 
