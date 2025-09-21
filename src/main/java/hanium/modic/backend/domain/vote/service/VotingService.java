@@ -20,7 +20,6 @@ import hanium.modic.backend.domain.vote.enums.VoteStatus;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteResultRepository;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
-import hanium.modic.backend.domain.vote.service.VoteRewardService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
@@ -95,10 +94,15 @@ public class VotingService {
 			});
 
 			// 9. 리워드 처리 (투표 참여 직후)
-			voteRewardService.processVoteReward(voteId, userId, decision);
+			VoteRewardResult reward = voteRewardService.processVoteReward(voteId, userId, decision);
 
-			// 10. 단순한 응답 생성
-			return VoteParticipationResponse.of(voteId);
+			// 10. 응답 생성
+			return VoteParticipationResponse.of(
+				voteId,
+				reward.isCorrectAnswer(),
+				reward.currentStreak(),
+				reward.receivedTicket()
+			);
 		} catch (LockException e) {
 			log.error("투표 참여 락 획득 실패: voteId={}, userId={}", voteId, userId, e);
 			throw new AppException(VOTE_UPDATE_FAIL_EXCEPTION);

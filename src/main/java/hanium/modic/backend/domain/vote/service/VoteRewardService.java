@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.domain.user.service.UserVoteStreakService;
+import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
 import hanium.modic.backend.domain.vote.enums.VoteDecision;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
@@ -23,6 +24,7 @@ public class VoteRewardService {
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 	private final UserVoteStreakService userVoteStreakService;
 	private final VoteProperties voteProperties;
+	private final TicketService ticketService;
 
 	public VoteDecision analyzeTrend(Long voteId) {
 		SimilarityVoteSummaryEntity summary = voteSummaryRepository.findByVoteId(voteId)
@@ -39,15 +41,24 @@ public class VoteRewardService {
 	}
 
 	@Transactional
-	public void processVoteReward(Long voteId, Long userId, VoteDecision userDecision) {
+	public VoteRewardResult processVoteReward(Long voteId, Long userId, VoteDecision userDecision) {
 		try {
 			VoteDecision trend = analyzeTrend(voteId);
 			boolean isCorrect = isCorrectAnswer(userDecision, trend);
 			userVoteStreakService.updateStreak(userId, isCorrect);
+
+			int currentStreak = userVoteStreakService.getStreakCount(userId);
+			boolean receivedTicket = false;
+			if (isCorrect && currentStreak >= voteProperties.getStreakRewardCount()) {
+				ticketService.giveRewardTicket(userId);
+				receivedTicket = true;
+			}
 			log.info("투표 리워드 처리 완료: voteId={}, userId={}, userDecision={}, trend={}, isCorrect={}",
 				voteId, userId, userDecision, trend, isCorrect);
+			return new VoteRewardResult(isCorrect, currentStreak, receivedTicket);
 		} catch (Exception e) {
 			log.error("투표 리워드 처리 중 오류 발생: voteId={}, userId={}", voteId, userId, e);
+			return new VoteRewardResult(false, userVoteStreakService.getStreakCount(userId), false);
 		}
 	}
 }
