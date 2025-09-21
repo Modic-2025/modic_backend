@@ -15,4 +15,14 @@ public class VoteProperties {
 	private int humanVoteWeight;
 	private Boolean enableAiAssessment;
 	private int maxVotesPerUserPerDay;
+
+	/**
+	 * 연속 정답 리워드 지급 기준 횟수 (기본값 3)
+	 */
+	private int streakRewardCount = 3;
+
+	/**
+	 * 연속 정답 카운트 TTL (일, 기본값 30)
+	 */
+	private int streakTtlDays = 30;
 }
