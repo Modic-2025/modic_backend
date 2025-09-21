@@ -60,7 +60,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 			// given
 			UserEntity currentUser = ContextHolderUtil.getCurrentUser();
 
-			// CreatedAiImageEntity 생성 및 저장
+			// AiChatImageEntity 생성 및 저장
 			AiChatImageEntity createdAiImage = AiChatImageEntity.builder()
 				.userId(currentUser.getId())
 				.postId(999L) // 임시 값
@@ -78,6 +78,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 
 			CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 				createdAiImage.getId(),
+				999L, // originalImageId 임시 값
 				"AI Generated Post",
 				"This is an AI derived post created from integration test",
 				2000L,
@@ -131,6 +132,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			999L, // 존재하지 않는 AI 이미지 ID
+			888L, // originalImageId 임시 값
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -185,6 +187,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			otherUserAiImage.getId(),
+			777L, // originalImageId 임시 값
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -338,6 +341,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		CreateAiDerivedPostRequest invalidRequest = new CreateAiDerivedPostRequest(
 			null, // AI 이미지 ID 누락
+			null, // originalImageId 누락
 			null, // 제목 누락
 			null, // 설명 누락
 			-1L,  // 음수 상업적 가격
@@ -355,6 +359,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 			.andExpect(jsonPath("$.reason").isArray())
 			.andExpect(jsonPath("$.reason[*]").value(Matchers.hasItems(
 				"생성된 AI 이미지 ID는 필수입니다.",
+				"원본 이미지 ID는 필수입니다.",
 				"제목은 필수입니다.",
 				"설명은 필수입니다.",
 				"상업적 가격은 0 이상이어야 합니다.",

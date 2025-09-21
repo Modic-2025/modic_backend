@@ -326,6 +326,7 @@ public class PostService {
 	// 포스트 타입에 따라 포스트 목록을 조회
 	private Page<PostEntity> getPostsByType(Pageable pageable, PostType postType) {
 		return switch (postType) {
+			// Todo: AI_DERIVED 조회시 PostStatus 필터링 구현 필요
 			case ORIGINAL -> postEntityRepository.findAllByIsAiDerivedPost(false, pageable);
 			case AI_DERIVED -> postEntityRepository.findAllByIsAiDerivedPost(true, pageable);
 			case ALL -> postEntityRepository.findAll(pageable);

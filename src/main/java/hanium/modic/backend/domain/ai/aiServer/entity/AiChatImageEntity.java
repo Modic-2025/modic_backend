@@ -1,7 +1,5 @@
 package hanium.modic.backend.domain.ai.aiServer.entity;
 
-import org.checkerframework.checker.units.qual.C;
-
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.image.domain.Image;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
@@ -13,19 +11,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "ai_chat_images",
-	indexes = {
-		@Index(name = "idx_ai_chat_images_request_id", columnList = "request_id"),
-		@Index(name = "idx_ai_chat_images_user_id_status_request_id",
-			columnList = "user_id, status, request_id DESC"),
-	})
+@Table(name = "ai_chat_images")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

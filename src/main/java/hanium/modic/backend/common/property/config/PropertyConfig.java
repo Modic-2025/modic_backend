@@ -13,6 +13,7 @@ import hanium.modic.backend.common.property.property.S3Properties;
 import hanium.modic.backend.common.property.property.SecurityProperties;
 import hanium.modic.backend.common.property.property.SwaggerProperties;
 import hanium.modic.backend.common.property.property.TokenProperty;
+import hanium.modic.backend.common.property.property.VoteProperties;
 
 // 전역적으로 사용되는 상수
 @Configuration
@@ -26,7 +27,8 @@ import hanium.modic.backend.common.property.property.TokenProperty;
 	CorsProperties.class,
 	RabbitMqProperties.class,
 	CloudFrontProperties.class,
-	AiProperties.class
+	AiProperties.class,
+	VoteProperties.class
 })
 public class PropertyConfig {
 }

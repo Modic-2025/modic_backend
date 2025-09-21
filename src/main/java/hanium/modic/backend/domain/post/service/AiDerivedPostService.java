@@ -11,9 +11,17 @@ import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
+import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
+import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
+import hanium.modic.backend.domain.vote.enums.VoteDecision;
+import hanium.modic.backend.domain.vote.enums.VoteStatus;
+import hanium.modic.backend.domain.vote.enums.VoteType;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -28,11 +36,16 @@ public class AiDerivedPostService {
 	private final PostService postService;
 	private final AsyncPostStatisticsService asyncPostStatisticsService;
 	private final ImageUtil imageUtil;
+	
+	// 투표 시스템 관련 의존성
+	private final SimilarityVoteRepository similarityVoteRepository;
+	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 
 	/**
-	 * AI 파생 포스트 생성
+	 * AI 파생 포스트 생성 (투표 시스템 연동)
 	 * @param userId 사용자 ID
 	 * @param createdAiImageId 생성된 AI 이미지 ID
+	 * @param originalImageId 비교할 원본 이미지 ID (투표용)
 	 * @param title 포스트 제목
 	 * @param description 포스트 설명
 	 * @param commercialPrice 상업적 가격
@@ -44,6 +57,7 @@ public class AiDerivedPostService {
 	public CreatePostResponse createAiDerivedPost(
 		Long userId,
 		Long createdAiImageId,
+		Long originalImageId,
 		String title,
 		String description,
 		Long commercialPrice,
@@ -58,7 +72,7 @@ public class AiDerivedPostService {
 			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		}
 
-		// AI 파생 포스트 생성 - parentPostId로 원본 포스트 설정
+		// AI 파생 포스트 생성 - PENDING 상태로 생성 (투표 대기)
 		PostEntity aiDerivedPost = PostEntity.builder()
 			.userId(userId)
 			.title(title)
@@ -68,6 +82,7 @@ public class AiDerivedPostService {
 			.ticketPrice(ticketPrice)
 			.isAiDerivedPost(true) // AI 파생 포스트로 설정
 			.parentPostId(createdAiImage.getPostId()) // 원본 포스트 ID 설정
+			.derivedPostStatus(PostStatus.PENDING) // 투표 대기 상태로 설정
 			.build();
 
 		PostEntity savedPost = postEntityRepository.save(aiDerivedPost);
@@ -83,6 +98,29 @@ public class AiDerivedPostService {
 		postImage.updatePost(savedPost);
 
 		postImageEntityRepository.save(postImage);
+
+		// 투표 시스템 연동: SimilarityVoteEntity 생성 (PENDING 상태)
+		SimilarityVoteEntity similarityVote = SimilarityVoteEntity.builder()
+			.originalImageId(originalImageId)
+			.derivedImageId(createdAiImageId)
+			.derivedPostId(savedPost.getId()) // 생성된 파생 포스트 ID 연결
+			.voteType(VoteType.SIMILARITY_CHECK)
+			.status(VoteStatus.PENDING) // AI 평가 대기 상태
+			.build();
+
+		SimilarityVoteEntity savedVote = similarityVoteRepository.save(similarityVote);
+
+		// 투표 집계 초기화: SimilarityVoteSummaryEntity 생성 (기본값 0)
+		SimilarityVoteSummaryEntity voteSummary = SimilarityVoteSummaryEntity.builder()
+			.voteId(savedVote.getId())
+			.approveWeight(0L)
+			.denyWeight(0L)
+			.totalWeight(0L)
+			.aiDecision(VoteDecision.PENDING) // AI 평가 결과 대기
+			.finalDecision(VoteDecision.PENDING) // 최종 결정 대기
+			.build();
+
+		voteSummaryRepository.save(voteSummary);
 
 		// 게시글 통계 초기화 (비동기)
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
