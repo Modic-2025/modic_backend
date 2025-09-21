@@ -25,4 +25,9 @@ public class VoteProperties {
 	 * 연속 정답 카운트 TTL (일, 기본값 30)
 	 */
 	private int streakTtlDays = 30;
+
+	/**
+	 * 리워드 지급 시 증가하는 티켓 수 (기본값 1)
+	 */
+	private int rewardTicketCount = 1;
 }

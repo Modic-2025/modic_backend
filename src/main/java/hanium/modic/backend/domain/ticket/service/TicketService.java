@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.domain.ticket.entity.TicketEntity;
 import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.web.ticket.dto.response.GetTicketInformationResponse;
@@ -19,6 +20,7 @@ public class TicketService {
 
 	private final TicketRepository ticketRepository;
 	private final LockManager lockManager;
+    private final VoteProperties voteProperties;
 
 	// 티켓 관련 정보 조회
 	public GetTicketInformationResponse getTicketInformation(Long userId) {
@@ -76,5 +78,19 @@ public class TicketService {
 			.build();
 
 		return ticketRepository.save(newUserTicket);
+	}
+
+	// 리워드 티켓 지급
+	@Transactional
+	public void giveRewardTicket(final long userId) {
+		try {
+			lockManager.aiRequestTicketLock(userId, () -> {
+				TicketEntity userTicket = getTicketEntity(userId);
+                userTicket.increaseTicket(voteProperties.getRewardTicketCount());
+				ticketRepository.save(userTicket);
+			});
+		} catch (LockException e) {
+			throw new AppException(AI_REQUEST_TICKET_PROCESSING_FAIL_EXCEPTION);
+		}
 	}
 }

@@ -58,6 +58,15 @@ public class TicketEntity extends BaseEntity {
 		this.lastIssuedAt = LocalDateTime.now();
 	}
 
+	// 리워드 티켓 지급 (발급 시간은 변경하지 않음)
+	public void increaseTicket(final long amount) {
+		if (amount <= 0) {
+			return;
+		}
+
+		this.ticketCount += amount;
+	}
+
 	public boolean isTicketExpired() {
 		return LocalDateTime.now().isAfter(this.lastIssuedAt.plusDays(1));
 	}
