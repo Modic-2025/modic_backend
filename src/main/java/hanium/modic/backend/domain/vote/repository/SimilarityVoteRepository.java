@@ -30,7 +30,7 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 	 * @return 파생 이미지 생성자의 사용자 ID
 	 */
 	@Query("SELECT cai.userId FROM SimilarityVoteEntity sv " +
-		"JOIN CreatedAiImageEntity cai ON cai.id = sv.derivedImageId " +
+		"JOIN AiChatImageEntity cai ON cai.id = sv.derivedImageId " +
 		"WHERE sv.id = :voteId")
 	Optional<Long> findDerivedImageCreatorId(@Param("voteId") Long voteId);
 
