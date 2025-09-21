@@ -58,7 +58,8 @@ dependencies {
 
     // AWS SDK v2 (버전은 resolutionStrategy로 관리)
     implementation 'software.amazon.awssdk:s3'
-    implementation 'software.amazon.awssdk:cloudfront'
+    // AWS SDK v1 - CloudFront (CloudFrontUrlSigner 사용)
+    implementation "com.amazonaws:aws-java-sdk-cloudfront:1.12.772" // cloudFront는 v2에 없어서 v1 사용
 
     //swagger
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12") {
