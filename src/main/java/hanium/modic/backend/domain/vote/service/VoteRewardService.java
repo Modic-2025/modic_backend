@@ -45,17 +45,24 @@ public class VoteRewardService {
 		try {
 			VoteDecision trend = analyzeTrend(voteId);
 			boolean isCorrect = isCorrectAnswer(userDecision, trend);
-			userVoteStreakService.updateStreak(userId, isCorrect);
-
+			// streak 업데이트 전 현재 값 확인
 			int currentStreak = userVoteStreakService.getStreakCount(userId);
+			boolean willReceiveReward = isCorrect && (currentStreak + 1) >= voteProperties.getStreakRewardCount();
+
+			// streak 업데이트 (3연속 정답 시 자동 초기화 포함)
+			userVoteStreakService.updateStreakWithReset(userId, isCorrect);
+
 			boolean receivedTicket = false;
-			if (isCorrect && currentStreak >= voteProperties.getStreakRewardCount()) {
+			if (willReceiveReward) {
 				ticketService.giveRewardTicket(userId);
 				receivedTicket = true;
 			}
+
+			// 업데이트 후 streak 값 (리워드 받았으면 0, 아니면 업데이트된 값)
+			int finalStreak = willReceiveReward ? 0 : userVoteStreakService.getStreakCount(userId);
 			log.info("투표 리워드 처리 완료: voteId={}, userId={}, userDecision={}, trend={}, isCorrect={}",
 				voteId, userId, userDecision, trend, isCorrect);
-			return new VoteRewardResult(isCorrect, currentStreak, receivedTicket);
+			return new VoteRewardResult(isCorrect, finalStreak, receivedTicket);
 		} catch (Exception e) {
 			log.error("투표 리워드 처리 중 오류 발생: voteId={}, userId={}", voteId, userId, e);
 			return new VoteRewardResult(false, userVoteStreakService.getStreakCount(userId), false);

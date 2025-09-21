@@ -89,8 +89,9 @@ class VoteRewardServiceTest {
 	}
 
 	@Test
-	@DisplayName("리워드 처리 - 정답이고 현재 streak가 보상 기준 이상이면 티켓 지급")
-	void processVoteReward_correctAndReachThreshold_awardsTicket() {
+	@DisplayName("리워드 처리 - 3연속 정답 달성 시 티켓 지급 및 streak 초기화")
+	void processVoteReward_reachThreeStreak_awardsTicketAndReset() {
+		// Given: streak 2에서 정답 시 3연속 달성
 		SimilarityVoteSummaryEntity summary = SimilarityVoteSummaryEntity.builder()
 			.voteId(voteId)
 			.approveWeight(60L)
@@ -99,21 +100,23 @@ class VoteRewardServiceTest {
 			.build();
 		given(voteSummaryRepository.findByVoteId(voteId)).willReturn(Optional.of(summary));
 		given(voteProperties.getStreakRewardCount()).willReturn(3);
-		// 정답으로 처리되어 streak=3 반환
-		given(userVoteStreakService.getStreakCount(userId)).willReturn(3);
+		given(userVoteStreakService.getStreakCount(userId)).willReturn(2); // 리워드 전 streak
 
+		// When
 		VoteRewardResult result = voteRewardService.processVoteReward(voteId, userId, VoteDecision.APPROVE);
 
-		verify(userVoteStreakService).updateStreak(userId, true);
+		// Then
+		verify(userVoteStreakService).updateStreakWithReset(userId, true);
 		verify(ticketService).giveRewardTicket(userId);
 		assertThat(result.isCorrectAnswer()).isTrue();
-		assertThat(result.currentStreak()).isEqualTo(3);
+		assertThat(result.currentStreak()).isEqualTo(0); // 리워드 후 초기화
 		assertThat(result.receivedTicket()).isTrue();
 	}
 
 	@Test
 	@DisplayName("리워드 처리 - 정답이지만 기준 미달이면 티켓 미지급")
 	void processVoteReward_correctButBelowThreshold_noTicket() {
+		// Given: streak 1에서 정답 시 2로 증가 (리워드 미달성)
 		SimilarityVoteSummaryEntity summary = SimilarityVoteSummaryEntity.builder()
 			.voteId(voteId)
 			.approveWeight(60L)
@@ -122,11 +125,15 @@ class VoteRewardServiceTest {
 			.build();
 		given(voteSummaryRepository.findByVoteId(voteId)).willReturn(Optional.of(summary));
 		given(voteProperties.getStreakRewardCount()).willReturn(3);
-		given(userVoteStreakService.getStreakCount(userId)).willReturn(2);
+		given(userVoteStreakService.getStreakCount(userId))
+			.willReturn(1) // 리워드 전
+			.willReturn(2); // 리워드 후
 
+		// When
 		VoteRewardResult result = voteRewardService.processVoteReward(voteId, userId, VoteDecision.APPROVE);
 
-		verify(userVoteStreakService).updateStreak(userId, true);
+		// Then
+		verify(userVoteStreakService).updateStreakWithReset(userId, true);
 		verify(ticketService, never()).giveRewardTicket(anyLong());
 		assertThat(result.isCorrectAnswer()).isTrue();
 		assertThat(result.currentStreak()).isEqualTo(2);
@@ -136,6 +143,7 @@ class VoteRewardServiceTest {
 	@Test
 	@DisplayName("리워드 처리 - 오답이면 streak 초기화되고 티켓 미지급")
 	void processVoteReward_incorrect_resetsAndNoTicket() {
+		// Given: 오답 시나리오
 		SimilarityVoteSummaryEntity summary = SimilarityVoteSummaryEntity.builder()
 			.voteId(voteId)
 			.approveWeight(30L)
@@ -143,11 +151,15 @@ class VoteRewardServiceTest {
 			.totalWeight(100L)
 			.build();
 		given(voteSummaryRepository.findByVoteId(voteId)).willReturn(Optional.of(summary));
-		given(userVoteStreakService.getStreakCount(userId)).willReturn(0);
+		given(userVoteStreakService.getStreakCount(userId))
+			.willReturn(2) // 리워드 전
+			.willReturn(0); // 리워드 후 (초기화)
 
+		// When
 		VoteRewardResult result = voteRewardService.processVoteReward(voteId, userId, VoteDecision.APPROVE);
 
-		verify(userVoteStreakService).updateStreak(userId, false);
+		// Then
+		verify(userVoteStreakService).updateStreakWithReset(userId, false);
 		verify(ticketService, never()).giveRewardTicket(anyLong());
 		assertThat(result.isCorrectAnswer()).isFalse();
 		assertThat(result.currentStreak()).isEqualTo(0);
@@ -164,7 +176,7 @@ class VoteRewardServiceTest {
 
 		VoteRewardResult result = voteRewardService.processVoteReward(voteId, userId, VoteDecision.APPROVE);
 
-		verify(userVoteStreakService, never()).updateStreak(eq(userId), anyBoolean());
+		verify(userVoteStreakService, never()).updateStreakWithReset(eq(userId), anyBoolean());
 		verify(ticketService, never()).giveRewardTicket(anyLong());
 		assertThat(result.isCorrectAnswer()).isFalse();
 		assertThat(result.currentStreak()).isEqualTo(1);

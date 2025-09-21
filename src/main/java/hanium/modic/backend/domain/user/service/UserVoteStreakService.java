@@ -1,11 +1,12 @@
 package hanium.modic.backend.domain.user.service;
 
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.property.property.VoteProperties;
+import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.domain.user.entity.UserVoteStreak;
+import hanium.modic.backend.domain.user.repository.UserVoteStreakRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,40 +15,41 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserVoteStreakService {
 
-	private final RedisTemplate<String, Object> redisTemplate;
+	private final UserVoteStreakRepository streakRepository;
+	private final LockManager lockManager;
 	private final VoteProperties voteProperties;
 
-	public void updateStreak(Long userId, boolean isCorrect) {
-		String key = getStreakKey(userId);
-		int current = getStreakCount(userId);
-		int next = isCorrect ? current + 1 : 0;
-		redisTemplate.opsForValue().set(key, next, voteProperties.getStreakTtlDays(), TimeUnit.DAYS);
-		log.debug("연속 정답 업데이트: userId={}, current={}, next={}, isCorrect={}", userId, current, next, isCorrect);
-	}
-
 	public int getStreakCount(Long userId) {
-		String key = getStreakKey(userId);
-		Object val = redisTemplate.opsForValue().get(key);
-		if (val == null) {
-			return 0;
-		}
-		if (val instanceof Number number) {
-			return number.intValue();
-		}
+		return streakRepository.findById(userId)
+			.map(UserVoteStreak::getStreakCount)
+			.orElse(0);
+	}
+
+	public void updateStreakWithReset(Long userId, boolean isCorrect) {
 		try {
-			return Integer.parseInt(String.valueOf(val));
-		} catch (NumberFormatException e) {
-			log.warn("연속 정답 값 파싱 실패: userId={}, value={}", userId, val);
-			return 0;
+			lockManager.voteStreakLock(userId, () -> {
+				UserVoteStreak streak = getOrCreateStreak(userId);
+				int currentStreak = streak.getStreakCount();
+				streak.updateStreak(isCorrect);
+
+				// 3연속 정답 달성 시 초기화
+				if (isCorrect && streak.getStreakCount() >= voteProperties.getStreakRewardCount()) {
+					streak.resetStreak();
+				}
+
+				streakRepository.save(streak);
+				log.debug("연속 정답 업데이트 (리셋 포함): userId={}, current={}, next={}, isCorrect={}",
+					userId, currentStreak, streak.getStreakCount(), isCorrect);
+			});
+		} catch (LockException e) {
+			log.error("투표 연속 정답 업데이트 (리셋 포함) 락 실패: userId={}", userId, e);
+			throw new RuntimeException("투표 연속 정답 업데이트에 실패했습니다.", e);
 		}
 	}
 
-	public void resetStreak(Long userId) {
-		redisTemplate.opsForValue().set(getStreakKey(userId), 0, voteProperties.getStreakTtlDays(), TimeUnit.DAYS);
-	}
-
-	private String getStreakKey(Long userId) {
-		return "vote:streak:user:" + userId;
+	private UserVoteStreak getOrCreateStreak(Long userId) {
+		return streakRepository.findById(userId)
+			.orElse(UserVoteStreak.builder().userId(userId).build());
 	}
 }
 
