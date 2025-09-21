@@ -417,8 +417,15 @@ class PostServiceTest {
 		Page<PostEntity> mockPostPage = new PageImpl<>(mockPosts,
 			PageRequest.of(page, size), mockPosts.size());
 
-		List<PostImageEntity> mockImagesPost1 = ImageFactory.createMockPostImages(mockPosts.get(0), 2);
-		List<PostImageEntity> mockImagesPost2 = ImageFactory.createMockPostImages(mockPosts.get(1), 3);
+		List<PostImageEntity> mockImagesPost1 = List.of(
+			ImageFactory.createMockPostImageWithId(mockPosts.get(0), 1L),
+			ImageFactory.createMockPostImageWithId(mockPosts.get(0), 2L)
+		);
+		List<PostImageEntity> mockImagesPost2 = List.of(
+			ImageFactory.createMockPostImageWithId(mockPosts.get(1), 3L),
+			ImageFactory.createMockPostImageWithId(mockPosts.get(1), 4L),
+			ImageFactory.createMockPostImageWithId(mockPosts.get(1), 5L)
+		);
 		List<PostImageEntity> allMockImages = new ArrayList<>();
 		allMockImages.addAll(mockImagesPost1);
 		allMockImages.addAll(mockImagesPost2);
@@ -438,11 +445,15 @@ class PostServiceTest {
 
 		GetSimplePostsResponse firstPost = result.getContent().get(0);
 		assertThat(firstPost.postId()).isEqualTo(1L);
-		assertThat(firstPost.imageUrl()).isNotNull();
+		assertThat(firstPost.images()).isNotEmpty();
+		assertThat(firstPost.images().get(0).getImageUrl()).isNotNull();
+		assertThat(firstPost.images().get(0).getImageId()).isNotNull();
 
 		GetSimplePostsResponse secondPost = result.getContent().get(1);
 		assertThat(secondPost.postId()).isEqualTo(2L);
-		assertThat(secondPost.imageUrl()).isNotNull();
+		assertThat(secondPost.images()).isNotEmpty();
+		assertThat(secondPost.images().get(0).getImageUrl()).isNotNull();
+		assertThat(secondPost.images().get(0).getImageId()).isNotNull();
 
 		verify(postEntityRepository).findAllByUserId(userId, PageRequest.of(page, size));
 		verify(postImageEntityRepository).findAllByPostIdIn(Arrays.asList(1L, 2L));
@@ -500,7 +511,7 @@ class PostServiceTest {
 
 		GetSimplePostsResponse response = result.getContent().get(0);
 		assertThat(response.postId()).isEqualTo(1L);
-		assertThat(response.imageUrl()).isNull();
+		assertThat(response.images()).isEmpty();
 
 		verify(postEntityRepository).findAllByUserId(userId, PageRequest.of(page, size));
 		verify(postImageEntityRepository).findAllByPostIdIn(Arrays.asList(1L));

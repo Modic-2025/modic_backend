@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -308,18 +307,20 @@ public class PostService {
 		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
 		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
 
-		// 포스트ID별로 첫 번째 이미지 URL을 찾는 Map 생성
-		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
-		for (PostImageEntity image : allPostImages) {
-			firstImageByPostId.computeIfAbsent(
-				image.getPostId(),
-				pid -> imageUtil.createImageGetUrl(image.getImagePath())
-			);
-		}
+		// 포스트ID별로 그룹화
+		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
+			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		return posts.map(post -> {
-			String firstImageUrl = firstImageByPostId.get(post.getId());
-			return new GetSimplePostsResponse(post.getId(), firstImageUrl);
+			List<GetSimplePostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetSimplePostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
+			return new GetSimplePostsResponse(post.getId(), postImages);
 		});
 	}
 
