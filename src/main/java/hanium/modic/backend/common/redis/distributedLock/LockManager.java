@@ -29,6 +29,7 @@ public class LockManager {
 	private final String POST_LIKE_PREFIX = "lock:postlike:";
 	private final String AI_PERMISSION_PREFIX = "lock:ai:perm:";
 	private final String VOTE_SUMMARY_PREFIX = "lock:vote:summary:";
+	private final String VOTE_STREAK_PREFIX = "lock:vote:streak:";
 
 	public void userLock(long userId, Runnable block) throws LockException {
 		exec.withLock(USER_PREFIX + userId, block);
@@ -57,5 +58,9 @@ public class LockManager {
 
 	public void voteSummaryLock(long voteId, Runnable block) throws LockException {
 		exec.withLock(VOTE_SUMMARY_PREFIX + voteId, block);
+	}
+
+	public void voteStreakLock(long userId, Runnable block) throws LockException {
+		exec.withLock(VOTE_STREAK_PREFIX + userId, block);
 	}
 }

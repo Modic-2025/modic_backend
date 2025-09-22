@@ -43,6 +43,7 @@ public class VotingService {
 	private final PostEntityRepository postEntityRepository;
 	private final LockManager lockManager;
 	private final VoteProperties voteProperties;
+	private final VoteRewardService voteRewardService;
 
 	/**
 	 * 투표 참여 메서드
@@ -92,8 +93,16 @@ public class VotingService {
 				checkAndCompleteVote(voteId);
 			});
 
-			// 9. 단순한 응답 생성
-			return VoteParticipationResponse.of(voteId);
+			// 9. 리워드 처리 (투표 참여 직후)
+			VoteRewardResult reward = voteRewardService.processVoteReward(voteId, userId, decision);
+
+			// 10. 응답 생성
+			return VoteParticipationResponse.of(
+				voteId,
+				reward.isCorrectAnswer(),
+				reward.currentStreak(),
+				reward.receivedTicket()
+			);
 		} catch (LockException e) {
 			log.error("투표 참여 락 획득 실패: voteId={}, userId={}", voteId, userId, e);
 			throw new AppException(VOTE_UPDATE_FAIL_EXCEPTION);
