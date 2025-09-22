@@ -8,14 +8,13 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatImageService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiImageResponseMessageDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.sse.SseChatResultResponse;
-import hanium.modic.backend.domain.ai.aiServer.dto.sse.SseImageResultResponse;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
@@ -118,7 +117,7 @@ public class AiImageCreatedListener {
 		// 6.클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 이미지를 응답한다.
 		aiResponseSseService.sendToClient(
 			message.requestId(),
-			new SseImageResultResponse(message.requestId(), imageUrl)
+			ChatMessageResponse.from(responseChatMessage, imageUrl)
 		);
 	}
 
@@ -149,7 +148,7 @@ public class AiImageCreatedListener {
 		// 4.클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 채팅을 응답한다.
 		aiResponseSseService.sendToClient(
 			message.requestId(),
-			new SseChatResultResponse(message.requestId(), message.textContext())
+			ChatMessageResponse.from(responseChatMessage)
 		);
 	}
 }

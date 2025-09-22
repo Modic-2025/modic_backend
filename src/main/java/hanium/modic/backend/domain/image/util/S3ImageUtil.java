@@ -67,7 +67,7 @@ public class S3ImageUtil implements ImageUtil {
 
 	// 이미지 삭제
 	@Override
-	@Async
+	@Async("imageTaskExecutor")
 	public void deleteImage(String imagePath) {
 		validateImagePath(imagePath);
 
@@ -85,7 +85,7 @@ public class S3ImageUtil implements ImageUtil {
 
 	// 여러 이미지 삭제
 	@Override
-	@Async
+	@Async("imageTaskExecutor")
 	public void deleteImages(List<String> imagePaths) {
 		if (imagePaths == null || imagePaths.isEmpty()) {
 			return;

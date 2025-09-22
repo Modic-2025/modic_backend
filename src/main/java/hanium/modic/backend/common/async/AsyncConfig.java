@@ -3,6 +3,7 @@ package hanium.modic.backend.common.async;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.MDC;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -23,15 +24,47 @@ public class AsyncConfig implements AsyncConfigurer {
 	@Bean(name = TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)
 	public ThreadPoolTaskExecutor asyncTaskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(1);
-		executor.setMaxPoolSize(2);
+		executor.setCorePoolSize(1); // IO작업이 많을 시 사용하는 CPU 코어 수에 맞게 조정
+		executor.setMaxPoolSize(2); // 사용하는 CPU 코어 수 x 2에 맞게 조정
 		executor.setThreadNamePrefix("async");
-		executor.setQueueCapacity(1000000);
+		executor.setQueueCapacity(2000);
 		executor.setAwaitTerminationSeconds(5); // shutdown시 5초 대기
 		executor.setWaitForTasksToCompleteOnShutdown(true); // shutdown 시 남은 작업 대기
 		executor.setTaskDecorator(new MdcTaskDecorator());
 		executor.initialize();
 		executor.getThreadPoolExecutor().prestartAllCoreThreads();
+		return executor;
+	}
+
+	@Bean(name = "imageTaskExecutor")
+	public ThreadPoolTaskExecutor imageTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(2);
+		executor.setMaxPoolSize(16);
+		executor.setQueueCapacity(200);
+		executor.setThreadNamePrefix("image-");
+		executor.setAwaitTerminationSeconds(5);
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setTaskDecorator(new MdcTaskDecorator());
+		executor.initialize();
+		executor.getThreadPoolExecutor().prestartAllCoreThreads();
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
+		return executor;
+	}
+
+	@Bean(name = "llmTaskExecutor")
+	public ThreadPoolTaskExecutor gptTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(4); // IO 작업이 많고, 메인 기능이므로 널널히 잡음
+		executor.setMaxPoolSize(16); // 사용하는 CPU 코어 수 x 2에 맞게 조정
+		executor.setQueueCapacity(2000);
+		executor.setThreadNamePrefix("gpt-");
+		executor.setAwaitTerminationSeconds(5);
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setTaskDecorator(new MdcTaskDecorator());
+		executor.initialize();
+		executor.getThreadPoolExecutor().prestartAllCoreThreads();
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
 		return executor;
 	}
 

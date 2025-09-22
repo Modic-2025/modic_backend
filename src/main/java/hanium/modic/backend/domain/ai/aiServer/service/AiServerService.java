@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
@@ -22,7 +24,6 @@ import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiImageRequestMessageDto;
 import hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt.GptChatResponseDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.sse.SseChatResultResponse;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.RequestCategory;
@@ -51,7 +52,9 @@ public class AiServerService {
 	private final AiChatService aiChatService;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
+	// 빠른 응답을 위해 비동기 처리, 응답은 SSE를 통해 클라이언트에 전달
 	@Transactional
+	@Async("llmTaskExecutor")
 	public void processAiRequest(
 		final Long nowUserId,
 		AiChatMessageEntity chatMessage,
@@ -62,16 +65,25 @@ public class AiServerService {
 		// 해당 Post에 대한 AI 이미지 생성 권한 검증
 		validateAiRequestPermission(nowUserId, postId);
 
-		// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
-		RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
-		log.info("Classified request category: {}", requestCategory);
-		if (requestCategory == RequestCategory.CHAT_GENERATION) {
-			// 채팅응답일 경우 채팅 생성 요청
-			requestChatCreation(chatMessage);
-		} else {
-			// 이미지 생성용인 경우 이미지 생성 요청
-			requestImageCreation(chatMessage, aiChatImages, nowUserId);
+		// AI 요청 처리
+		try {
+			// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
+			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
+			log.info("Classified request category: {}", requestCategory);
+
+			if (requestCategory == RequestCategory.CHAT_GENERATION) {
+				// 채팅응답일 경우 채팅 생성 요청
+				requestChatCreation(chatMessage);
+			} else {
+				// 이미지 생성용인 경우 이미지 생성 요청
+				requestImageCreation(chatMessage, aiChatImages, nowUserId);
+			}
+		} catch (AppException e) {
+			// AI 서버 오류 등으로 요청 실패 시 메시지 상태 업데이트
+			chatMessage.updateStatus(AiImageStatus.REQUEST_FAILED);
+			aiChatMessageRepository.save(chatMessage);
 		}
+
 	}
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
@@ -127,7 +139,7 @@ public class AiServerService {
 		// TODO: 실시간 응답으로 바꿔야 함.
 		aiResponseSseService.sendToClient(
 			chatMessage.getRequestId(),
-			new SseChatResultResponse(chatMessage.getRequestId(), response.response())
+			ChatMessageResponse.from(message)
 		);
 	}
 
@@ -143,7 +155,9 @@ public class AiServerService {
 			- Also update the chat summary by including this new interaction.
 			- Speak Korean.
 			
-			Return the result strictly as JSON including response and newSummary fields
+			Return the result strictly as raw JSON object.
+			Do not include Markdown formatting, code fences, or extra text.
+			Only output JSON with two fields: response and newSummary.
 			""";
 
 		String jsonResponse = aiChatService.prompt(
@@ -154,6 +168,7 @@ public class AiServerService {
 		try {
 			return objectMapper.readValue(jsonResponse, GptChatResponseDto.class);
 		} catch (Exception e) {
+			log.error("Failed to parse AI chat response. Raw response: {}", jsonResponse, e);
 			throw new AppException(ErrorCode.AI_SERVER_ERROR);
 		}
 	}
