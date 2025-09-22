@@ -29,6 +29,16 @@ public class GptProvider implements AiProvider {
 		this.webClient = WebClient.builder()
 			.baseUrl("https://api.openai.com/v1")
 			.defaultHeader("Authorization", "Bearer " + aiProperties.getOpenai().getApiKey())
+			.clientConnector(new org.springframework.http.client.reactive.ReactorClientHttpConnector(
+				reactor.netty.http.client.HttpClient.create()
+					.option(io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+					.responseTimeout(java.time.Duration.ofSeconds(30))
+					.doOnConnected(conn -> conn
+						.addHandlerLast(
+							new io.netty.handler.timeout.ReadTimeoutHandler(30, java.util.concurrent.TimeUnit.SECONDS))
+						.addHandlerLast(new io.netty.handler.timeout.WriteTimeoutHandler(10,
+							java.util.concurrent.TimeUnit.SECONDS)))
+			))
 			.build();
 	}
 
