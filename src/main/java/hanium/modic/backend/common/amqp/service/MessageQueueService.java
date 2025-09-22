@@ -2,12 +2,9 @@ package hanium.modic.backend.common.amqp.service;
 
 import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
 
-import java.util.List;
-
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-import hanium.modic.backend.domain.ai.aiServer.dto.AiImageRequestMessageDto;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 

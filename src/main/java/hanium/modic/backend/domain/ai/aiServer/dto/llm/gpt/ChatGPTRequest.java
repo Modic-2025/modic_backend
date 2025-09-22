@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.ai.aiServer.dto.chatGpt;
+package hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt;
 
 import java.util.List;
 

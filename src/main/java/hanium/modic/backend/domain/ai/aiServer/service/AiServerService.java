@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,17 +15,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.sse.service.EmitterService;
+import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
-import hanium.modic.backend.domain.ai.aiServer.dto.AiChatRequestDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.ClassifyRequestCategoryDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.chatGpt.ChatGPTResponse;
-import hanium.modic.backend.domain.ai.aiServer.dto.chatGpt.GptChatResponseDto;
+import hanium.modic.backend.domain.ai.aiServer.dto.AiImageRequestMessageDto;
+import hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt.GptChatResponseDto;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.RequestCategory;
@@ -48,12 +47,14 @@ public class AiServerService {
 	private final AiImagePermissionService aiImagePermissionService;
 	private final AiChatImageRepository aiChatImageRepository;
 	private final AiChatMessageRepository aiChatMessageRepository;
+	private final ObjectMapper objectMapper;
+	private final AiResponseSseService aiResponseSseService;
 	private final AiChatService aiChatService;
-	private final EmitterService emitterService;
-	private final ObjectMapper	 objectMapper;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
+	// 빠른 응답을 위해 비동기 처리, 응답은 SSE를 통해 클라이언트에 전달
 	@Transactional
+	@Async("llmTaskExecutor")
 	public void processAiRequest(
 		final Long nowUserId,
 		AiChatMessageEntity chatMessage,
@@ -64,16 +65,25 @@ public class AiServerService {
 		// 해당 Post에 대한 AI 이미지 생성 권한 검증
 		validateAiRequestPermission(nowUserId, postId);
 
-		// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
-		RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
-		log.info("Classified request category: {}", requestCategory);
-		if (requestCategory == RequestCategory.CHAT_GENERATION) {
-			// 채팅응답일 경우 채팅 생성 요청
-			requestChatCreation(chatMessage);
-		} else {
-			// 이미지 생성용인 경우 이미지 생성 요청
-			requestImageCreation(chatMessage, aiChatImages, nowUserId);
+		// AI 요청 처리
+		try {
+			// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
+			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
+			log.info("Classified request category: {}", requestCategory);
+
+			if (requestCategory == RequestCategory.CHAT_GENERATION) {
+				// 채팅응답일 경우 채팅 생성 요청
+				requestChatCreation(chatMessage);
+			} else {
+				// 이미지 생성용인 경우 이미지 생성 요청
+				requestImageCreation(chatMessage, aiChatImages, nowUserId);
+			}
+		} catch (AppException e) {
+			// AI 서버 오류 등으로 요청 실패 시 메시지 상태 업데이트
+			chatMessage.updateStatus(AiImageStatus.REQUEST_FAILED);
+			aiChatMessageRepository.save(chatMessage);
 		}
+
 	}
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
@@ -95,15 +105,16 @@ public class AiServerService {
 	private void requestChatCreation(
 		AiChatMessageEntity chatMessage
 	) {
+		final Long userId = chatMessage.getUserId();
+		final Long postId = chatMessage.getPostId();
+
+		// 1.AI에게 채팅 생성 요청
 		GptChatResponseDto response = requestChatCreationToServer(
 			chatMessage.getTextContent(),
 			aiChatRoomService.getChatRoom(chatMessage.getUserId(), chatMessage.getPostId()).chatSummary()
 		);
 
-		final Long userId = chatMessage.getUserId();
-		final Long postId = chatMessage.getPostId();
-
-		// 채팅 저장
+		// 2.채팅 저장
 		// 다음 메시지 순서 조회
 		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(userId, postId);
 
@@ -119,18 +130,20 @@ public class AiServerService {
 			.requestId(chatMessage.getRequestId())
 			.status(AiImageStatus.RESPONSE)
 			.build();
-
 		aiChatMessageRepository.save(message);
-		// 채팅룸 요약 업데이트
+
+		// 3.채팅룸 요약 업데이트
 		aiChatRoomService.updateChatSummary(userId, postId, response.newSummary());
 
+		// 4. SSE로 실시간 응답
 		// TODO: 실시간 응답으로 바꿔야 함.
-		emitterService.sendToClient(
+		aiResponseSseService.sendToClient(
 			chatMessage.getRequestId(),
-			response.response()
+			ChatMessageResponse.from(message)
 		);
 	}
 
+	// AI에게 채팅 생성 요청
 	private GptChatResponseDto requestChatCreationToServer(
 		String textContent,
 		String chatSummary
@@ -142,7 +155,9 @@ public class AiServerService {
 			- Also update the chat summary by including this new interaction.
 			- Speak Korean.
 			
-			Return the result strictly as JSON including response and newSummary fields
+			Return the result strictly as raw JSON object.
+			Do not include Markdown formatting, code fences, or extra text.
+			Only output JSON with two fields: response and newSummary.
 			""";
 
 		String jsonResponse = aiChatService.prompt(
@@ -153,6 +168,7 @@ public class AiServerService {
 		try {
 			return objectMapper.readValue(jsonResponse, GptChatResponseDto.class);
 		} catch (Exception e) {
+			log.error("Failed to parse AI chat response. Raw response: {}", jsonResponse, e);
 			throw new AppException(ErrorCode.AI_SERVER_ERROR);
 		}
 	}
@@ -177,7 +193,7 @@ public class AiServerService {
 			.orElseThrow(() -> new AppException(ErrorCode.AI_CHAT_ROOM_NOT_FOUND));
 
 		// 4. MQ에 이미지 생성 요청 DTO 생성
-		AiChatRequestDto aiChatRequestDto = new AiChatRequestDto(
+		AiImageRequestMessageDto aiImageRequestMessageDto = new AiImageRequestMessageDto(
 			chatMessage.getRequestId(),
 			chatMessage.getTextContent(),
 			aiChatImages.stream().map(AiChatImageEntity::getImagePath).toList(),
@@ -188,7 +204,7 @@ public class AiServerService {
 		);
 
 		// 5. MQ에 요청
-		messageQueueService.sendImageGenerationRequest(aiChatRequestDto);
+		messageQueueService.sendImageGenerationRequest(aiImageRequestMessageDto);
 
 		// 6. 사용권소모, MQ과정까지 실패하면 사용권 소모하면 안됨.
 		aiImagePermissionService.consumeRemainingGenerations(nowUserId, postId);
@@ -203,20 +219,20 @@ public class AiServerService {
 	}
 
 	// AiChatMessageEntity 리스트를 ChatMessage 리스트로 변환
-	private List<AiChatRequestDto.ChatMessage> convertFromEntities(List<AiChatMessageEntity> entities) {
+	private List<AiImageRequestMessageDto.ChatMessage> convertFromEntities(List<AiChatMessageEntity> entities) {
 		return entities.stream()
 			.map(entity -> {
-				List<AiChatRequestDto.ChatContent> contents = new ArrayList<>();
+				List<AiImageRequestMessageDto.ChatContent> contents = new ArrayList<>();
 
 				// 텍스트 컨텐츠 추가
-				contents.add(AiChatRequestDto.ChatContent.text(entity.getTextContent()));
+				contents.add(AiImageRequestMessageDto.ChatContent.text(entity.getTextContent()));
 
 				// 이미지 컨텐츠 추가 (이미지가 있는 경우)
 				if (entity.hasImage()) {
 					AiChatImageEntity aiChatImage = aiChatImageRepository.findById(entity.getAiChatImageId()).get();
 
 					contents.add(
-						AiChatRequestDto.ChatContent.image(
+						AiImageRequestMessageDto.ChatContent.image(
 							aiChatImage.getImagePath(),
 							aiChatImage.getDescription(),
 							aiChatImage.getFromOriginImage()
@@ -224,7 +240,7 @@ public class AiServerService {
 					);
 				}
 
-				return new AiChatRequestDto.ChatMessage(entity.getSenderType(), contents);
+				return new AiImageRequestMessageDto.ChatMessage(entity.getSenderType(), contents);
 			})
 			.toList();
 	}
