@@ -2,6 +2,9 @@ package hanium.modic.backend.domain.ai.aiServer.dto;
 
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 
+/**
+ * AI 서버로부터 받는 채팅 응답 DTO
+ */
 public record AiImageResponseMessageDto(
 	boolean isSuccess,
 	String requestId,

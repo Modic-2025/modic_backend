@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
-import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiImageRequestMessageDto;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
