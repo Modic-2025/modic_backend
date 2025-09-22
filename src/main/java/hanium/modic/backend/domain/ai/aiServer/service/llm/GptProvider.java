@@ -1,5 +1,6 @@
-package hanium.modic.backend.domain.ai.aiServer.service;
+package hanium.modic.backend.domain.ai.aiServer.service.llm;
 
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -12,26 +13,27 @@ import hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt.ChatGPTMessage;
 import hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt.ChatGPTRequest;
 import hanium.modic.backend.domain.ai.aiServer.dto.llm.gpt.ChatGPTResponse;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
-@Slf4j
 @Service
-public class AiChatService {
+@Slf4j
+public class GptProvider implements AiProvider {
 
 	private final ObjectMapper objectMapper;
 	private final AiProperties aiProperties;
-	private final WebClient openAiWebClient;
+	private final WebClient webClient;
 
-	public AiChatService(ObjectMapper objectMapper, AiProperties aiProperties) {
+	public GptProvider(ObjectMapper objectMapper, AiProperties aiProperties) {
 		this.objectMapper = objectMapper;
 		this.aiProperties = aiProperties;
-		this.openAiWebClient = WebClient.builder()
+		this.webClient = WebClient.builder()
 			.baseUrl("https://api.openai.com/v1")
 			.defaultHeader("Authorization", "Bearer " + aiProperties.getOpenai().getApiKey())
 			.build();
 	}
 
-	// llm 호출
-	public String  prompt(String systemPrompt, String userPrompt) {
+	@Override
+	public String prompt(String systemPrompt, String userPrompt) {
 		ChatGPTRequest request = new ChatGPTRequest(
 			aiProperties.getOpenai().getModel(),
 			java.util.Arrays.asList(
@@ -40,10 +42,22 @@ public class AiChatService {
 			)
 		);
 
-		String jsonResponse = openAiWebClient.post()
+		String jsonResponse = webClient.post()
 			.uri("/chat/completions")
 			.bodyValue(request)
 			.retrieve()
+			.onStatus(HttpStatusCode::is4xxClientError, response ->
+				response.bodyToMono(String.class)
+					.flatMap(error -> {
+						log.error("GPT API client error: {}", error);
+						return Mono.error(new AppException(ErrorCode.AI_SERVER_ERROR));
+					}))
+			.onStatus(HttpStatusCode::is5xxServerError, response ->
+				response.bodyToMono(String.class)
+					.flatMap(error -> {
+						log.error("GPT API server error: {}", error);
+						return Mono.error(new AppException(ErrorCode.AI_SERVER_ERROR));
+					}))
 			.bodyToMono(String.class)
 			.block();
 
@@ -51,6 +65,7 @@ public class AiChatService {
 			ChatGPTResponse chatGPTResponse = objectMapper.readValue(jsonResponse, ChatGPTResponse.class);
 			return chatGPTResponse.getChoices().get(0).getMessage().getContent();
 		} catch (Exception e) {
+			log.error("Failed to parse Gpt AI response. Raw response: {}", jsonResponse, e);
 			throw new AppException(ErrorCode.AI_SERVER_ERROR);
 		}
 	}
