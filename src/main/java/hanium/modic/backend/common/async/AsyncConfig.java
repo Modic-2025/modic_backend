@@ -46,9 +46,9 @@ public class AsyncConfig implements AsyncConfigurer {
 		executor.setAwaitTerminationSeconds(5);
 		executor.setWaitForTasksToCompleteOnShutdown(true);
 		executor.setTaskDecorator(new MdcTaskDecorator());
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
 		executor.initialize();
 		executor.getThreadPoolExecutor().prestartAllCoreThreads();
-		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
 		return executor;
 	}
 
@@ -62,9 +62,9 @@ public class AsyncConfig implements AsyncConfigurer {
 		executor.setAwaitTerminationSeconds(5);
 		executor.setWaitForTasksToCompleteOnShutdown(true);
 		executor.setTaskDecorator(new MdcTaskDecorator());
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
 		executor.initialize();
 		executor.getThreadPoolExecutor().prestartAllCoreThreads();
-		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 포화 시 호출한 스레드에서 실행
 		return executor;
 	}
 
