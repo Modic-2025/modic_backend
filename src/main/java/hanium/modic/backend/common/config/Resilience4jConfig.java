@@ -18,7 +18,7 @@ public class Resilience4jConfig {
 			.failureRateThreshold(50)                        // 실패율 50% 이상이면 Open
 			.slidingWindowSize(10)                           // 최근 10번 요청 기준
 			.minimumNumberOfCalls(10)                        // 최소 10번 이후부터 판단
-			.waitDurationInOpenState(Duration.ofSeconds(30)) // Open 유지 시간
+			.waitDurationInOpenState(Duration.ofHours(1)) // Open 유지 시간
 			.recordException(e ->
 				e instanceof java.io.IOException             // SocketTime, ConnectTimeout, IOException 발생 시 실패로 간주
 					|| e instanceof AppException
