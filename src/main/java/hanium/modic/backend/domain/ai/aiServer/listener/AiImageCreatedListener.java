@@ -8,18 +8,19 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
-import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
-import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatImageService;
-import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiImageResponseMessageDto;
-import hanium.modic.backend.domain.ai.aiServer.dto.ImageResultResponse;
+import hanium.modic.backend.domain.ai.aiServer.dto.sse.SseChatResultResponse;
+import hanium.modic.backend.domain.ai.aiServer.dto.sse.SseImageResultResponse;
+import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
+import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
-import hanium.modic.backend.common.sse.service.EmitterService;
+import hanium.modic.backend.domain.ai.aiServer.service.AiResponseSseService;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,17 +31,17 @@ import lombok.extern.slf4j.Slf4j;
 public class AiImageCreatedListener {
 
 	private final AiChatImageRepository aiChatImageRepository;
-	private final EmitterService emitterService;
 	private final AiChatImageService aiChatImageService;
 	private final AiChatMessageRepository aiChatMessageRepository;
 	private final AiChatRoomRepository aiChatRoomRepository;
+	private final AiResponseSseService aiResponseSseService;
 
 	// MQ에서 이미지 생성 완료 메시지 수신
 	// 요청 메시지 변경 및 응답 메시지 저장&SSE 응답
 	@Transactional
 	@RabbitListener(queues = AI_IMAGE_CREATED_QUEUE)
 	public void handleImageCreated(AiImageResponseMessageDto message) {
-		log.info("[AI 이미지 생성 완료] 메시지 수신: {}", message);
+		log.info("[AI 이미지 생성 완료] 메시지 수신: {}", message.requestId());
 
 		// 1.요청 채팅 조회
 		Optional<AiChatMessageEntity> chatMessageOpt = aiChatMessageRepository
@@ -61,7 +62,20 @@ public class AiImageCreatedListener {
 		aiChatRoom.updateChatSummary(message.chatSummary());
 		aiChatRoomRepository.save(aiChatRoom);
 
-		// 3.응답 이미지 저장
+		// 3.응답 이미지가 있는지 확인 후 이에 따라 SSE 응답
+		if (message.isImageGenerated()) {
+			handleSuccessImageGeneration(message, requestChatMessage, aiChatRoom);
+		} else {
+			handleFailedImageGeneration(message, requestChatMessage);
+		}
+	}
+
+	private void handleSuccessImageGeneration(
+		AiImageResponseMessageDto message,
+		AiChatMessageEntity requestChatMessage,
+		AiChatRoomEntity aiChatRoom
+	) {
+		// 1.응답 이미지 저장
 		AiChatImageEntity aiChatImage = AiChatImageEntity.builder()
 			.imagePath(message.imagePath())
 			.fullImageName(message.fullImageName())
@@ -72,18 +86,20 @@ public class AiImageCreatedListener {
 			.userId(requestChatMessage.getUserId())
 			.status(AiImageStatus.RESPONSE)
 			.aiChatRoomId(aiChatRoom.getId())
+			.fromOriginImage(message.fromStyleImage())
+			.description(message.description())
 			.build();
 		aiChatImageRepository.save(aiChatImage);
 
-		// 3.응답 채팅 저장
-		// 다음 메시지 순서 조회cd
+		// 2. 다음 메시지 순서 조회
 		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(requestChatMessage.getUserId(),
 			requestChatMessage.getPostId());
 
-		// 응답 메시지 저장
+		// 3.응답 메시지 저장
 		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()
 			.userId(requestChatMessage.getUserId())
 			.postId(requestChatMessage.getPostId())
+			.aiChatRoomId(requestChatMessage.getAiChatRoomId())
 			.messageOrder(messageOrder)
 			.senderType(SenderType.USER)
 			.textContent("")
@@ -100,9 +116,40 @@ public class AiImageCreatedListener {
 		String imageUrl = aiChatImageService.createImageGetUrl(aiChatImage.getId());
 
 		// 6.클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 이미지를 응답한다.
-		emitterService.sendToClient(
+		aiResponseSseService.sendToClient(
 			message.requestId(),
-			new ImageResultResponse(message.requestId(), imageUrl)
+			new SseImageResultResponse(message.requestId(), imageUrl)
+		);
+	}
+
+	// 응답 이미지가 없는 경우, 단순 채팅만 저장 후 응답
+	private void handleFailedImageGeneration(AiImageResponseMessageDto message,
+		AiChatMessageEntity requestChatMessage) {
+		// 1.다음 메시지 순서 조회
+		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(requestChatMessage.getUserId(),
+			requestChatMessage.getPostId());
+
+		// 2.응답 메시지 저장
+		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()
+			.userId(requestChatMessage.getUserId())
+			.postId(requestChatMessage.getPostId())
+			.aiChatRoomId(requestChatMessage.getAiChatRoomId())
+			.messageOrder(messageOrder)
+			.senderType(SenderType.USER)
+			.textContent(message.textContext())
+			.aiChatImageId(null)
+			.requestId(message.requestId())
+			.status(AiImageStatus.RESPONSE)
+			.build();
+		aiChatMessageRepository.save(responseChatMessage);
+
+		// 3.요청 메시지 완료상태로 업데이트
+		requestChatMessage.updateStatus(AiImageStatus.REQUEST);
+
+		// 4.클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 채팅을 응답한다.
+		aiResponseSseService.sendToClient(
+			message.requestId(),
+			new SseChatResultResponse(message.requestId(), message.textContext())
 		);
 	}
 }
