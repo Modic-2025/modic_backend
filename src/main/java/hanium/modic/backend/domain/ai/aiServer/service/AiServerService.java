@@ -68,7 +68,7 @@ public class AiServerService {
 		// AI 요청 처리
 		try {
 			// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
-			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent());
+			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent(), chatMessage.hasImage());
 			log.info("Classified request category: {}", requestCategory);
 
 			if (requestCategory == RequestCategory.CHAT_GENERATION) {
@@ -87,17 +87,31 @@ public class AiServerService {
 	}
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
-	private RequestCategory classifyRequestCategory(String message) {
-
+	private RequestCategory classifyRequestCategory(String message, boolean hasImage) {
 		String systemPrompt = """
-			You are a classifier.
-			Given a user input, decide whether it is:
-			- "IMAGE_GENERATION" if the user is asking to generate an image
-			- "CHAT_GENERATION" if it is a normal conversation
-			Only return one of the two exact words.
-			""";
+        You are a classifier.
+        The user can provide both text and/or an image.
+        
+        Decide the intent:
+        - "IMAGE_GENERATION": 
+            * If the user only provides an image without text.
+            * If the text is asking to generate, modify, or create a new image.
+            * If the user provides both image and text, but the text still indicates a new image should be generated.
+        - "CHAT_GENERATION": 
+            * If the user only wants a conversational response.
+            * If the user provides both image and text, but the text indicates normal chat about the image, not a request for new generation.
 
-		String category = aiChatService.prompt(systemPrompt, message);
+        Only return one of the two exact words.
+        """;
+
+		// 메시지가 null 또는 빈 문자열일 수 있으니 기본값 처리
+		String safeMessage = (message == null) ? "" : message;
+
+		// hasImage 여부도 프롬프트에 포함
+		String input = String.format("User input: \"%s\"%nImage provided: %s",
+			safeMessage, hasImage ? "YES" : "NO");
+
+		String category = aiChatService.prompt(systemPrompt, input).trim();
 		return RequestCategory.valueOf(category);
 	}
 
