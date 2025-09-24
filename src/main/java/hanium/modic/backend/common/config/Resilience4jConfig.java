@@ -22,6 +22,7 @@ public class Resilience4jConfig {
 			.recordException(e ->
 				e instanceof java.io.IOException             // SocketTime, ConnectTimeout, IOException 발생 시 실패로 간주
 					|| e instanceof AppException
+					|| e instanceof org.springframework.web.reactive.function.client.WebClientException
 			)
 			.recordResult(response -> {
 				if (response == null)
