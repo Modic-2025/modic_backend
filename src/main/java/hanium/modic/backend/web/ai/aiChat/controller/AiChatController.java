@@ -152,6 +152,19 @@ public class AiChatController {
 		description = """
 			AI 이미지 생성 요청 후, 해당 요청 ID로 SSE 구독을 시작해야 실시간으로 이미지를 받을 수 있습니다.
 			서버는 이미지 생성 완료 시 SSE를 통해 이미지를 전송하고 서버연결을 끊습니다.
+			
+			SSE응답 형식은 Message 목록 조회 내용 형식과 유사합니다.
+			{
+			  "messageId": 1,
+			  "messageOrder": 1,
+			  "senderType": "AI", // AI 응답
+			  "textContent": "안녕하세요! 생성된 메시지입니다.",
+			  "requestId": "req-1234567890",
+			  "imageUrl": "https://example.com/images/1.png", // 없으면 null
+			  "createdAt": "2025-09-24T13:45:00",
+			  "status": "RESPONSE" // 응답이므로 RESPONSE
+			}
+			
 			""",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
