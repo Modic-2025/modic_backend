@@ -106,6 +106,34 @@ public class PostReviewService {
 			.forEach(postImageEntity -> postImageEntity.updatePostReview(postReview));
 	}
 
+	// 포스트 리뷰 상세 조회
+	@Transactional(readOnly = true)
+	public PostReviewDetailResponse getPostReviewDetail(final Long reviewId) {
+		final PostReviewEntity postReview = postReviewRepository.findById(reviewId)
+			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
+
+		final UserEntity user = userEntityRepository.findById(postReview.getUserId())
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+
+		final List<PostReviewImageEntity> images = postReviewImageRepository.findAllByPostReviewId(reviewId);
+		final List<String> imageUrls = images.stream()
+			.map(image -> postReviewImageService.createImageGetUrl(image.getId()))
+			.toList();
+
+		String userImageUrl = user.getUserImageUrl();
+		boolean hasUserImage = userImageUrl != null;
+
+		return new PostReviewDetailResponse(
+			user.getName(),
+			hasUserImage,
+			userImageUrl,
+			postReview.getCreateAt(),
+			postReview.getId(),
+			postReview.getDescription(),
+			imageUrls
+		);
+	}
+
 	// 포스트 리뷰 목록 조회
 	@Transactional(readOnly = true)
 	public Page<PostReviewDetailResponse> getPostReviews(final Long postId, final int page, final int size) {
