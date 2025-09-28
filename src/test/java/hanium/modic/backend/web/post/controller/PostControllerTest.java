@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +38,7 @@ import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 
 @WebMvcTest(controllers = PostController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -384,5 +386,84 @@ class PostControllerTest extends BaseControllerTest {
 				"이미지 개수 초과"
 			)
 		);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공")
+	void getPostTree_Success() throws Exception {
+		// given
+		Long postId = 1L;
+		List<GetPostTreeResponse> mockResponse = List.of(
+			new GetPostTreeResponse(1L, "Root Post", null, "http://example.com/image1.jpg", PostStatus.APPROVED),
+			new GetPostTreeResponse(2L, "Child Post 1", 1L, "http://example.com/image2.jpg", PostStatus.PENDING),
+			new GetPostTreeResponse(3L, "Child Post 2", 1L, "http://example.com/image3.jpg", PostStatus.APPROVED)
+		);
+
+		when(postService.getPostTree(postId)).thenReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(3))
+			.andExpect(jsonPath("$.data[0].postId").value(1))
+			.andExpect(jsonPath("$.data[0].title").value("Root Post"))
+			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
+			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image1.jpg"))
+			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"))
+			.andExpect(jsonPath("$.data[1].postId").value(2))
+			.andExpect(jsonPath("$.data[1].parentPostId").value(1))
+			.andExpect(jsonPath("$.data[1].postStatus").value("PENDING"))
+			.andExpect(jsonPath("$.data[2].postId").value(3))
+			.andExpect(jsonPath("$.data[2].parentPostId").value(1))
+			.andExpect(jsonPath("$.data[2].postStatus").value("APPROVED"));
+
+		verify(postService).getPostTree(postId);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 실패 - 존재하지 않는 포스트")
+	void getPostTree_PostNotFound() throws Exception {
+		// given
+		Long postId = 999L;
+		when(postService.getPostTree(postId)).thenThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.isSuccess").value(false))
+			.andExpect(jsonPath("$.code").value("P-001"));
+
+		verify(postService).getPostTree(postId);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공 - 하위 포스트가 없는 경우")
+	void getPostTree_SingleNode() throws Exception {
+		// given
+		Long postId = 1L;
+		List<GetPostTreeResponse> mockResponse = List.of(
+			new GetPostTreeResponse(1L, "Single Post", null, "http://example.com/image.jpg", PostStatus.APPROVED)
+		);
+
+		when(postService.getPostTree(postId)).thenReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].postId").value(1))
+			.andExpect(jsonPath("$.data[0].title").value("Single Post"))
+			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
+			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image.jpg"))
+			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"));
+
+		verify(postService).getPostTree(postId);
 	}
 }
