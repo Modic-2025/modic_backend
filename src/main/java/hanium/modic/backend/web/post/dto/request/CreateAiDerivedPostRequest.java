@@ -12,10 +12,6 @@ public record CreateAiDerivedPostRequest(
 	@Schema(description = "생성된 AI 이미지 ID", example = "1")
 	Long createdAiImageId,
 
-	@NotNull(message = "원본 이미지 ID는 필수입니다.")
-	@Schema(description = "비교할 원본 이미지 ID (투표 시스템에서 사용)", example = "2")
-	Long originalImageId,
-
 	@NotBlank(message = "제목은 필수입니다.")
 	@Schema(description = "게시물 제목", example = "멋진 AI 아트")
 	String title,

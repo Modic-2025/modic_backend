@@ -44,6 +44,7 @@ public enum ErrorCode {
 	POST_ROLE_EXCEPTION(HttpStatus.FORBIDDEN, "P-002", "포스트에 대한 권한이 없습니다."),
 	POST_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "P-003", "포스트에 대한 접근 권한이 없습니다."),
 	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
+	THUMBNAIL_IMAGE_NOT_IN_IMAGE_LIST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-005", "썸네일 이미지는 이미지 목록에 포함되어야 합니다."),
 
 	// Post Like
 	CANNOT_LIKE_OWN_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "PL-001", "자신의 게시글에는 하트를 할 수 없습니다."),

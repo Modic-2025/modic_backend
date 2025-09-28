@@ -189,7 +189,7 @@ public class VotingService {
 
 			// 3. 파생 포스트 조회
 			PostEntity derivedPost = postEntityRepository.findById(derivedPostId).orElse(null);
-			if (derivedPost == null || !derivedPost.getIsAiDerivedPost()) {
+			if (derivedPost == null || derivedPost.getPostStatus() == PostStatus.ORIGINAL) {
 				log.warn("유효하지 않은 파생 포스트: postId={}, voteId={}", derivedPostId, voteId);
 				return;
 			}
@@ -200,8 +200,8 @@ public class VotingService {
 
 			// 5. 투표 결과에 따른 포스트 상태 업데이트
 			PostStatus newStatus = (voteSummary.getFinalDecision() == VoteDecision.APPROVE)
-				? PostStatus.APPROVED
-				: PostStatus.REJECTED;
+				? PostStatus.DERIVED_APPROVED
+				: PostStatus.DERIVED_REJECTED;
 
 			derivedPost.updateDerivedPostStatus(newStatus);
 			postEntityRepository.save(derivedPost);

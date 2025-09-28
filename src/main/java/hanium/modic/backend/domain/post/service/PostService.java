@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.post.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
+import static hanium.modic.backend.domain.post.enums.PostStatus.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
 import java.util.LinkedHashMap;
@@ -29,9 +30,8 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
-import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
-import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -61,8 +61,12 @@ public class PostService {
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
 		final Long ticketPrice,
-		final List<Long> imageIds
+		final List<Long> imageIds,
+		final Long thumbnailImageId
 	) {
+		// 썸네일 이미지가 이미지 목록에 포함되어 있는지 검증
+		validateThumbnailInImages(thumbnailImageId, imageIds);
+
 		PostEntity postEntity = PostEntity.builder()
 			.userId(userId)
 			.title(title)
@@ -70,8 +74,9 @@ public class PostService {
 			.commercialPrice(commercialPrice)
 			.nonCommercialPrice(nonCommercialPrice)
 			.ticketPrice(ticketPrice)
-			.isAiDerivedPost(false)
 			.parentPostId(null) // 일반 포스트는 부모가 없음
+			.postStatus(ORIGINAL) // 일반 포스트는 상태가 없음
+			.thumbnailImageId(thumbnailImageId)
 			.build();
 
 		PostEntity post = postEntityRepository.save(postEntity);
@@ -115,28 +120,20 @@ public class PostService {
 		// 현재 인증된 사용자의 좋아요 여부 확인
 		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
 
-		// AI 파생 포스트의 id와 ImageUrl 조회
-		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+		// AI 파생 포스트의 id와 ImageUrl 조회, 오직 승인된 파생포스트만 조회
+		List<PostEntity> derivedPosts = postEntityRepository.findAllByParentPostIdAndPostStatusOrderByIdDesc(id,
+			DERIVED_APPROVED);
 
-		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
-
-		// 포스트ID별로 첫 번째 이미지 URL 찾기
-		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
-		for (PostImageEntity image : allPostImages) {
-			firstImageByPostId.computeIfAbsent(
-				image.getPostId(),
-				pid -> imageUtil.createImageGetUrl(image.getImagePath())
-			);
-		}
-		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
-			.map(postId -> {
-				String firstImageUrl = firstImageByPostId.get(postId);
-				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+		// 파생 포스트 별로 postId와 대표 이미지 URL 찾기
+		List<GetPostResponse.SimplePostDto> simpleDerivedPostDtos = derivedPosts.stream()
+			.map(derivedPost -> {
+				String firstImageUrl = postImageService.createImageGetUrl(derivedPost.getThumbnailImageId());
+				return new GetPostResponse.SimplePostDto(derivedPost.getId(), firstImageUrl);
 			})
 			.toList();
 
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, derivedPosts);
+			isLikedByCurrentUser, simpleDerivedPostDtos);
 	}
 
 	@Transactional(readOnly = true)
@@ -165,41 +162,29 @@ public class PostService {
 		Boolean isLikedByCurrentUser = false;
 
 		// AI 파생 포스트의 id와 ImageUrl 조회
-		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+		List<PostEntity> derivedPosts = postEntityRepository.findAllByParentPostIdAndPostStatusOrderByIdDesc(id,
+			DERIVED_APPROVED);
 
-		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
-
-		// 포스트ID별로 첫 번째 이미지 URL 찾기
-		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
-		for (PostImageEntity image : allPostImages) {
-			firstImageByPostId.computeIfAbsent(
-				image.getPostId(),
-				pid -> imageUtil.createImageGetUrl(image.getImagePath())
-			);
-		}
-		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
-			.map(postId -> {
-				String firstImageUrl = firstImageByPostId.get(postId);
-				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+		// 파생 포스트 별로 postId와 대표 이미지 URL 찾기
+		List<GetPostResponse.SimplePostDto> simpleDerivedPostDtos = derivedPosts.stream()
+			.map(derivedPost -> {
+				String firstImageUrl = postImageService.createImageGetUrl(derivedPost.getThumbnailImageId());
+				return new GetPostResponse.SimplePostDto(derivedPost.getId(), firstImageUrl);
 			})
 			.toList();
 
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, derivedPosts);
+			isLikedByCurrentUser, simpleDerivedPostDtos);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size,
-		final PostType postType) {
-
-		// Todo: sort 기능 추가
-
+	public PageResponse<GetPostsResponse> getPosts(
+		final int page,
+		final int size,
+		final PostType postType
+	) {
 		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
 		Page<PostEntity> posts = getPostsByType(pageable, postType);
-
-		if (posts.isEmpty()) {
-			throw new AppException(POST_NOT_FOUND_EXCEPTION);
-		}
 
 		// 게시글 ID 목록 추출
 		List<Long> postIds = posts.getContent().stream()
@@ -216,6 +201,7 @@ public class PostService {
 			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
+			// Todo: 대표이미지 어떻게 앞으로 넣지
 			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
 				.stream()
 				.map(image -> new GetPostsResponse.ImageDto(
@@ -230,6 +216,48 @@ public class PostService {
 		});
 
 		return PageResponse.of(responsePages);
+	}
+
+	// 유저 포스트 목록 조회
+	@Transactional(readOnly = true)
+	public Page<GetPostsResponse> getUserPosts(
+		final long userId,
+		final int page,
+		final int size
+	) {
+		// 1. 포스트 목록 조회 (DERIVED_PENDING, DERIVED_REJECTED 상태의 포스트도 포함)
+		Page<PostEntity> posts = postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size));
+
+		// 2. 이미지 조회
+		// 게시글 ID 목록 추출
+		List<Long> postIds = posts.getContent().stream()
+			.map(PostEntity::getId)
+			.toList();
+
+		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 그룹화
+		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
+			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
+
+		// 3. 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
+		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
+
+		// 4. 응답 생성
+		return posts.map(post -> {
+			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetPostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
+			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
+
+			return new GetPostsResponse(post.getId(), post.getTitle(), post.getPostStatus(), postImages, likeCount);
+		});
 	}
 
 	@Transactional
@@ -253,18 +281,22 @@ public class PostService {
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
 		final Long ticketPrice,
-		final List<Long> imageIds
+		final List<Long> imageIds,
+		final Long thumbnailImageId
 	) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
 		validatePostRole(userId, post.getUserId());
+		validateThumbnailInImages(thumbnailImageId, imageIds);
 
+		// 포스트 정보 업데이트
 		post.updateTitle(title);
 		post.updateDescription(description);
 		post.updateCommercialPrice(commercialPrice);
 		post.updateNonCommercialPrice(nonCommercialPrice);
 		post.updateTicketPrice(ticketPrice);
+		post.updateThumbnailImageId(thumbnailImageId);
 		postEntityRepository.save(post);
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(postId);
@@ -278,61 +310,6 @@ public class PostService {
 		// 새로 추가된 이미지에 PostId 업데이트
 		postImageEntityRepository.findAllByIds(imageIds)
 			.forEach(postImageEntity -> postImageEntity.updatePost(post));
-	}
-
-	// 포스트 권한 검증
-	// Todo : 권한 검증 로직 개선 필요, AOP 등등
-	private void validatePostRole(
-		final long userId,
-		final long postUserId
-	) {
-		if (userId != postUserId) {
-			throw new AppException(POST_ROLE_EXCEPTION);
-		}
-	}
-
-	// 단순 포스트 목록 조회
-	@Transactional(readOnly = true)
-	public Page<GetSimplePostsResponse> getSimplePosts(final long userId, final int page, final int size) {
-		Page<PostEntity> posts = postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size));
-
-		if (posts.isEmpty()) {
-			return Page.empty();
-		}
-
-		// 게시글 ID 목록 추출
-		List<Long> postIds = posts.getContent().stream()
-			.map(PostEntity::getId)
-			.toList();
-
-		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
-		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
-
-		// 포스트ID별로 그룹화
-		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
-			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
-
-		return posts.map(post -> {
-			List<GetSimplePostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
-				.stream()
-				.map(image -> new GetSimplePostsResponse.ImageDto(
-					imageUtil.createImageGetUrl(image.getImagePath()),
-					image.getId()
-				))
-				.toList();
-
-			return new GetSimplePostsResponse(post.getId(), postImages);
-		});
-	}
-
-	// 포스트 타입에 따라 포스트 목록을 조회
-	private Page<PostEntity> getPostsByType(Pageable pageable, PostType postType) {
-		return switch (postType) {
-			// Todo: AI_DERIVED 조회시 PostStatus 필터링 구현 필요
-			case ORIGINAL -> postEntityRepository.findAllByIsAiDerivedPost(false, pageable);
-			case AI_DERIVED -> postEntityRepository.findAllByIsAiDerivedPost(true, pageable);
-			case ALL -> postEntityRepository.findAll(pageable);
-		};
 	}
 
 	/**
@@ -382,5 +359,32 @@ public class PostService {
 				return GetPostTreeResponse.of(post, representativeImageUrl);
 			})
 			.toList();
+	}
+
+	// 포스트 타입에 따라 포스트 목록을 조회(승인되지 않은 파생 포스트는 모두 제외)
+	private Page<PostEntity> getPostsByType(Pageable pageable, PostType postType) {
+		return switch (postType) {
+			case ORIGINAL -> postEntityRepository.findAllByPostStatus(ORIGINAL, pageable);
+			case AI_DERIVED -> postEntityRepository.findAllByPostStatus(DERIVED_APPROVED, pageable);
+			case ALL -> postEntityRepository.findAllByPostStatusIn(List.of(ORIGINAL, DERIVED_APPROVED), pageable);
+		};
+	}
+
+	// 포스트 권한 검증
+	// Todo : 권한 검증 로직 개선 필요, AOP 등등
+	private void validatePostRole(
+		final long userId,
+		final long postUserId
+	) {
+		if (userId != postUserId) {
+			throw new AppException(POST_ROLE_EXCEPTION);
+		}
+	}
+
+	// 썸네일 이미지가 이미지 목록에 포함되어 있는지 검증
+	private void validateThumbnailInImages(Long thumbnailImageId, List<Long> imageIds) {
+		if (!imageIds.contains(thumbnailImageId)) {
+			throw new AppException(THUMBNAIL_IMAGE_NOT_IN_IMAGE_LIST_EXCEPTION);
+		}
 	}
 }
