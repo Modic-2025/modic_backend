@@ -11,25 +11,23 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
+import hanium.modic.backend.domain.image.dto.ParsedImageName;
+import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
-public class PostImageService {
+public class PostImageService extends ImageService {
 
 	private final PostImageEntityRepository postImageEntityRepository;
-	private final ImageValidationService imageValidationService;
-	private final ImageUtil imageUtil;
 
-	// 이미지 저장 URL 생성
-	public CreateImageSaveUrlDto createImageSaveUrl(ImagePrefix imagePrefix, String fullFileName) {
-		imageValidationService.validateFullFileName(fullFileName);
+	public PostImageService(ImageValidationService imageValidationService, ImageUtil imageUtil,
+		PostImageEntityRepository postImageEntityRepository) {
+		super(imageValidationService, imageUtil);
+		this.postImageEntityRepository = postImageEntityRepository;
 
-		return imageUtil.createImageSaveUrl(imagePrefix, fullFileName);
 	}
 
 	// POST 이미지는 public이므로 get URL 생성 없이 바로 URL 응답
@@ -37,7 +35,7 @@ public class PostImageService {
 	public String createImageGetUrl(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-		return image.getImageUrl();
+		return imageUtil.createImageGetUrl(image.getImagePath());
 	}
 
 	// 이미지 삭제
@@ -47,7 +45,7 @@ public class PostImageService {
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
 		postImageEntityRepository.delete(image);
-		imageUtil.deleteImage(image.getImagePath()); // s3는 비동기로 삭제, 트랜잭션 무관
+		// s3 이미지는 삭제 x
 	}
 
 	// 여러 이미지 삭제
@@ -65,23 +63,21 @@ public class PostImageService {
 			.toList();
 
 		postImageEntityRepository.deleteAllByIds(ids);
-		imageUtil.deleteImages(imagePaths); // s3는 비동기로 삭제, 트랜잭션 무관
+		// s3 이미지는 삭제 x
 	}
 
 	// 원격 저장소에 이미지 저장 확인 후 DB에 저장
 	public PostImageEntity saveImage(final ImagePrefix imagePrefix, final String fullFileName, final String imagePath) {
-		imageValidationService.validateImageSaved(imagePath, imagePrefix);
-		imageValidationService.validateFullFileName(fullFileName);
+		imageValidationService.validateImageSaved(imagePath);
 		validateDuplicatedImagePath(imagePath);
 
-		String[] fileNameParts = fullFileName.split("\\.");
-		String fileName = fileNameParts[0];
-		String fileExtension = fileNameParts[1];
+		ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
+		String fileName = parsedImageName.imageName();
+		String fileExtension = parsedImageName.fileExtension();
 
 		return postImageEntityRepository.save(
 			PostImageEntity.builder()
 				.imagePurpose(imagePrefix)
-				.imageUrl(imageUtil.createImageUrl(imagePrefix, imagePath))
 				.fullImageName(fullFileName)
 				.imageName(fileName)
 				.extension(ImageExtension.from(fileExtension))

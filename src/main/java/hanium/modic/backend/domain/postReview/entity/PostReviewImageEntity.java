@@ -42,14 +42,13 @@ public class PostReviewImageEntity extends Image {
 	@Builder
 	private PostReviewImageEntity(
 		String imagePath,
-		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
 		ImagePrefix imagePurpose,
 		PostReviewEntity postReviewEntity
 	) {
-		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
+		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 		this.postReviewId = (postReviewEntity == null) ? null : postReviewEntity.getId();
 	}
 

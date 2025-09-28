@@ -12,15 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
-import com.amazonaws.services.s3.AmazonS3;
-
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.property.property.S3Properties;
-import hanium.modic.backend.domain.ai.entity.AiImagePermissionEntity;
-import hanium.modic.backend.domain.ai.repository.AiImagePermissionRepository;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -35,6 +33,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.postReview.dto.request.CreatePostReviewRequest;
+import software.amazon.awssdk.services.s3.S3Client;
 
 class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -51,10 +50,10 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 	private PostReviewImageRepository postReviewImageRepository;
 
 	@Autowired
-	private AiImagePermissionRepository aiImagePermissionRepository;
+	private AiChatRoomRepository aiChatRoomRepository;
 
 	@Autowired
-	private AmazonS3 amazonS3;
+	private S3Client s3Client;
 
 	@Autowired
 	private S3Properties s3Properties;
@@ -69,17 +68,15 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostEntity post = postEntityRepository.save(PostFactory.createMockPost(postOwner));
 
 		// AiImagePermission 생성 (해당 그림체를 사용한 이력 추가)
-		aiImagePermissionRepository.save(AiImagePermissionEntity.builder()
+		aiChatRoomRepository.save(AiChatRoomEntity.builder()
 			.userId(user.getId())
 			.postId(post.getId())
 			.remainingGenerations(10)
-			.isActive(true)
 			.build());
 
 		final PostReviewImageEntity savedImage = postReviewImageRepository.save(
 			PostReviewImageEntity.builder()
 				.imagePath("post-review/test-image.jpg")
-				.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 				.fullImageName("test-image.jpg")
 				.imageName("test-image")
 				.extension(ImageExtension.JPG)
@@ -111,7 +108,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostReviewEntity review = postReviewRepository.save(PostReviewFactory.createMockPostReview(post, user));
 		PostReviewImageEntity postReviewImage = PostReviewImageEntity.builder()
 			.imagePath("post-review/test-image.jpg")
-			.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 			.fullImageName("test-image.jpg")
 			.imageName("test-image")
 			.extension(ImageExtension.JPG)
@@ -139,7 +135,6 @@ class PostReviewControllerIntegrationTest extends BaseIntegrationTest {
 		final PostReviewEntity review = postReviewRepository.save(PostReviewFactory.createMockPostReview(post, writer));
 		PostReviewImageEntity postReviewImage = PostReviewImageEntity.builder()
 			.imagePath("post-review/test-image.jpg")
-			.imageUrl("https://s3.bucket.com/post-review/test-image.jpg")
 			.fullImageName("test-image.jpg")
 			.imageName("test-image")
 			.extension(ImageExtension.JPG)

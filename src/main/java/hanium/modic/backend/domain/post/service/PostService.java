@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.post.service;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.data.domain.Sort.Direction.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,8 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
@@ -25,7 +28,9 @@ import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -46,6 +51,7 @@ public class PostService {
 
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = DESC;
+	private final ImageUtil imageUtil;
 
 	@Transactional
 	public Long createPost(
@@ -54,13 +60,18 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds) {
+		final Long ticketPrice,
+		final List<Long> imageIds
+	) {
 		PostEntity postEntity = PostEntity.builder()
 			.userId(userId)
 			.title(title)
 			.description(description)
 			.commercialPrice(commercialPrice)
 			.nonCommercialPrice(nonCommercialPrice)
+			.ticketPrice(ticketPrice)
+			.isAiDerivedPost(false)
+			.parentPostId(null) // 일반 포스트는 부모가 없음
 			.build();
 
 		PostEntity post = postEntityRepository.save(postEntity);
@@ -90,7 +101,13 @@ public class PostService {
 		final boolean hasUserImage = userImage != null;
 		final String userEmail = userEntity.getEmail();
 
-		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(id);
+		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
+			.stream()
+			.map(image -> new ImageDto(
+				imageUtil.createImageGetUrl(image.getImagePath()),
+				image.getId()
+			))
+			.toList();
 
 		// 하트 수 조회 (통계 테이블 사용)
 		long likeCount = postLikeService.getLikeCount(id);
@@ -98,17 +115,87 @@ public class PostService {
 		// 현재 인증된 사용자의 좋아요 여부 확인
 		Boolean isLikedByCurrentUser = postLikeService.isLikedByUser(currentUserId, id);
 
+		// AI 파생 포스트의 id와 ImageUrl 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 찾기
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
+			.map(postId -> {
+				String firstImageUrl = firstImageByPostId.get(postId);
+				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+			})
+			.toList();
+
 		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser);
+			isLikedByCurrentUser, derivedPosts);
 	}
 
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size) {
+	public GetPostResponse getPostForPublic(final Long id) {
+		final PostEntity postEntity = postEntityRepository.findById(id)
+			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
+		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		final String userName = userEntity.getName();
+		final String userImage = userEntity.getUserImageUrl();
+		final boolean hasUserImage = userImage != null;
+		final String userEmail = userEntity.getEmail();
+
+		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
+			.stream()
+			.map(image -> new ImageDto(
+				imageUtil.createImageGetUrl(image.getImagePath()),
+				image.getId()
+			))
+			.toList();
+
+		// 하트 수 조회 (통계 테이블 사용)
+		long likeCount = postLikeService.getLikeCount(id);
+
+		// 비로그인 사용자이므로 좋아요 여부는 null로 설정
+		Boolean isLikedByCurrentUser = false;
+
+		// AI 파생 포스트의 id와 ImageUrl 조회
+		List<Long> derivedPostIds = postEntityRepository.findIdsByParentPostIdOrderByIdDesc(id);
+
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(derivedPostIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 찾기
+		Map<Long, String> firstImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			firstImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+		List<GetPostResponse.SimplePostDto> derivedPosts = derivedPostIds.stream()
+			.map(postId -> {
+				String firstImageUrl = firstImageByPostId.get(postId);
+				return new GetPostResponse.SimplePostDto(postId, firstImageUrl);
+			})
+			.toList();
+
+		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
+			isLikedByCurrentUser, derivedPosts);
+	}
+
+	@Transactional(readOnly = true)
+	public PageResponse<GetPostsResponse> getPosts(final String sort, final int page, final int size,
+		final PostType postType) {
 
 		// Todo: sort 기능 추가
 
 		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
-		Page<PostEntity> posts = postEntityRepository.findAll(pageable);
+		Page<PostEntity> posts = getPostsByType(pageable, postType);
 
 		if (posts.isEmpty()) {
 			throw new AppException(POST_NOT_FOUND_EXCEPTION);
@@ -129,7 +216,14 @@ public class PostService {
 			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		Page<GetPostsResponse> responsePages = posts.map(post -> {
-			List<PostImageEntity> postImages = imagesByPostId.getOrDefault(post.getId(), List.of());
+			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetPostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
 			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
 
 			return GetPostsResponse.of(post, postImages, likeCount);
@@ -158,7 +252,9 @@ public class PostService {
 		final String description,
 		final Long commercialPrice,
 		final Long nonCommercialPrice,
-		final List<Long> imageIds) {
+		final Long ticketPrice,
+		final List<Long> imageIds
+	) {
 		PostEntity post = postEntityRepository.findById(postId)
 			.orElseThrow(() -> new AppException(POST_NOT_FOUND_EXCEPTION));
 
@@ -168,6 +264,7 @@ public class PostService {
 		post.updateDescription(description);
 		post.updateCommercialPrice(commercialPrice);
 		post.updateNonCommercialPrice(nonCommercialPrice);
+		post.updateTicketPrice(ticketPrice);
 		postEntityRepository.save(post);
 
 		List<PostImageEntity> postImages = postImageEntityRepository.findAllByPostId(postId);
@@ -187,7 +284,8 @@ public class PostService {
 	// Todo : 권한 검증 로직 개선 필요, AOP 등등
 	private void validatePostRole(
 		final long userId,
-		final long postUserId) {
+		final long postUserId
+	) {
 		if (userId != postUserId) {
 			throw new AppException(POST_ROLE_EXCEPTION);
 		}
@@ -210,17 +308,79 @@ public class PostService {
 		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
 		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
 
-		// 포스트ID별로 첫 번째 이미지 URL을 찾는 Map 생성
-		Map<Long, String> firstImageByPostId = allPostImages.stream()
-			.collect(Collectors.toMap(
-				PostImageEntity::getPostId,     // Key: postId
-				PostImageEntity::getImageUrl,   // Value: imageUrl
-				(existing, replacement) -> existing  // 중복 시 첫 번째 값 유지
-			));
+		// 포스트ID별로 그룹화
+		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
+			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
 
 		return posts.map(post -> {
-			String firstImageUrl = firstImageByPostId.get(post.getId());
-			return new GetSimplePostsResponse(post.getId(), firstImageUrl);
+			List<GetSimplePostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetSimplePostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
+			return new GetSimplePostsResponse(post.getId(), postImages);
 		});
+	}
+
+	// 포스트 타입에 따라 포스트 목록을 조회
+	private Page<PostEntity> getPostsByType(Pageable pageable, PostType postType) {
+		return switch (postType) {
+			// Todo: AI_DERIVED 조회시 PostStatus 필터링 구현 필요
+			case ORIGINAL -> postEntityRepository.findAllByIsAiDerivedPost(false, pageable);
+			case AI_DERIVED -> postEntityRepository.findAllByIsAiDerivedPost(true, pageable);
+			case ALL -> postEntityRepository.findAll(pageable);
+		};
+	}
+
+	/**
+	 * 특정 포스트를 포함한 하위 트리를 조회
+	 * 각 노드의 대표 이미지(첫 번째 이미지)와 포스트 상태를 포함하여 반환
+	 *
+	 * @param postId 트리의 루트 포스트 ID
+	 * @return 트리 구조로 구성된 포스트 정보 리스트
+	 * @throws AppException 포스트가 존재하지 않을 경우
+	 */
+	@Transactional(readOnly = true)
+	public List<GetPostTreeResponse> getPostTree(Long postId) {
+		// 포스트 존재 여부 확인
+		if (!postEntityRepository.existsById(postId)) {
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
+		}
+
+		// 재귀적으로 모든 하위 트리 포스트 조회
+		List<PostEntity> treeNodes = postEntityRepository.findAllDescendantsByPostId(postId);
+
+		// 포스트가 없을 경우 예외 처리
+		if (treeNodes.isEmpty()) {
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
+		}
+
+		// 모든 포스트 ID 추출
+		List<Long> postIds = treeNodes.stream()
+			.map(PostEntity::getId)
+			.toList();
+
+		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 매핑
+		Map<Long, String> representativeImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			representativeImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+
+		// PostEntity를 GetPostTreeResponse로 변환
+		return treeNodes.stream()
+			.map(post -> {
+				String representativeImageUrl = representativeImageByPostId.get(post.getId());
+				return GetPostTreeResponse.of(post, representativeImageUrl);
+			})
+			.toList();
 	}
 }

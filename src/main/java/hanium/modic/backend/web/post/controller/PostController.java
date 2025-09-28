@@ -2,6 +2,8 @@ package hanium.modic.backend.web.post.controller;
 
 import static org.springframework.http.HttpStatus.*;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -25,6 +28,7 @@ import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.postReview.dto.response.CanReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -53,7 +57,7 @@ public class PostController {
 		return ResponseEntity.status(CREATED)
 			.body(AppResponse.created(CreatePostResponse.of(
 				postService.createPost(user.getId(), request.title(), request.description(), request.commercialPrice(),
-					request.nonCommercialPrice(), request.imageIds()))));
+					request.nonCommercialPrice(), request.ticketPrice(), request.imageIds()))));
 	}
 
 	@GetMapping("/{id}")
@@ -65,13 +69,23 @@ public class PostController {
 	}
 
 	@GetMapping
-	@Operation(summary = "게시글 목록 조회 API", description = "게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기를 입력받습니다.", responses = {
-		@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")})
+	@Operation(
+		summary = "게시글 목록 조회 API",
+		description = """
+			게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기, 포스트 타입을 입력받습니다.
+			postType은 (ALL, ORIGINAL, AI_DERIVED)가 존재한다.
+			""",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		}
+	)
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "LATEST") String sort,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
-		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size) {
-		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size);
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
+		@RequestParam(required = false, defaultValue = "ALL") PostType postType
+	) {
+		PageResponse<GetPostsResponse> response = postService.getPosts(sort, page, size, postType);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
@@ -92,7 +106,7 @@ public class PostController {
 	public ResponseEntity<AppResponse<Void>> updatePost(@CurrentUser UserEntity user, @PathVariable long id,
 		@RequestBody @Valid UpdatePostRequest request) {
 		postService.updatePost(user.getId(), id, request.title(), request.description(), request.commercialPrice(),
-			request.nonCommercialPrice(), request.imageIds());
+			request.nonCommercialPrice(), request.ticketPrice(), request.imageIds());
 
 		return ResponseEntity.status(NO_CONTENT).body(AppResponse.noContent());
 	}
@@ -112,7 +126,7 @@ public class PostController {
 		@CurrentUser UserEntity user) {
 
 		boolean canReview = postReviewAuthorizationService.canUserReviewPost(user.getId(), postId);
-		
+
 		CanReviewResponse response;
 		if (canReview) {
 			response = CanReviewResponse.allowed();
@@ -120,6 +134,24 @@ public class PostController {
 			response = CanReviewResponse.denied();
 		}
 
+		return ResponseEntity.ok(AppResponse.ok(response));
+	}
+
+	@GetMapping("/{postId}/tree")
+	@Operation(
+		summary = "게시글 트리 조회 API",
+		description = """
+			특정 포스트를 포함한 하위 트리의 모든 노드를 조회합니다.
+			각 노드는 postId, title, parentPostId, 대표이미지URL, postStatus를 포함합니다.
+			프론트엔드에서 parentPostId를 통해 트리 구조를 구성할 수 있습니다.
+			""",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "트리 조회 성공"),
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
+		}
+	)
+	public ResponseEntity<AppResponse<List<GetPostTreeResponse>>> getPostTree(@PathVariable Long postId) {
+		List<GetPostTreeResponse> response = postService.getPostTree(postId);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 }

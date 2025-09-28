@@ -1,8 +1,12 @@
 package hanium.modic.backend.domain.post.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import hanium.modic.backend.domain.post.entity.PostEntity;
 
@@ -10,4 +14,35 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 	long countByUserId(Long userId);
 
 	Page<PostEntity> findAllByUserId(Long userId, Pageable pageable);
+
+	Page<PostEntity> findAllByIsAiDerivedPost(Boolean isAiDerivedPost, Pageable pageable);
+
+	List<Long> findIdsByParentPostIdOrderByIdDesc(Long parentPostId);
+
+	/**
+	 * 특정 포스트를 포함한 모든 하위 트리 노드를 재귀적으로 조회
+	 * MySQL의 CTE(Common Table Expression)를 사용하여 재귀 쿼리 수행
+	 *
+	 * @param postId 트리의 루트 포스트 ID
+	 * @return 해당 포스트와 모든 하위 포스트 엔티티 리스트
+	 */
+	@Query(value = """
+		WITH RECURSIVE post_tree AS (
+			SELECT id, user_id, title, description, commercial_price, non_commercial_price,
+			       ticket_price, is_ai_derived_post, parent_post_id, derived_post_status,
+			       create_at, update_at
+			FROM post
+			WHERE id = :postId
+
+			UNION ALL
+
+			SELECT p.id, p.user_id, p.title, p.description, p.commercial_price, p.non_commercial_price,
+			       p.ticket_price, p.is_ai_derived_post, p.parent_post_id, p.derived_post_status,
+			       p.create_at, p.update_at
+			FROM post p
+			INNER JOIN post_tree pt ON p.parent_post_id = pt.id
+		)
+		SELECT * FROM post_tree ORDER BY id
+		""", nativeQuery = true)
+	List<PostEntity> findAllDescendantsByPostId(@Param("postId") Long postId);
 }

@@ -36,13 +36,12 @@ public class UserImageEntity extends Image {
 	private UserImageEntity(
 		UserEntity user,
 		String imagePath,
-		String imageUrl,
 		String fullImageName,
 		String imageName,
 		ImageExtension extension,
 		ImagePrefix imagePurpose
 	) {
-		super(imagePath, imageUrl, fullImageName, imageName, extension, imagePurpose);
+		super(imagePath, fullImageName, imageName, extension, imagePurpose);
 		this.userId = user.getId();
 	}
 }

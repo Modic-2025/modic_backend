@@ -27,6 +27,7 @@ public class ProfileService {
 		final String userImageUrl = user.getUserImageUrl();
 
 		return new GetMyProfileResponse(
+			user.getId(),
 			user.getEmail(),
 			user.getName(),
 			userImageUrl != null,
@@ -49,6 +50,7 @@ public class ProfileService {
 		final String userImageUrl = user.getUserImageUrl();
 
 		return new GetProfileResponse(
+			user.getId(),
 			user.getEmail(),
 			user.getName(),
 			userImageUrl != null,

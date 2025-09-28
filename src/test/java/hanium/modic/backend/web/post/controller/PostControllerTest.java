@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import hanium.modic.backend.domain.post.enums.PostStatus;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 
 @WebMvcTest(controllers = PostController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -75,6 +78,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"제목은 필수입니다.",
@@ -85,6 +89,7 @@ class PostControllerTest extends BaseControllerTest {
 					"제목",
 					"설명",
 					null,
+					0L,
 					0L,
 					List.of(1L)
 				),
@@ -97,6 +102,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					null,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 필수입니다.",
@@ -108,6 +114,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					-1L,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
@@ -119,6 +126,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					null
 				),
 				"이미지는 필수입니다.",
@@ -128,6 +136,7 @@ class PostControllerTest extends BaseControllerTest {
 				new CreatePostRequest(
 					"제목",
 					"설명",
+					0L,
 					0L,
 					0L,
 					Collections.nCopies(9, 1L)
@@ -144,9 +153,9 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L,
+			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L, false,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
-			10L, true);
+			10L, true, List.of());
 
 		when(postService.getPost(postId, testUser.getId())).thenReturn(response);
 
@@ -154,7 +163,7 @@ class PostControllerTest extends BaseControllerTest {
 		mockMvc.perform(get("/api/posts/{id}", postId)
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.id").value(response.id()))
+			.andExpect(jsonPath("$.data.postId").value(response.postId()))
 			.andExpect(jsonPath("$.data.title").value(response.title()))
 			.andExpect(jsonPath("$.data.description").value(response.description()))
 			.andExpect(jsonPath("$.data.likeCount").value(response.likeCount()))
@@ -184,15 +193,15 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostsResponse post1 = new GetPostsResponse(
-			1L, 1L, "제목1", "설명1", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
+			1L, 1L, "제목1", "설명1", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
 		GetPostsResponse post2 = new GetPostsResponse(
-			2L, 2L, "제목2", "설명2", 20000L, 8000L, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
+			2L, 2L, "제목2", "설명2", 20000L, 8000L, false, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
 
 		List<GetPostsResponse> content = List.of(post1, post2);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(any(String.class), anyInt(), anyInt())).thenReturn(pageResponse);
+		when(postService.getPosts(any(String.class), anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -213,13 +222,13 @@ class PostControllerTest extends BaseControllerTest {
 		throws Exception {
 		// given
 		GetPostsResponse post = new GetPostsResponse(
-			1L, 1L, "제목", "설명", 10000L, 5000L, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
+			1L, 1L, "제목", "설명", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
 
 		List<GetPostsResponse> content = List.of(post);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(sort, pageNumber, size)).thenReturn(pageResponse);
+		when(postService.getPosts(sort, pageNumber, size, PostType.ALL)).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -285,6 +294,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"제목은 필수입니다.",
@@ -296,6 +306,7 @@ class PostControllerTest extends BaseControllerTest {
 					null,
 					0L,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"설명은 필수입니다.",
@@ -305,6 +316,7 @@ class PostControllerTest extends BaseControllerTest {
 				new UpdatePostRequest(
 					"제목",
 					"",
+					0L,
 					0L,
 					0L,
 					List.of(1L)
@@ -319,6 +331,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					null,
 					0L,
+					0L,
 					List.of(1L)
 				),
 				"상업적 가격은 필수입니다.",
@@ -330,6 +343,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					null,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 필수입니다.",
@@ -341,6 +355,7 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					-1L,
+					0L,
 					List.of(1L)
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
@@ -350,6 +365,7 @@ class PostControllerTest extends BaseControllerTest {
 				new UpdatePostRequest(
 					"제목",
 					"설명",
+					0L,
 					0L,
 					0L,
 					null
@@ -363,11 +379,91 @@ class PostControllerTest extends BaseControllerTest {
 					"설명",
 					0L,
 					0L,
+					0L,
 					Collections.nCopies(9, 1L)
 				),
 				"이미지는 최대 8개까지 업로드 가능합니다.",
 				"이미지 개수 초과"
 			)
 		);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공")
+	void getPostTree_Success() throws Exception {
+		// given
+		Long postId = 1L;
+		List<GetPostTreeResponse> mockResponse = List.of(
+			new GetPostTreeResponse(1L, "Root Post", null, "http://example.com/image1.jpg", PostStatus.APPROVED),
+			new GetPostTreeResponse(2L, "Child Post 1", 1L, "http://example.com/image2.jpg", PostStatus.PENDING),
+			new GetPostTreeResponse(3L, "Child Post 2", 1L, "http://example.com/image3.jpg", PostStatus.APPROVED)
+		);
+
+		when(postService.getPostTree(postId)).thenReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(3))
+			.andExpect(jsonPath("$.data[0].postId").value(1))
+			.andExpect(jsonPath("$.data[0].title").value("Root Post"))
+			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
+			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image1.jpg"))
+			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"))
+			.andExpect(jsonPath("$.data[1].postId").value(2))
+			.andExpect(jsonPath("$.data[1].parentPostId").value(1))
+			.andExpect(jsonPath("$.data[1].postStatus").value("PENDING"))
+			.andExpect(jsonPath("$.data[2].postId").value(3))
+			.andExpect(jsonPath("$.data[2].parentPostId").value(1))
+			.andExpect(jsonPath("$.data[2].postStatus").value("APPROVED"));
+
+		verify(postService).getPostTree(postId);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 실패 - 존재하지 않는 포스트")
+	void getPostTree_PostNotFound() throws Exception {
+		// given
+		Long postId = 999L;
+		when(postService.getPostTree(postId)).thenThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.isSuccess").value(false))
+			.andExpect(jsonPath("$.code").value("P-001"));
+
+		verify(postService).getPostTree(postId);
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공 - 하위 포스트가 없는 경우")
+	void getPostTree_SingleNode() throws Exception {
+		// given
+		Long postId = 1L;
+		List<GetPostTreeResponse> mockResponse = List.of(
+			new GetPostTreeResponse(1L, "Single Post", null, "http://example.com/image.jpg", PostStatus.APPROVED)
+		);
+
+		when(postService.getPostTree(postId)).thenReturn(mockResponse);
+
+		// when & then
+		mockMvc.perform(get("/api/posts/{postId}/tree", postId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.isSuccess").value(true))
+			.andExpect(jsonPath("$.data").isArray())
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].postId").value(1))
+			.andExpect(jsonPath("$.data[0].title").value("Single Post"))
+			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
+			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image.jpg"))
+			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"));
+
+		verify(postService).getPostTree(postId);
 	}
 }

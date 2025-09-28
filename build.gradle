@@ -21,6 +21,22 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven { url "https://repo.spring.io/milestone" }
+    maven { url "https://repo.spring.io/snapshot" }
+}
+
+// 의존성 버전 강제 고정
+configurations.all {
+    resolutionStrategy {
+        // AWS SDK v2 및 다른 라이브러리 버전을 강제 고정하여 잠재적 충돌 방지
+        force 'software.amazon.awssdk:cloudfront:2.26.14',
+                'software.amazon.awssdk:s3:2.26.14',
+                'software.amazon.awssdk:url-signer:2.26.14'
+        force 'io.jsonwebtoken:jjwt-api:0.12.5'
+        force "io.swagger.core.v3:swagger-annotations-jakarta:2.2.36"
+        force "io.swagger.core.v3:swagger-core-jakarta:2.2.36"
+        force "io.swagger.core.v3:swagger-models-jakarta:2.2.36"
+    }
 }
 
 dependencies {
@@ -33,34 +49,49 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
-    implementation 'com.google.guava:guava:30.1.1-jre'
+    implementation 'com.google.guava:guava:33.2.1-jre'
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    //s3
-    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+    // AWS SDK v2 (버전은 resolutionStrategy로 관리)
+    implementation 'software.amazon.awssdk:s3'
+    // AWS SDK v1 - CloudFront (CloudFrontUrlSigner 사용)
+    implementation "com.amazonaws:aws-java-sdk-cloudfront:1.12.772" // cloudFront는 v2에 없어서 v1 사용
+
     //swagger
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.12") {
+        exclude group: "io.swagger.core.v3", module: "swagger-annotations"
+    }
 
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
-    runtimeOnly 'org.glassfish.jaxb:jaxb-runtime:4.0.3'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.2'
+    runtimeOnly 'org.glassfish.jaxb:jaxb-runtime:4.0.5'
 
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    // Amqp
-    implementation 'org.springframework.boot:spring-boot-starter-amqp:3.4.2'
+    // Amqp (버전은 Spring Boot가 관리)
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
     // Redisson(Redis Client)
-    implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
-    // OAuth
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:3.5.0'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.32.0'
+    // OAuth (버전은 Spring Boot가 관리)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // metric
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-cloudwatch2:1.13.4")
+
+    // webClient용 라이브러리, WebFlux 사용x
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // api 이중화를 위한 circuit breaker
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
 }
 
 tasks.named('test') {

@@ -24,9 +24,6 @@ public class Image extends BaseEntity {
 	private String imagePath;
 
 	@Column(nullable = false)
-	private String imageUrl;
-
-	@Column(nullable = false)
 	private String fullImageName;
 
 	@Column(nullable = false)
