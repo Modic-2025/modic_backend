@@ -97,6 +97,23 @@ public class PostReviewController {
 		return ResponseEntity.ok().build();
 	}
 
+	@GetMapping("/{reviewId}")
+	@Operation(
+		summary = "포스트 리뷰 상세 조회",
+		description = "특정 리뷰의 상세 정보를 조회합니다. 작성자 정보, 내용, 이미지가 포함됩니다.",
+		responses = {
+			@ApiResponse(responseCode = "404", description = "해당 리뷰를 찾을 수 없습니다.[R-001]"),
+			@ApiResponse(responseCode = "404", description = "해당 유저를 찾을 수 없습니다.[U-002]")
+		}
+	)
+	public ResponseEntity<AppResponse<PostReviewDetailResponse>> getPostReviewDetail(
+		@PathVariable long reviewId
+	) {
+		PostReviewDetailResponse response = postReviewService.getPostReviewDetail(reviewId);
+
+		return ResponseEntity.ok(AppResponse.ok(response));
+	}
+
 	@GetMapping
 	@Operation(
 		summary = "포스트 리뷰 목록 조회",
