@@ -135,6 +135,7 @@ public class AiImageCreatedListener {
 			.aiChatRoomId(requestChatMessage.getAiChatRoomId())
 			.messageOrder(messageOrder)
 			.senderType(SenderType.AI)
+			.textContent("")
 			.textContent(message.textContext())
 			.aiChatImageId(null)
 			.requestId(message.requestId())
