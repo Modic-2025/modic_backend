@@ -44,6 +44,7 @@ public class VotingService {
 	private final LockManager lockManager;
 	private final VoteProperties voteProperties;
 	private final VoteRewardService voteRewardService;
+	private final VoteCompletionRewardService voteCompletionRewardService;
 
 	/**
 	 * 투표 참여 메서드
@@ -155,6 +156,13 @@ public class VotingService {
 
 				// 연결된 파생 게시물의 상태 업데이트
 				updateDerivedPostStatus(voteId);
+
+				// 투표 완료 리워드 처리 (에러는 로깅만)
+				try {
+					voteCompletionRewardService.processCompletionReward(voteId);
+				} catch (Exception e) {
+					log.error("투표 완료 리워드 처리 실패: voteId={}", voteId, e);
+				}
 			}
 		}
 
