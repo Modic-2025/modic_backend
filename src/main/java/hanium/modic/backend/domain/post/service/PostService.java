@@ -30,6 +30,7 @@ import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -332,5 +333,54 @@ public class PostService {
 			case AI_DERIVED -> postEntityRepository.findAllByIsAiDerivedPost(true, pageable);
 			case ALL -> postEntityRepository.findAll(pageable);
 		};
+	}
+
+	/**
+	 * 특정 포스트를 포함한 하위 트리를 조회
+	 * 각 노드의 대표 이미지(첫 번째 이미지)와 포스트 상태를 포함하여 반환
+	 *
+	 * @param postId 트리의 루트 포스트 ID
+	 * @return 트리 구조로 구성된 포스트 정보 리스트
+	 * @throws AppException 포스트가 존재하지 않을 경우
+	 */
+	@Transactional(readOnly = true)
+	public List<GetPostTreeResponse> getPostTree(Long postId) {
+		// 포스트 존재 여부 확인
+		if (!postEntityRepository.existsById(postId)) {
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
+		}
+
+		// 재귀적으로 모든 하위 트리 포스트 조회
+		List<PostEntity> treeNodes = postEntityRepository.findAllDescendantsByPostId(postId);
+
+		// 포스트가 없을 경우 예외 처리
+		if (treeNodes.isEmpty()) {
+			throw new AppException(POST_NOT_FOUND_EXCEPTION);
+		}
+
+		// 모든 포스트 ID 추출
+		List<Long> postIds = treeNodes.stream()
+			.map(PostEntity::getId)
+			.toList();
+
+		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 첫 번째 이미지 URL 매핑
+		Map<Long, String> representativeImageByPostId = new LinkedHashMap<>();
+		for (PostImageEntity image : allPostImages) {
+			representativeImageByPostId.computeIfAbsent(
+				image.getPostId(),
+				pid -> imageUtil.createImageGetUrl(image.getImagePath())
+			);
+		}
+
+		// PostEntity를 GetPostTreeResponse로 변환
+		return treeNodes.stream()
+			.map(post -> {
+				String representativeImageUrl = representativeImageByPostId.get(post.getId());
+				return GetPostTreeResponse.of(post, representativeImageUrl);
+			})
+			.toList();
 	}
 }

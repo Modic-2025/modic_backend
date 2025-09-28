@@ -2,6 +2,8 @@ package hanium.modic.backend.web.post.controller;
 
 import static org.springframework.http.HttpStatus.*;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +28,7 @@ import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.postReview.dto.response.CanReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -131,6 +134,24 @@ public class PostController {
 			response = CanReviewResponse.denied();
 		}
 
+		return ResponseEntity.ok(AppResponse.ok(response));
+	}
+
+	@GetMapping("/{postId}/tree")
+	@Operation(
+		summary = "게시글 트리 조회 API",
+		description = """
+			특정 포스트를 포함한 하위 트리의 모든 노드를 조회합니다.
+			각 노드는 postId, title, parentPostId, 대표이미지URL, postStatus를 포함합니다.
+			프론트엔드에서 parentPostId를 통해 트리 구조를 구성할 수 있습니다.
+			""",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "트리 조회 성공"),
+			@ApiResponse(responseCode = "404", description = "해당 게시글을 찾을 수 없습니다.[P-001]")
+		}
+	)
+	public ResponseEntity<AppResponse<List<GetPostTreeResponse>>> getPostTree(@PathVariable Long postId) {
+		List<GetPostTreeResponse> response = postService.getPostTree(postId);
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 }

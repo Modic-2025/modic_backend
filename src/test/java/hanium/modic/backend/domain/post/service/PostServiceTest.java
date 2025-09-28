@@ -44,6 +44,7 @@ import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.post.dto.response.GetSimplePostsResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -726,5 +727,131 @@ class PostServiceTest {
 		verify(postEntityRepository).findIdsByParentPostIdOrderByIdDesc(postId);
 		// 비로그인 사용자이므로 isLikedByUser는 호출되지 않음
 		verify(postLikeService, never()).isLikedByUser(any(), any());
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공 - 하위 포스트가 있는 경우")
+	void getPostTree_WithChildPosts_ShouldReturnTreeResponse() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long rootPostId = 1L;
+		PostEntity rootPost = createMockPostWithId(rootPostId, mockUser);
+		PostEntity childPost1 = createMockAiDerivedPostWithId(2L, mockUser, rootPostId);
+		PostEntity childPost2 = createMockAiDerivedPostWithId(3L, mockUser, rootPostId);
+
+		List<PostEntity> treeNodes = List.of(rootPost, childPost1, childPost2);
+		List<PostImageEntity> rootImages = ImageFactory.createMockPostImages(rootPost, 1);
+		List<PostImageEntity> child1Images = ImageFactory.createMockPostImages(childPost1, 1);
+		List<PostImageEntity> child2Images = ImageFactory.createMockPostImages(childPost2, 1);
+		List<PostImageEntity> allImages = new ArrayList<>();
+		allImages.addAll(rootImages);
+		allImages.addAll(child1Images);
+		allImages.addAll(child2Images);
+
+		when(postEntityRepository.existsById(rootPostId)).thenReturn(true);
+		when(postEntityRepository.findAllDescendantsByPostId(rootPostId)).thenReturn(treeNodes);
+		when(postImageEntityRepository.findAllByPostIdIn(List.of(1L, 2L, 3L))).thenReturn(allImages);
+		when(imageUtil.createImageGetUrl(any())).thenReturn("http://example.com/image.jpg");
+
+		// when
+		List<GetPostTreeResponse> result = postService.getPostTree(rootPostId);
+
+		// then
+		assertThat(result).hasSize(3);
+
+		GetPostTreeResponse rootResponse = result.get(0);
+		assertThat(rootResponse.postId()).isEqualTo(rootPostId);
+		assertThat(rootResponse.title()).isEqualTo(rootPost.getTitle());
+		assertThat(rootResponse.parentPostId()).isNull();
+		assertThat(rootResponse.representativeImageUrl()).isEqualTo("http://example.com/image.jpg");
+		assertThat(rootResponse.postStatus()).isEqualTo(rootPost.getDerivedPostStatus());
+
+		GetPostTreeResponse child1Response = result.get(1);
+		assertThat(child1Response.postId()).isEqualTo(2L);
+		assertThat(child1Response.parentPostId()).isEqualTo(rootPostId);
+
+		GetPostTreeResponse child2Response = result.get(2);
+		assertThat(child2Response.postId()).isEqualTo(3L);
+		assertThat(child2Response.parentPostId()).isEqualTo(rootPostId);
+
+		verify(postEntityRepository).existsById(rootPostId);
+		verify(postEntityRepository).findAllDescendantsByPostId(rootPostId);
+		verify(postImageEntityRepository).findAllByPostIdIn(any());
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 실패 - 존재하지 않는 포스트")
+	void getPostTree_PostNotFound_ShouldThrowException() {
+		// given
+		Long nonExistentPostId = 999L;
+		when(postEntityRepository.existsById(nonExistentPostId)).thenReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> postService.getPostTree(nonExistentPostId))
+			.isInstanceOf(AppException.class)
+			.hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND_EXCEPTION);
+
+		verify(postEntityRepository).existsById(nonExistentPostId);
+		verify(postEntityRepository, never()).findAllDescendantsByPostId(any());
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공 - 하위 포스트가 없는 경우")
+	void getPostTree_WithoutChildPosts_ShouldReturnSingleNode() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long rootPostId = 1L;
+		PostEntity rootPost = createMockPostWithId(rootPostId, mockUser);
+		List<PostEntity> treeNodes = List.of(rootPost);
+		List<PostImageEntity> rootImages = ImageFactory.createMockPostImages(rootPost, 1);
+
+		when(postEntityRepository.existsById(rootPostId)).thenReturn(true);
+		when(postEntityRepository.findAllDescendantsByPostId(rootPostId)).thenReturn(treeNodes);
+		when(postImageEntityRepository.findAllByPostIdIn(List.of(rootPostId))).thenReturn(rootImages);
+		when(imageUtil.createImageGetUrl(any())).thenReturn("http://example.com/image.jpg");
+
+		// when
+		List<GetPostTreeResponse> result = postService.getPostTree(rootPostId);
+
+		// then
+		assertThat(result).hasSize(1);
+
+		GetPostTreeResponse response = result.get(0);
+		assertThat(response.postId()).isEqualTo(rootPostId);
+		assertThat(response.title()).isEqualTo(rootPost.getTitle());
+		assertThat(response.parentPostId()).isNull();
+		assertThat(response.representativeImageUrl()).isEqualTo("http://example.com/image.jpg");
+
+		verify(postEntityRepository).existsById(rootPostId);
+		verify(postEntityRepository).findAllDescendantsByPostId(rootPostId);
+		verify(postImageEntityRepository).findAllByPostIdIn(any());
+	}
+
+	@Test
+	@DisplayName("포스트 트리 조회 성공 - 이미지가 없는 포스트")
+	void getPostTree_WithoutImages_ShouldReturnNullImageUrl() {
+		// given
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		Long rootPostId = 1L;
+		PostEntity rootPost = createMockPostWithId(rootPostId, mockUser);
+		List<PostEntity> treeNodes = List.of(rootPost);
+
+		when(postEntityRepository.existsById(rootPostId)).thenReturn(true);
+		when(postEntityRepository.findAllDescendantsByPostId(rootPostId)).thenReturn(treeNodes);
+		when(postImageEntityRepository.findAllByPostIdIn(List.of(rootPostId))).thenReturn(Collections.emptyList());
+
+		// when
+		List<GetPostTreeResponse> result = postService.getPostTree(rootPostId);
+
+		// then
+		assertThat(result).hasSize(1);
+
+		GetPostTreeResponse response = result.get(0);
+		assertThat(response.postId()).isEqualTo(rootPostId);
+		assertThat(response.representativeImageUrl()).isNull();
+
+		verify(postEntityRepository).existsById(rootPostId);
+		verify(postEntityRepository).findAllDescendantsByPostId(rootPostId);
+		verify(postImageEntityRepository).findAllByPostIdIn(any());
 	}
 }
