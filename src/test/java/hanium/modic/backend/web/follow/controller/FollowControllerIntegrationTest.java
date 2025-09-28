@@ -563,6 +563,78 @@ public class FollowControllerIntegrationTest extends BaseIntegrationTest {
 			.param("userId", "999999")
 			.param("page", "0")
 			.param("size", "10"));
+		// then: USER_NOT_FOUND 예외 발생
+		result.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.code").value("U-002"));
+	}
+
+	@Test
+	@DisplayName("TEST21: 팔로우 상태 확인 - 팔로우 중인 경우")
+	@WithCustomUser(email = "user1@test.com")
+	void getFollowStatusFollowing() throws Exception {
+		// given: user1이 user2를 팔로우한 상태
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+		UserEntity user2 = saveUser("User2");
+		followEntityRepository.save(FollowEntity.builder().me(user1).following(user2).build());
+
+		// when: 팔로우 상태 확인 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/status")
+			.param("userId", String.valueOf(user2.getId())));
+
+		// then: 팔로우 중임을 확인
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.isFollowing").value(true))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
+			.andExpect(jsonPath("$.isSuccess").value(true));
+	}
+
+	@Test
+	@DisplayName("TEST22: 팔로우 상태 확인 - 팔로우하지 않은 경우")
+	@WithCustomUser(email = "user1@test.com")
+	void getFollowStatusNotFollowing() throws Exception {
+		// given: user1과 user2가 존재하지만 팔로우 관계가 없음
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+		UserEntity user2 = saveUser("User2");
+
+		// when: 팔로우 상태 확인 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/status")
+			.param("userId", String.valueOf(user2.getId())));
+
+		// then: 팔로우하지 않음을 확인
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(false))
+			.andExpect(jsonPath("$.isSuccess").value(true));
+	}
+
+	@Test
+	@DisplayName("TEST23: 팔로우 상태 확인 - 자기 자신인 경우 isSelf true 반환")
+	@WithCustomUser(email = "user1@test.com")
+	void getFollowStatusSelf() throws Exception {
+		// given: user1이 로그인한 상태
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
+		// when: 자기 자신의 팔로우 상태 확인 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/status")
+			.param("userId", String.valueOf(user1.getId())));
+
+		// then: isFollowing false, isSelf true 반환
+		result.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.isFollowing").value(false))
+			.andExpect(jsonPath("$.data.isSelf").value(true))
+			.andExpect(jsonPath("$.isSuccess").value(true));
+	}
+
+	@Test
+	@DisplayName("TEST24: 팔로우 상태 확인 - 존재하지 않는 사용자")
+	@WithCustomUser(email = "user1@test.com")
+	void getFollowStatusUserNotFound() throws Exception {
+		// given: user1이 로그인한 상태
+		UserEntity user1 = ContextHolderUtil.getCurrentUser();
+
+		// when: 존재하지 않는 사용자의 팔로우 상태 확인 요청
+		ResultActions result = mockMvc.perform(get("/api/follows/status")
+			.param("userId", String.valueOf(999999L)));
 
 		// then: USER_NOT_FOUND 예외 발생
 		result.andExpect(status().isNotFound())

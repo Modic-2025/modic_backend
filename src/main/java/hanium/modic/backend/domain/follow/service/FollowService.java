@@ -129,10 +129,10 @@ public class FollowService {
 				final String userImageUrl = u.getUserImageUrl();
 				final boolean hasUserImage = userImageUrl != null;
 				return new GetFollowingsWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
+					u.getId(),
+					hasUserImage,
+					userImageUrl,
+					u.getName(),
 					u.getEmail(),
 					true // 내 팔로잉 목록이므로 항상 true
 				);
@@ -142,9 +142,9 @@ public class FollowService {
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회 (인증 유저용 - 팔로우 상태 포함)
 	public Page<GetFollowingsWithStatusResponse> getFollowingsWithStatus(
-		final long currentUserId, 
-		final long targetUserId, 
-		final int page, 
+		final long currentUserId,
+		final long targetUserId,
+		final int page,
 		final int size
 	) {
 		validateUserExists(targetUserId);
@@ -154,14 +154,27 @@ public class FollowService {
 				final String userImageUrl = u.getUserImageUrl();
 				final boolean hasUserImage = userImageUrl != null;
 				return new GetFollowingsWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
+					u.getId(),
+					hasUserImage,
+					userImageUrl,
+					u.getName(),
 					u.getEmail(),
 					u.getIsFollowing()
 				);
 			});
+	}
+
+	// 팔로우 여부 확인
+	public boolean isFollowing(final Long currentUserId, final Long targetUserId) {
+		// 자기 자신을 팔로우하는지 확인하는 경우
+		if (currentUserId.equals(targetUserId)) {
+			return false;
+		}
+
+		// 대상 사용자 존재 여부 확인
+		validateUserExists(targetUserId);
+
+		return followRepository.existsByMyIdAndFollowingId(currentUserId, targetUserId);
 	}
 
 	// 유저 존재 체크

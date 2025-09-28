@@ -2,6 +2,7 @@ package hanium.modic.backend.domain.follow.service;
 
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
@@ -75,5 +77,60 @@ class FollowServiceTest extends BaseIntegrationTest {
 		// 검증
 		assertThat(followCount).isEqualTo(1);      // 딱 하나만 저장돼야 함
 		assertThat(errorCount.get()).isEqualTo(0); // 예외 없어야 함
+	}
+
+	@Test
+	@DisplayName("팔로우 상태 확인 - 팔로우 중인 경우 true 반환")
+	void 팔로우_중인_경우_true_반환() {
+		// given
+		me = userRepository.save(UserFactory.createMockUserWithoutId("me"));
+		target = userRepository.save(UserFactory.createMockUserWithoutId("target"));
+		followService.followOrUnfollow(me, target.getId(), FOLLOW);
+
+		// when
+		boolean isFollowing = followService.isFollowing(me.getId(), target.getId());
+
+		// then
+		assertThat(isFollowing).isTrue();
+	}
+
+	@Test
+	@DisplayName("팔로우 상태 확인 - 팔로우하지 않은 경우 false 반환")
+	void 팔로우하지_않은_경우_false_반환() {
+		// given
+		me = userRepository.save(UserFactory.createMockUserWithoutId("me"));
+		target = userRepository.save(UserFactory.createMockUserWithoutId("target"));
+
+		// when
+		boolean isFollowing = followService.isFollowing(me.getId(), target.getId());
+
+		// then
+		assertThat(isFollowing).isFalse();
+	}
+
+	@Test
+	@DisplayName("팔로우 상태 확인 - 자기 자신인 경우 false 반환")
+	void 자기_자신인_경우_false_반환() {
+		// given
+		me = userRepository.save(UserFactory.createMockUserWithoutId("me"));
+
+		// when
+		boolean isFollowing = followService.isFollowing(me.getId(), me.getId());
+
+		// then
+		assertThat(isFollowing).isFalse();
+	}
+
+	@Test
+	@DisplayName("팔로우 상태 확인 - 존재하지 않는 사용자인 경우 예외 발생")
+	void 존재하지_않는_사용자인_경우_예외_발생() {
+		// given
+		me = userRepository.save(UserFactory.createMockUserWithoutId("me"));
+		Long nonExistentUserId = 999L;
+
+		// when & then
+		assertThrows(AppException.class, () -> {
+			followService.isFollowing(me.getId(), nonExistentUserId);
+		});
 	}
 }
