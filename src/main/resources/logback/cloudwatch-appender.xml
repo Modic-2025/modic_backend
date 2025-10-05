@@ -1,0 +1,19 @@
+<included>
+    <appender name="CLOUDWATCH" class="ca.pjer.logback.AwsLogsAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <layout>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %thread %level %logger{36} - %msg%n</pattern>
+        </layout>
+
+        <!-- CloudWatch 설정 -->
+        <logGroupName>modic-log</logGroupName> <!-- 공통 그룹명 -->
+        <logStreamUuidPrefix>${ACTIVE_PROFILE:-unknown}-</logStreamUuidPrefix> <!-- 프로필별 스트림 구분 -->
+        <logRegion>ap-northeast-2</logRegion>
+        <maxBatchLogEvents>50</maxBatchLogEvents>
+        <maxFlushTimeMillis>30000</maxFlushTimeMillis>
+        <maxBlockTimeMillis>5000</maxBlockTimeMillis>
+        <retentionTimeDays>30</retentionTimeDays>
+    </appender>
+</included>

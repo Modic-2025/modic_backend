@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+    <!-- Spring 프로필 속성 먼저 선언 -->
+    <springProperty name="ACTIVE_PROFILE" source="spring.profiles.active"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+
+    <!-- 로그 패턴 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %clr(%5level) %cyan(%logger{36}) - %msg%n"/>
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %5level %logger{36} - %msg%n"/>
+
+    <!-- 외부 Appender 분리 -->
+    <include resource="logback/console-appender.xml"/>
+    <include resource="logback/file-info-appender.xml"/>
+    <include resource="logback/cloudwatch-appender.xml"/>
+
+    <!-- 환경별 설정 -->
+    <springProfile name="local">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE-INFO"/>
+            <appender-ref ref="CLOUDWATCH"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="main">
+        <root level="INFO">
+            <appender-ref ref="FILE-INFO"/>
+            <appender-ref ref="CLOUDWATCH"/>
+        </root>
+    </springProfile>
+</configuration>
