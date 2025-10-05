@@ -18,6 +18,7 @@ import hanium.modic.backend.domain.vote.service.VoteQueryService;
 import hanium.modic.backend.domain.vote.service.VotingService;
 import hanium.modic.backend.web.vote.dto.request.VoteParticipationRequest;
 import hanium.modic.backend.web.vote.dto.response.VoteParticipationResponse;
+import hanium.modic.backend.web.vote.dto.response.GetVoteStreakResponse;
 import hanium.modic.backend.web.vote.dto.response.VoteDetailResponse;
 import hanium.modic.backend.web.vote.dto.response.VoteSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,6 +53,26 @@ public class VoteController {
 		@PathVariable @Min(1) Long voteId
 	) {
 		VoteSummaryResponse response = voteQueryService.getVoteResults(voteId);
+		return ok(AppResponse.ok(response));
+	}
+
+	/**
+	 * 현재 로그인한 사용자의 투표 연속 정답 수를 조회합니다.
+	 *
+	 * @param user 인증된 사용자
+	 * @return 사용자의 현재 연속 정답 정보
+	 */
+	@GetMapping("/streak")
+	@Operation(
+		summary = "투표 연속 정답 수 조회",
+		description = "현재 로그인한 사용자의 투표 연속 정답 현황을 조회합니다.",
+		responses = {
+			@ApiResponse(responseCode = "200", description = "연속 정답 수 조회 성공"),
+			@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]")
+		}
+	)
+	public ResponseEntity<AppResponse<GetVoteStreakResponse>> getVoteStreak(@CurrentUser UserEntity user) {
+		GetVoteStreakResponse response = votingService.getVoteStreak(user.getId());
 		return ok(AppResponse.ok(response));
 	}
 

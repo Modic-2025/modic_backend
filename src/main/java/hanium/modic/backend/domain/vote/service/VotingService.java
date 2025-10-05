@@ -12,6 +12,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.domain.user.service.UserVoteStreakService;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteResultEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
@@ -24,6 +25,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.web.vote.dto.response.VoteParticipationResponse;
+import hanium.modic.backend.web.vote.dto.response.GetVoteStreakResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +47,21 @@ public class VotingService {
 	private final VoteProperties voteProperties;
 	private final VoteRewardService voteRewardService;
 	private final VoteCompletionRewardService voteCompletionRewardService;
+	private final UserVoteStreakService userVoteStreakService;
+
+	/**
+	 * 사용자의 투표 연속 정답 정보를 조회합니다.
+	 *
+	 * @param userId 조회 대상 사용자 ID
+	 * @return 현재 연속 정답 수와 리워드 임계치를 담은 응답
+	 */
+	@Transactional(readOnly = true)
+	public GetVoteStreakResponse getVoteStreak(final Long userId) {
+		int streakCount = userVoteStreakService.getStreakCount(userId);
+		int rewardThreshold = voteProperties.getStreakRewardCount();
+		return GetVoteStreakResponse.of(streakCount, rewardThreshold);
+	}
+
 
 	/**
 	 * 투표 참여 메서드
