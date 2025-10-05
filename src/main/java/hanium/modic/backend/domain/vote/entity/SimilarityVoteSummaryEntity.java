@@ -16,6 +16,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 유사도 투표 집계 엔티티
+ * - 투표별 가중치 합산 결과와 AI/최종 결정 상태를 보관합니다.
+ * - AI 서버(또는 외부 소비자)가 조회했는지 여부를 `fetchedByAi` 로 추적합니다.
+ */
 @Table(name = "similarity_vote_summary",
 	indexes = {
 		@Index(name = "idx_similarity_vote_summary_vote_id", columnList = "vote_id")
@@ -48,6 +53,12 @@ public class SimilarityVoteSummaryEntity extends BaseEntity {
 	@Column(name = "final_decision")
 	@Enumerated(EnumType.STRING)
 	private VoteDecision finalDecision;
+
+	/**
+	 * AI 서버에서 완료 결과를 조회했는지 여부
+	 */
+	@Column(name = "fetched_by_ai", nullable = false)
+	private Boolean fetchedByAi = false;
 
 	@Builder
 	public SimilarityVoteSummaryEntity(
@@ -86,12 +97,22 @@ public class SimilarityVoteSummaryEntity extends BaseEntity {
 		this.aiDecision = aiDecision;
 	}
 
+	/**
+	 * 최소 총 가중치 임계치에 도달한 경우 최종 결정을 결정합니다.
+	 * 임계치 미만일 경우 PENDING 상태를 유지합니다.
+	 */
 	public void updateFinalDecision(long minTotalWeight) {
-		// 최소 총 가중치에 도달한 경우에만 최종 결정을 업데이트
 		if (this.totalWeight >= minTotalWeight) {
 			this.finalDecision = this.approveWeight > this.denyWeight ? VoteDecision.APPROVE : VoteDecision.DENY;
 		} else {
-			this.finalDecision = VoteDecision.PENDING; // 아직 임계치에 도달하지 않은 경우 대기 상태 유지
+			this.finalDecision = VoteDecision.PENDING;
 		}
+	}
+
+	/**
+	 * 외부(AI 서버)가 조회 완료로 표시합니다.
+	 */
+	public void markAsFetched() {
+		this.fetchedByAi = true;
 	}
 }
