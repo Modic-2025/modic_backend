@@ -27,7 +27,7 @@ public record GetPostTreeResponse(
 			postEntity.getTitle(),
 			postEntity.getParentPostId(),
 			representativeImageUrl,
-			postEntity.getDerivedPostStatus()
+			postEntity.getPostStatus()
 		);
 	}
 }

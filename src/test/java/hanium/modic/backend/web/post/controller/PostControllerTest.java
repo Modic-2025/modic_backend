@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -79,7 +80,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"제목은 필수입니다.",
 				"제목 누락"
@@ -91,7 +93,8 @@ class PostControllerTest extends BaseControllerTest {
 					null,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"상업적 가격은 필수입니다.",
 				"상업적 가격 누락"
@@ -103,7 +106,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					null,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"비상업적 가격은 필수입니다.",
 				"비상업적 가격 누락"
@@ -115,7 +119,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					-1L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
 				"비상업적 가격 음수"
@@ -127,7 +132,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					null
+					null,
+					1L
 				),
 				"이미지는 필수입니다.",
 				"이미지 누락"
@@ -139,7 +145,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					Collections.nCopies(9, 1L)
+					Collections.nCopies(9, 1L),
+					1L
 				),
 				"이미지는 최대 8개까지 업로드 가능합니다.",
 				"이미지 개수 초과"
@@ -153,7 +160,7 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		GetPostResponse response = new GetPostResponse(
-			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L, false,
+			"이름", false, null, "chanho@naver.com", 1L, 1L, "제목", "설명", 10000L, 5000L, 0L, PostStatus.ORIGINAL,
 			List.of(new GetPostResponse.ImageDto("http://img1.jpg", 1L)),
 			10L, true, List.of());
 
@@ -193,15 +200,15 @@ class PostControllerTest extends BaseControllerTest {
 	void getPosts_DefaultParams_Success() throws Exception {
 		// given
 		GetPostsResponse post1 = new GetPostsResponse(
-			1L, 1L, "제목1", "설명1", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
+			1L, "제목1", PostStatus.ORIGINAL, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 5L);
 		GetPostsResponse post2 = new GetPostsResponse(
-			2L, 2L, "제목2", "설명2", 20000L, 8000L, false, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
+			2L, "제목2", PostStatus.ORIGINAL, List.of(new GetPostsResponse.ImageDto("http://img2.jpg", 2L)), 8L);
 
 		List<GetPostsResponse> content = List.of(post1, post2);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(any(String.class), anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(pageResponse);
+		when(postService.getPosts(anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -222,13 +229,14 @@ class PostControllerTest extends BaseControllerTest {
 		throws Exception {
 		// given
 		GetPostsResponse post = new GetPostsResponse(
-			1L, 1L, "제목", "설명", 10000L, 5000L, false, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)), 3L);
+			1L, "제목", PostStatus.ORIGINAL, List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)),
+			3L);
 
 		List<GetPostsResponse> content = List.of(post);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
 		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(sort, pageNumber, size, PostType.ALL)).thenReturn(pageResponse);
+		when(postService.getPosts(pageNumber, size, PostType.ALL)).thenReturn(pageResponse);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -295,7 +303,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"제목은 필수입니다.",
 				"제목 누락"
@@ -307,7 +316,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"설명은 필수입니다.",
 				"설명 누락"
@@ -319,7 +329,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"설명은 필수입니다.",
 				"설명 비어있음"
@@ -332,7 +343,8 @@ class PostControllerTest extends BaseControllerTest {
 					null,
 					0L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"상업적 가격은 필수입니다.",
 				"상업적 가격 누락"
@@ -344,7 +356,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					null,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"비상업적 가격은 필수입니다.",
 				"비상업적 가격 누락"
@@ -356,7 +369,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					-1L,
 					0L,
-					List.of(1L)
+					List.of(1L),
+					1L
 				),
 				"비상업적 가격은 0 이상이어야 합니다.",
 				"비상업적 가격 음수"
@@ -368,6 +382,7 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
+					null,
 					null
 				),
 				"이미지는 필수입니다.",
@@ -380,7 +395,8 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					0L,
-					Collections.nCopies(9, 1L)
+					Collections.nCopies(9, 1L),
+					1L
 				),
 				"이미지는 최대 8개까지 업로드 가능합니다.",
 				"이미지 개수 초과"
@@ -394,9 +410,12 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		List<GetPostTreeResponse> mockResponse = List.of(
-			new GetPostTreeResponse(1L, "Root Post", null, "http://example.com/image1.jpg", PostStatus.APPROVED),
-			new GetPostTreeResponse(2L, "Child Post 1", 1L, "http://example.com/image2.jpg", PostStatus.PENDING),
-			new GetPostTreeResponse(3L, "Child Post 2", 1L, "http://example.com/image3.jpg", PostStatus.APPROVED)
+			new GetPostTreeResponse(1L, "Root Post", null, "http://example.com/image1.jpg",
+				PostStatus.DERIVED_APPROVED),
+			new GetPostTreeResponse(2L, "Child Post 1", 1L, "http://example.com/image2.jpg",
+				PostStatus.DERIVED_PENDING),
+			new GetPostTreeResponse(3L, "Child Post 2", 1L, "http://example.com/image3.jpg",
+				PostStatus.DERIVED_APPROVED)
 		);
 
 		when(postService.getPostTree(postId)).thenReturn(mockResponse);
@@ -412,13 +431,13 @@ class PostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data[0].title").value("Root Post"))
 			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
 			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image1.jpg"))
-			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"))
+			.andExpect(jsonPath("$.data[0].postStatus").value("DERIVED_APPROVED"))
 			.andExpect(jsonPath("$.data[1].postId").value(2))
 			.andExpect(jsonPath("$.data[1].parentPostId").value(1))
-			.andExpect(jsonPath("$.data[1].postStatus").value("PENDING"))
+			.andExpect(jsonPath("$.data[1].postStatus").value("DERIVED_PENDING"))
 			.andExpect(jsonPath("$.data[2].postId").value(3))
 			.andExpect(jsonPath("$.data[2].parentPostId").value(1))
-			.andExpect(jsonPath("$.data[2].postStatus").value("APPROVED"));
+			.andExpect(jsonPath("$.data[2].postStatus").value("DERIVED_APPROVED"));
 
 		verify(postService).getPostTree(postId);
 	}
@@ -446,7 +465,8 @@ class PostControllerTest extends BaseControllerTest {
 		// given
 		Long postId = 1L;
 		List<GetPostTreeResponse> mockResponse = List.of(
-			new GetPostTreeResponse(1L, "Single Post", null, "http://example.com/image.jpg", PostStatus.APPROVED)
+			new GetPostTreeResponse(1L, "Single Post", null, "http://example.com/image.jpg",
+				PostStatus.DERIVED_APPROVED)
 		);
 
 		when(postService.getPostTree(postId)).thenReturn(mockResponse);
@@ -462,7 +482,7 @@ class PostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data[0].title").value("Single Post"))
 			.andExpect(jsonPath("$.data[0].parentPostId").doesNotExist())
 			.andExpect(jsonPath("$.data[0].representativeImageUrl").value("http://example.com/image.jpg"))
-			.andExpect(jsonPath("$.data[0].postStatus").value("APPROVED"));
+			.andExpect(jsonPath("$.data[0].postStatus").value("DERIVED_APPROVED"));
 
 		verify(postService).getPostTree(postId);
 	}

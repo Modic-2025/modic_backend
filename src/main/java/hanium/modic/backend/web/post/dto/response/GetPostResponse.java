@@ -7,6 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import hanium.modic.backend.domain.post.entity.PostEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +25,7 @@ public record GetPostResponse(
 	Long commercialPrice,
 	Long nonCommercialPrice,
 	Long ticketPrice,
-	Boolean isAiDerivedPost,
+	PostStatus postStatus,
 	List<ImageDto> images,
 	// 하트 관련 필드
 	long likeCount,
@@ -33,30 +34,6 @@ public record GetPostResponse(
 	List<SimplePostDto> derivedPosts
 
 ) {
-	// 기존 메서드 (하트 정보 없음 - 하위호환성)
-	public static GetPostResponse of(
-		String userName,
-		boolean hasUserImage,
-		String userImageUrl,
-		String userEmail,
-		PostEntity postEntity,
-		List<ImageDto> images) {
-		return of(userName, hasUserImage, userImageUrl, userEmail, postEntity, images, 0L, null, List.of());
-	}
-
-	// 하트 정보 포함 메서드 (파생포스트 정보 없음 - 하위호환성)
-	public static GetPostResponse of(
-		String userName,
-		boolean hasUserImage,
-		String userImageUrl,
-		String userEmail,
-		PostEntity postEntity,
-		List<ImageDto> imageDtos,
-		long likeCount,
-		Boolean isLikedByCurrentUser) {
-		return of(userName, hasUserImage, userImageUrl, userEmail, postEntity, imageDtos, likeCount, isLikedByCurrentUser, List.of());
-	}
-
 	// 파생포스트 정보까지 포함한 완전한 메서드
 	public static GetPostResponse of(
 		String userName,
@@ -82,7 +59,7 @@ public record GetPostResponse(
 			postEntity.getCommercialPrice(),
 			postEntity.getNonCommercialPrice(),
 			postEntity.getTicketPrice(),
-			postEntity.getIsAiDerivedPost(),
+			postEntity.getPostStatus(),
 			imageDtos,
 			likeCount,
 			isLikedByCurrentUser,

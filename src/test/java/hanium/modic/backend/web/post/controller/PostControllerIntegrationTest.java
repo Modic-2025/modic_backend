@@ -85,7 +85,8 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			10000L,
 			5000L,
 			0L,
-			List.of(image1.getId(), image2.getId())
+			List.of(image1.getId(), image2.getId()),
+			image1.getId()
 		);
 		String json = objectMapper.writeValueAsString(request);
 
@@ -146,7 +147,8 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			20000L,
 			10000L,
 			0L,
-			postImageIds
+			postImageIds,
+			postImageIds.get(0)
 		);
 		String json = objectMapper.writeValueAsString(request);
 
@@ -188,7 +190,8 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 			20000L,
 			10000L,
 			0L,
-			List.of(otherPersonsImage.getId())
+			List.of(otherPersonsImage.getId()),
+			otherPersonsImage.getId()
 		);
 		String json = objectMapper.writeValueAsString(request);
 
@@ -230,7 +233,8 @@ class PostControllerIntegrationTest extends BaseIntegrationTest {
 				20000L,
 				10000L,
 				0L,
-				List.of(imageToKeep.getId()) // 첫 번째 이미지만 남기고 나머지는 삭제
+				List.of(imageToKeep.getId()), // 첫 번째 이미지만 남기고 나머지는 삭제
+				imageToKeep.getId()
 			);
 			String json = objectMapper.writeValueAsString(request);
 

@@ -2,8 +2,6 @@ package hanium.modic.backend.web.post.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,11 +39,9 @@ public class AiDerivedPostController {
 		@CurrentUser UserEntity currentUser,
 		@Valid @RequestBody CreateAiDerivedPostRequest request
 	) {
-
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
 			currentUser.getId(),
 			request.createdAiImageId(),
-			request.originalImageId(),
 			request.title(),
 			request.description(),
 			request.commercialPrice(),
@@ -55,21 +51,5 @@ public class AiDerivedPostController {
 
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(AppResponse.ok(response));
-	}
-
-	@Operation(summary = "AI 파생 포스트 삭제", description = "AI 파생 포스트를 삭제합니다. 생성자만 삭제할 수 있습니다.")
-	@ApiResponses(value = {
-		@ApiResponse(responseCode = "400", description = "AI 파생 포스트가 아닙니다.[P-004]"),
-		@ApiResponse(responseCode = "403", description = "포스트에 대한 접근 권한이 없습니다.[P-003]"),
-		@ApiResponse(responseCode = "404", description = "해당 포스트를 찾을 수 없습니다.[P-001]")
-	})
-	@DeleteMapping("/{postId}")
-	public ResponseEntity<AppResponse<Void>> deleteAiDerivedPost(
-		@CurrentUser UserEntity currentUser,
-		@PathVariable Long postId) {
-
-		aiDerivedPostService.deleteAiDerivedPost(currentUser.getId(), postId);
-
-		return ResponseEntity.ok().build();
 	}
 }
