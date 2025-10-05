@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 import org.mockito.Mockito;
 
 import hanium.modic.backend.domain.post.entity.PostEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 
 public class PostFactory {
@@ -17,7 +18,8 @@ public class PostFactory {
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
 			.ticketPrice(3L)
-			.isAiDerivedPost(false)
+			.thumbnailImageId(1L)
+			.postStatus(PostStatus.ORIGINAL)
 			.parentPostId(null)
 			.build();
 
@@ -35,7 +37,8 @@ public class PostFactory {
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
 			.ticketPrice(3L)
-			.isAiDerivedPost(false)
+			.thumbnailImageId(1L)
+			.postStatus(PostStatus.ORIGINAL)
 			.parentPostId(null)
 			.build();
 	}
@@ -48,7 +51,8 @@ public class PostFactory {
 			.commercialPrice(15000L)
 			.nonCommercialPrice(8000L)
 			.ticketPrice(5L)
-			.isAiDerivedPost(true)
+			.thumbnailImageId(1L)
+			.postStatus(PostStatus.ORIGINAL)
 			.parentPostId(1L) // 기본적으로 포스트 ID 1을 부모로 설정
 			.build();
 
@@ -66,7 +70,8 @@ public class PostFactory {
 			.commercialPrice(15000L)
 			.nonCommercialPrice(8000L)
 			.ticketPrice(5L)
-			.isAiDerivedPost(true)
+			.thumbnailImageId(1L)
+			.postStatus(PostStatus.ORIGINAL)
 			.parentPostId(parentPostId)
 			.build();
 
@@ -84,7 +89,8 @@ public class PostFactory {
 			.commercialPrice(15000L)
 			.nonCommercialPrice(8000L)
 			.ticketPrice(5L)
-			.isAiDerivedPost(true)
+			.thumbnailImageId(1L)
+			.postStatus(PostStatus.ORIGINAL)
 			.parentPostId(1L) // 기본적으로 포스트 ID 1을 부모로 설정
 			.build();
 	}

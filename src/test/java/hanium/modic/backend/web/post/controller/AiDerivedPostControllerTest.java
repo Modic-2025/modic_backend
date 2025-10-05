@@ -56,7 +56,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.reason[0]").value(expectedErrorMessage));
 
 		verify(aiDerivedPostService, never()).createAiDerivedPost(
-			anyLong(), anyLong(), anyLong(), anyString(), anyString(), anyLong(), anyLong(), anyLong());
+			anyLong(), anyLong(), anyString(), anyString(), anyLong(), anyLong(), anyLong());
 	}
 
 	static Stream<Arguments> invalidCreateAiDerivedPostRequests() {
@@ -64,7 +64,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					null,
-					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -76,7 +75,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
-					1L,
 					1L,
 					null,
 					"This is an AI derived post",
@@ -90,7 +88,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
-					1L,
 					"",
 					"This is an AI derived post",
 					2000L,
@@ -102,7 +99,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
-					1L,
 					1L,
 					"AI Generated Post",
 					null,
@@ -116,7 +112,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
-					1L,
 					"AI Generated Post",
 					"",
 					2000L,
@@ -128,7 +123,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
-					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -142,7 +136,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
-					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					-1L,
@@ -154,7 +147,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
-					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -168,7 +160,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
-					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -181,7 +172,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
 					1L,
-					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
 					2000L,
@@ -193,7 +183,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 			),
 			Arguments.of(
 				new CreateAiDerivedPostRequest(
-					1L,
 					1L,
 					"AI Generated Post",
 					"This is an AI derived post",
@@ -213,7 +202,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			999L,
-			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -222,7 +210,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		);
 
 		when(aiDerivedPostService.createAiDerivedPost(
-			anyLong(), eq(request.createdAiImageId()), eq(request.originalImageId()), eq(request.title()),
+			anyLong(), eq(request.createdAiImageId()), eq(request.title()),
 			eq(request.description()), eq(request.commercialPrice()),
 			eq(request.nonCommercialPrice()), eq(request.ticketPrice())
 		)).thenThrow(new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
@@ -243,7 +231,6 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		// given
 		CreateAiDerivedPostRequest request = new CreateAiDerivedPostRequest(
 			1L,
-			1L,
 			"AI Generated Post",
 			"This is an AI derived post",
 			2000L,
@@ -252,7 +239,7 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 		);
 
 		when(aiDerivedPostService.createAiDerivedPost(
-			anyLong(), eq(request.createdAiImageId()), eq(request.originalImageId()), eq(request.title()),
+			anyLong(), eq(request.createdAiImageId()), eq(request.title()),
 			eq(request.description()), eq(request.commercialPrice()),
 			eq(request.nonCommercialPrice()), eq(request.ticketPrice())
 		)).thenThrow(new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION));
@@ -265,65 +252,5 @@ class AiDerivedPostControllerTest extends BaseControllerTest {
 				.content(json))
 			.andExpect(status().isForbidden())
 			.andExpect(jsonPath("$.message").value(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION.getMessage()));
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 성공")
-	void deleteAiDerivedPost_Success() throws Exception {
-		// given
-		Long postId = 1L;
-
-		doNothing().when(aiDerivedPostService).deleteAiDerivedPost(anyLong(), eq(postId));
-
-		// when & then
-		mockMvc.perform(delete("/api/ai/derived-posts/{postId}", postId))
-			.andExpect(status().isOk());
-
-		verify(aiDerivedPostService, times(1)).deleteAiDerivedPost(anyLong(), eq(postId));
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - 포스트를 찾을 수 없음")
-	void deleteAiDerivedPost_PostNotFound_ShouldReturn404() throws Exception {
-		// given
-		Long nonExistentPostId = 999L;
-
-		doThrow(new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION))
-			.when(aiDerivedPostService).deleteAiDerivedPost(anyLong(), eq(nonExistentPostId));
-
-		// when & then
-		mockMvc.perform(delete("/api/ai/derived-posts/{postId}", nonExistentPostId))
-			.andExpect(status().isNotFound())
-			.andExpect(jsonPath("$.message").value(ErrorCode.POST_NOT_FOUND_EXCEPTION.getMessage()));
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - 포스트 접근 권한 없음")
-	void deleteAiDerivedPost_PostAccessDenied_ShouldReturn403() throws Exception {
-		// given
-		Long postId = 1L;
-
-		doThrow(new AppException(ErrorCode.POST_ACCESS_DENIED_EXCEPTION))
-			.when(aiDerivedPostService).deleteAiDerivedPost(anyLong(), eq(postId));
-
-		// when & then
-		mockMvc.perform(delete("/api/ai/derived-posts/{postId}", postId))
-			.andExpect(status().isForbidden())
-			.andExpect(jsonPath("$.message").value(ErrorCode.POST_ACCESS_DENIED_EXCEPTION.getMessage()));
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - AI 파생 포스트가 아님")
-	void deleteAiDerivedPost_NotAiDerivedPost_ShouldReturn400() throws Exception {
-		// given
-		Long postId = 1L;
-
-		doThrow(new AppException(ErrorCode.NOT_AI_DERIVED_POST_EXCEPTION))
-			.when(aiDerivedPostService).deleteAiDerivedPost(anyLong(), eq(postId));
-
-		// when & then
-		mockMvc.perform(delete("/api/ai/derived-posts/{postId}", postId))
-			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").value(ErrorCode.NOT_AI_DERIVED_POST_EXCEPTION.getMessage()));
 	}
 }

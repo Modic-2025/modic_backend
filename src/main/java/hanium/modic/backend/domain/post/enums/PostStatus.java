@@ -6,18 +6,20 @@ package hanium.modic.backend.domain.post.enums;
  */
 public enum PostStatus {
 
+	ORIGINAL,
+
 	/**
 	 * 투표 진행 중 - 파생 게시물 생성 후 투표 결과 대기 중
 	 */
-	PENDING,
+	DERIVED_PENDING,
 
 	/**
 	 * 승인됨 - 투표 결과 과반수가 APPROVE로 결정
 	 */
-	APPROVED,
+	DERIVED_APPROVED,
 
 	/**
 	 * 거부됨 - 투표 결과 과반수가 DENY로 결정
 	 */
-	REJECTED
+	DERIVED_REJECTED
 }

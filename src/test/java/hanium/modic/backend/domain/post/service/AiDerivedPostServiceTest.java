@@ -78,13 +78,15 @@ class AiDerivedPostServiceTest {
 		Long commercialPrice = 2000L;
 		Long nonCommercialPrice = 1000L;
 		Long ticketPrice = 300L;
+		Long postId = 1L;
 
 		UserEntity mockUser = UserFactory.createMockUser(userId);
 		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
-			createdAiImageId, userId, 1L, "request-123");
-		PostEntity mockSavedPost = createMockPostWithId(1L, mockUser);
+			createdAiImageId, userId, postId, "request-123");
+		PostEntity mockSavedPost = createMockPostWithId(postId, mockUser);
 
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
+		when(postEntityRepository.findById(anyLong())).thenReturn(Optional.of(mockSavedPost));
 		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
 		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
 		when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenAnswer(invocation -> {
@@ -100,7 +102,7 @@ class AiDerivedPostServiceTest {
 
 		// when
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
-			userId, createdAiImageId, originalImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
+			userId, createdAiImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
 
 		// then
 		assertThat(response).isNotNull();
@@ -116,7 +118,6 @@ class AiDerivedPostServiceTest {
 		assertThat(savedPost.getCommercialPrice()).isEqualTo(commercialPrice);
 		assertThat(savedPost.getNonCommercialPrice()).isEqualTo(nonCommercialPrice);
 		assertThat(savedPost.getTicketPrice()).isEqualTo(ticketPrice);
-		assertThat(savedPost.getIsAiDerivedPost()).isTrue();
 		assertThat(savedPost.getParentPostId()).isEqualTo(mockAiImage.getPostId()); // 부모 포스트 ID 검증
 
 		// PostImageEntity 저장 검증
@@ -150,7 +151,7 @@ class AiDerivedPostServiceTest {
 		// when & then
 		AppException exception = assertThrows(AppException.class,
 			() -> aiDerivedPostService.createAiDerivedPost(
-				userId, nonExistentAiImageId, originalImageId, title, description,
+				userId, nonExistentAiImageId, title, description,
 				commercialPrice, nonCommercialPrice, ticketPrice));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION);
@@ -182,93 +183,12 @@ class AiDerivedPostServiceTest {
 		// when & then
 		AppException exception = assertThrows(AppException.class,
 			() -> aiDerivedPostService.createAiDerivedPost(
-				userId, createdAiImageId, originalImageId, title, description,
+				userId, createdAiImageId, title, description,
 				commercialPrice, nonCommercialPrice, ticketPrice));
 
 		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		verify(createdAiImageRepository, times(1)).findById(createdAiImageId);
 		verify(postEntityRepository, never()).save(any());
 		verify(postImageEntityRepository, never()).save(any());
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 성공")
-	void deleteAiDerivedPost_Success() {
-		// given
-		Long userId = 1L;
-		Long postId = 1L;
-
-		UserEntity mockUser = UserFactory.createMockUser(userId);
-		PostEntity mockPost = createMockAiDerivedPostWithId(postId, mockUser);
-
-		when(postEntityRepository.findById(mockPost.getId())).thenReturn(Optional.of(mockPost));
-
-		// when
-		aiDerivedPostService.deleteAiDerivedPost(mockUser.getId(), mockPost.getId());
-
-		// then
-		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postService, times(1)).deletePost(userId, postId);
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - 존재하지 않는 포스트")
-	void deleteAiDerivedPost_PostNotFound_ShouldThrowException() {
-		// given
-		Long userId = 1L;
-		Long nonExistentPostId = 999L;
-
-		when(postEntityRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
-
-		// when & then
-		AppException exception = assertThrows(AppException.class,
-			() -> aiDerivedPostService.deleteAiDerivedPost(userId, nonExistentPostId));
-
-		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_NOT_FOUND_EXCEPTION);
-		verify(postEntityRepository, times(1)).findById(nonExistentPostId);
-		verify(postService, never()).deletePost(anyLong(), anyLong());
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - 포스트 접근 권한 없음")
-	void deleteAiDerivedPost_AccessDenied_ShouldThrowException() {
-		// given
-		Long userId = 1L;
-		Long otherUserId = 2L;
-		Long postId = 1L;
-
-		UserEntity otherUser = UserFactory.createMockUser(otherUserId);
-		PostEntity mockPost = createMockAiDerivedPostWithId(postId, otherUser);
-
-		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
-
-		// when & then
-		AppException exception = assertThrows(AppException.class,
-			() -> aiDerivedPostService.deleteAiDerivedPost(userId, mockPost.getId()));
-
-		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.POST_ACCESS_DENIED_EXCEPTION);
-		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postService, never()).deletePost(anyLong(), anyLong());
-	}
-
-	@Test
-	@DisplayName("AI 파생 포스트 삭제 실패 - AI 파생 포스트가 아님")
-	void deleteAiDerivedPost_NotAiDerivedPost_ShouldThrowException() {
-		// given
-		Long userId = 1L;
-		Long postId = 1L;
-
-		UserEntity mockUser = UserFactory.createMockUser(userId);
-		PostEntity mockPost = createMockPostWithId(postId, mockUser); // 일반 포스트
-
-		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
-
-		// when & then
-		AppException exception = assertThrows(AppException.class,
-			() -> aiDerivedPostService.deleteAiDerivedPost(mockUser.getId(), mockPost.getId()));
-
-		assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.NOT_AI_DERIVED_POST_EXCEPTION);
-		verify(postEntityRepository, times(1)).findById(postId);
-		verify(postService, never()).deletePost(anyLong(), anyLong());
 	}
 }

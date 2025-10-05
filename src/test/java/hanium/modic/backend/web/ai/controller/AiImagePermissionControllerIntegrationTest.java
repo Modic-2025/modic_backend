@@ -15,6 +15,7 @@ import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.ticket.entity.TicketEntity;
 import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -45,6 +46,8 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 			.commercialPrice(10000L)
 			.nonCommercialPrice(5000L)
 			.ticketPrice(3L)
+			.postStatus(PostStatus.ORIGINAL)
+			.thumbnailImageId(1L)
 			.build());
 	}
 
