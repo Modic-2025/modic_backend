@@ -28,8 +28,11 @@ public class SecurityExceptionFilter extends OncePerRequestFilter {
 	private final ObjectMapper objectMapper;
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-		FilterChain filterChain) throws ServletException, IOException {
+	protected void doFilterInternal(
+		HttpServletRequest request,
+		HttpServletResponse response,
+		FilterChain filterChain
+	) throws ServletException, IOException {
 
 		try {
 			filterChain.doFilter(request, response);
@@ -45,16 +48,28 @@ public class SecurityExceptionFilter extends OncePerRequestFilter {
 	}
 
 	private void handleAppException(HttpServletResponse response, AppException e) throws IOException {
-		log.error("AppException 발생 in Security Filter: errorCode={}, message={}",
-			e.getErrorCode().getCode(), e.getMessage());
+		log.error(
+			"AppException 발생 in Security Filter: status={}, errorCode={}, message={}",
+			e.getErrorCode().getStatus(),
+			e.getErrorCode().getCode(),
+			e.getMessage()
+		);
 
 		ErrorResponse errorResponse = ErrorResponse.from(e.getErrorCode());
 		writeErrorResponse(response, e.getErrorCode().getStatus().value(), errorResponse);
 	}
 
-	private void handleSecurityException(HttpServletResponse response, ErrorCode errorCode, Exception e)
-		throws IOException {
-		log.error("Security Exception 발생: errorCode={}, message={}", errorCode.getCode(), e.getMessage());
+	private void handleSecurityException(
+		HttpServletResponse response,
+		ErrorCode errorCode,
+		Exception e
+	) throws IOException {
+		log.error(
+			"Security Exception 발생: status={}, errorCode={}, message={}",
+			errorCode.getStatus(),
+			errorCode.getCode(),
+			e.getMessage()
+		);
 
 		ErrorResponse errorResponse = ErrorResponse.from(errorCode);
 		writeErrorResponse(response, errorCode.getStatus().value(), errorResponse);
@@ -67,8 +82,11 @@ public class SecurityExceptionFilter extends OncePerRequestFilter {
 		writeErrorResponse(response, ErrorCode.INTERNAL_SERVER_ERROR.getStatus().value(), errorResponse);
 	}
 
-	private void writeErrorResponse(HttpServletResponse response, int status, ErrorResponse errorResponse)
-		throws IOException {
+	private void writeErrorResponse(
+		HttpServletResponse response,
+		int status,
+		ErrorResponse errorResponse
+	) throws IOException {
 		response.setStatus(status);
 		response.setContentType("application/json;charset=UTF-8");
 		response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
