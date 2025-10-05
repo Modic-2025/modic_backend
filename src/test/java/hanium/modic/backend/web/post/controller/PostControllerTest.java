@@ -133,7 +133,7 @@ class PostControllerTest extends BaseControllerTest {
 					0L,
 					0L,
 					null,
-					null
+					1L
 				),
 				"이미지는 필수입니다.",
 				"이미지 누락"
