@@ -22,6 +22,21 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 
 	List<PostEntity> findAllByParentPostIdAndPostStatusOrderByIdDesc(Long parentPostId, PostStatus postStatus);
 
+	@Query("""
+		SELECT p
+		FROM PostEntity p
+		WHERE p.postStatus IN :postStatuses
+		AND (
+			LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+			OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+		)
+	""")
+	Page<PostEntity> searchByKeywordAndPostStatuses(
+		@Param("keyword") String keyword,
+		@Param("postStatuses") List<PostStatus> postStatuses,
+		Pageable pageable
+	);
+
 	/**
 	 * 특정 포스트를 포함한 모든 하위 트리 노드를 재귀적으로 조회, 승인된 파생 포스트만 포함
 	 * MySQL의 CTE(Common Table Expression)를 사용하여 재귀 쿼리 수행
