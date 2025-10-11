@@ -9,10 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import hanium.modic.backend.domain.post.enums.PostStatus;
-import hanium.modic.backend.domain.post.enums.PostType;
-import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,13 +29,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.domain.post.enums.PostStatus;
+import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.service.PostService;
+import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
 import hanium.modic.backend.web.post.dto.request.CreatePostRequest;
 import hanium.modic.backend.web.post.dto.request.UpdatePostRequest;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
-import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
+import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
 
 @WebMvcTest(controllers = PostController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -206,9 +204,8 @@ class PostControllerTest extends BaseControllerTest {
 
 		List<GetPostsResponse> content = List.of(post1, post2);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), 2);
-		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(pageResponse);
+		when(postService.getPosts(anyInt(), anyInt(), eq(PostType.ALL))).thenReturn(page);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")
@@ -220,6 +217,46 @@ class PostControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.size").value(10))
 			.andExpect(jsonPath("$.data.totalElements").value(2))
 			.andExpect(jsonPath("$.data.totalPages").value(1));
+	}
+
+	@Test
+	@DisplayName("게시글 검색 성공")
+	void searchPosts_WithKeyword_ShouldReturnPage() throws Exception {
+		GetPostsResponse post = new GetPostsResponse(
+			1L,
+			"제목",
+			PostStatus.ORIGINAL,
+			List.of(new GetPostsResponse.ImageDto("http://img1.jpg", 1L)),
+			3L
+		);
+		Page<GetPostsResponse> page = new PageImpl<>(List.of(post), PageRequest.of(0, 10), 1);
+
+		when(postService.searchPosts(anyString(), anyInt(), anyInt(), any())).thenReturn(page);
+
+		mockMvc.perform(get("/api/posts/search")
+				.param("keyword", " 테스트 ")
+				.param("page", "0")
+				.param("size", "10")
+				.param("postType", "ALL"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.content[0].postId").value(post.postId()))
+			.andExpect(jsonPath("$.data.content[0].title").value(post.title()))
+			.andExpect(jsonPath("$.data.content[0].likeCount").value(post.likeCount()));
+
+		verify(postService).searchPosts("테스트", 0, 10, PostType.ALL);
+	}
+
+	@Test
+	@DisplayName("게시글 검색 실패 - 검색어 누락")
+	void searchPosts_WithoutKeyword_ShouldReturnBadRequest() throws Exception {
+		mockMvc.perform(get("/api/posts/search")
+				.param("keyword", " ")
+				.param("page", "0")
+				.param("size", "10"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value("C-001"));
+
+		verify(postService, never()).searchPosts(anyString(), anyInt(), anyInt(), any());
 	}
 
 	@ParameterizedTest(name = "[{index}] sort={0}, page={1}, size={2}")
@@ -234,9 +271,8 @@ class PostControllerTest extends BaseControllerTest {
 
 		List<GetPostsResponse> content = List.of(post);
 		Page<GetPostsResponse> page = new PageImpl<>(content, PageRequest.of(pageNumber, size), totalElements);
-		PageResponse<GetPostsResponse> pageResponse = PageResponse.of(page);
 
-		when(postService.getPosts(pageNumber, size, PostType.ALL)).thenReturn(pageResponse);
+		when(postService.getPosts(pageNumber, size, PostType.ALL)).thenReturn(page);
 
 		// when & then
 		mockMvc.perform(get("/api/posts")

@@ -4,6 +4,7 @@ import static org.springframework.http.HttpStatus.*;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,6 +36,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -104,8 +106,29 @@ public class PostController {
 		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
 		@RequestParam(required = false, defaultValue = "ALL") PostType postType
 	) {
-		PageResponse<GetPostsResponse> response = postService.getPosts(page, size, postType);
-		return ResponseEntity.ok(AppResponse.ok(response));
+		Page<GetPostsResponse> response = postService.getPosts(page, size, postType);
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(response)));
+	}
+
+	@GetMapping("/search")
+	@Operation(
+		summary = "게시글 검색 API",
+		description = """
+			제목 또는 설명에 검색어가 포함된 게시글을 조회합니다.
+			검색 대상은 postType(ALL, ORIGINAL, AI_DERIVED)에 따라 달라집니다.
+		""",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
+		}
+	)
+	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> searchPosts(
+		@RequestParam @NotBlank(message = "검색어는 필수입니다.") String keyword,
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
+		@RequestParam(required = false, defaultValue = "ALL") PostType postType
+	) {
+		Page<GetPostsResponse> response = postService.searchPosts(keyword.strip(), page, size, postType);
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(response)));
 	}
 
 	@DeleteMapping("/{id}")

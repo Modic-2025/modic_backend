@@ -29,7 +29,6 @@ import org.springframework.data.domain.Sort;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.image.entityfactory.ImageFactory;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
@@ -311,7 +310,8 @@ class PostServiceTest {
 		// 하트 수 배치 조회 설정
 		Map<Long, Long> mockLikeCounts = Map.of(1L, 5L, 2L, 8L);
 
-		when(postEntityRepository.findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)), any(Pageable.class))).thenReturn(mockPostPage);
+		when(postEntityRepository.findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)),
+			any(Pageable.class))).thenReturn(mockPostPage);
 		when(postImageEntityRepository.findAllByPostIdIn(Arrays.asList(1L, 2L)))
 			.thenReturn(allMockImages);
 		when(postLikeService.getLikeCounts(Arrays.asList(1L, 2L)))
@@ -319,7 +319,7 @@ class PostServiceTest {
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
 		// when
-		PageResponse<GetPostsResponse> response = postService.getPosts(page, size, PostType.ALL);
+		Page<GetPostsResponse> response = postService.getPosts(page, size, PostType.ALL);
 
 		// then
 		assertThat(response).isNotNull();
@@ -333,7 +333,8 @@ class PostServiceTest {
 		assertThat(secondPost.likeCount()).isEqualTo(8L);
 
 		// 배치 조회 메서드 호출 검증
-		verify(postEntityRepository).findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)), any(Pageable.class));
+		verify(postEntityRepository).findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)),
+			any(Pageable.class));
 		verify(postImageEntityRepository).findAllByPostIdIn(Arrays.asList(1L, 2L));
 		verify(postLikeService).getLikeCounts(Arrays.asList(1L, 2L));
 	}
@@ -364,23 +365,82 @@ class PostServiceTest {
 		Map<Long, Long> mockLikeCounts = Map.of(1L, 3L, 2L, 7L);
 
 		// When
-		when(postEntityRepository.findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)), any(Pageable.class))).thenReturn(mockPostPage);
+		when(postEntityRepository.findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)),
+			any(Pageable.class))).thenReturn(mockPostPage);
 		when(postLikeService.getLikeCounts(Arrays.asList(1L, 2L))).thenReturn(mockLikeCounts);
 		when(postImageEntityRepository.findAllByPostIdIn(Arrays.asList(1L, 2L))).thenReturn(allMockImages);
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 
-		PageResponse<GetPostsResponse> response = postService.getPosts(page, size, PostType.ALL);
+		Page<GetPostsResponse> response = postService.getPosts(page, size, PostType.ALL);
 
 		// Then
 		assertThat(response).isNotNull();
 		assertEquals(mockPosts.size(), response.getContent().size());
-		assertEquals(page, response.getPage());
 		assertEquals(size, response.getSize());
 		assertEquals(1, response.getTotalPages());
 
-		verify(postEntityRepository, times(1)).findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)),any(Pageable.class));
+		verify(postEntityRepository, times(1)).findAllByPostStatusIn(eq(List.of(ORIGINAL, DERIVED_APPROVED)),
+			any(Pageable.class));
 		verify(postImageEntityRepository, times(1)).findAllByPostIdIn(Arrays.asList(1L, 2L));
 		verify(postLikeService, times(1)).getLikeCounts(Arrays.asList(1L, 2L));
+	}
+
+	@Test
+	@DisplayName("게시글 검색 성공 - 제목 및 설명 일치")
+	void searchPosts_WithKeyword_ShouldReturnPagedResponse() {
+		// given
+		String rawKeyword = " 테스트 ";
+		int page = 0;
+		int size = 10;
+		UserEntity mockUser = UserFactory.createMockUser(1L);
+		PostEntity firstPost = createMockPostWithId(1L, mockUser);
+		PostEntity secondPost = createMockPostWithId(2L, mockUser);
+		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
+		Page<PostEntity> mockPostPage = new PageImpl<>(List.of(firstPost, secondPost), pageable, 2);
+		List<PostImageEntity> firstPostImages = ImageFactory.createMockPostImages(firstPost, 1);
+		List<PostImageEntity> secondPostImages = ImageFactory.createMockPostImages(secondPost, 1);
+		List<PostImageEntity> allImages = new ArrayList<>();
+		allImages.addAll(firstPostImages);
+		allImages.addAll(secondPostImages);
+
+		when(postEntityRepository.searchByKeywordAndPostStatuses(anyString(), anyList(), any(Pageable.class)))
+			.thenReturn(mockPostPage);
+		when(postLikeService.getLikeCounts(anyList()))
+			.thenReturn(Map.of(1L, 4L, 2L, 6L));
+		when(postImageEntityRepository.findAllByPostIdIn(anyList()))
+			.thenReturn(allImages);
+		when(imageUtil.createImageGetUrl(anyString()))
+			.thenAnswer(invocation -> "https://cdn.test/" + invocation.getArgument(0, String.class));
+
+		// when
+		Page<GetPostsResponse> response = postService.searchPosts(rawKeyword, page, size, PostType.ALL);
+
+		// then
+		assertThat(response).isNotNull();
+		assertThat(response.getContent()).hasSize(2);
+		assertThat(response.getContent().get(0).likeCount()).isEqualTo(4L);
+		assertThat(response.getContent().get(1).likeCount()).isEqualTo(6L);
+		assertThat(response.getContent().get(0).images()).hasSize(1);
+		assertThat(response.getContent().get(0).images().get(0).getImageUrl()).isEqualTo("https://cdn.test/imagePath1");
+
+		ArgumentCaptor<String> keywordCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<List> statusesCaptor = ArgumentCaptor.forClass(List.class);
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+		verify(postEntityRepository).searchByKeywordAndPostStatuses(
+			keywordCaptor.capture(),
+			statusesCaptor.capture(),
+			pageableCaptor.capture()
+		);
+
+		assertThat(keywordCaptor.getValue()).isEqualTo("테스트");
+		@SuppressWarnings("unchecked")
+		List<PostStatus> capturedStatuses = statusesCaptor.getValue();
+		assertThat(capturedStatuses).containsExactlyInAnyOrder(ORIGINAL, DERIVED_APPROVED);
+		assertThat(pageableCaptor.getValue()).isEqualTo(pageable);
+
+		verify(postLikeService).getLikeCounts(anyList());
+		verify(postImageEntityRepository).findAllByPostIdIn(anyList());
 	}
 
 	@Test

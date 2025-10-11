@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.image.util.ImageUtil;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
+import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
@@ -53,6 +53,7 @@ public class PostService {
 	private static final Sort.Direction SORT_DIRECTION = DESC;
 	private final ImageUtil imageUtil;
 
+	// 일반 포스트 생성
 	@Transactional
 	public Long createPost(
 		final Long userId,
@@ -95,6 +96,7 @@ public class PostService {
 		return post.getId();
 	}
 
+	// 단일 포스트 조회
 	@Transactional(readOnly = true)
 	public GetPostResponse getPost(final Long id, final Long currentUserId) {
 		final PostEntity postEntity = postEntityRepository.findById(id)
@@ -136,6 +138,7 @@ public class PostService {
 			isLikedByCurrentUser, simpleDerivedPostDtos);
 	}
 
+	// 비로그인 상태에서 단일 포스트 조회
 	@Transactional(readOnly = true)
 	public GetPostResponse getPostForPublic(final Long id) {
 		final PostEntity postEntity = postEntityRepository.findById(id)
@@ -177,45 +180,36 @@ public class PostService {
 			isLikedByCurrentUser, simpleDerivedPostDtos);
 	}
 
+	// 전체 포스트 목록 조회
 	@Transactional(readOnly = true)
-	public PageResponse<GetPostsResponse> getPosts(
+	public Page<GetPostsResponse> getPosts(
 		final int page,
 		final int size,
 		final PostType postType
 	) {
 		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
 		Page<PostEntity> posts = getPostsByType(pageable, postType);
+		return createGetPostsResponse(posts);
+	}
 
-		// 게시글 ID 목록 추출
-		List<Long> postIds = posts.getContent().stream()
-			.map(PostEntity::getId)
-			.toList();
-
-		// 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
-		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
-		// 배치로 모든 포스트 이미지 조회
-		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
-
-		// 포스트ID별로 그룹화
-		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
-			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
-
-		Page<GetPostsResponse> responsePages = posts.map(post -> {
-			// Todo: 대표이미지 어떻게 앞으로 넣지
-			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
-				.stream()
-				.map(image -> new GetPostsResponse.ImageDto(
-					imageUtil.createImageGetUrl(image.getImagePath()),
-					image.getId()
-				))
-				.toList();
-
-			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
-
-			return GetPostsResponse.of(post, postImages, likeCount);
-		});
-
-		return PageResponse.of(responsePages);
+	// 검색어로 포스트 목록 조회
+	/**
+	 * 제목 또는 설명에 검색어가 포함된 게시글 목록을 페이지 단위로 조회합니다.
+	 * 검색 대상은 전달받은 포스트 타입에 해당하는 게시글로 제한됩니다.
+	 */
+	@Transactional(readOnly = true)
+	public Page<GetPostsResponse> searchPosts(
+		final String keyword,
+		final int page,
+		final int size,
+		final PostType postType
+	) {
+		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
+		List<PostStatus> postStatuses = resolveSearchTargetStatuses(postType);
+		String sanitizedKeyword = keyword.strip();
+		Page<PostEntity> posts = postEntityRepository.searchByKeywordAndPostStatuses(sanitizedKeyword, postStatuses,
+			pageable);
+		return createGetPostsResponse(posts);
 	}
 
 	// 유저 포스트 목록 조회
@@ -225,41 +219,11 @@ public class PostService {
 		final int page,
 		final int size
 	) {
-		// 1. 포스트 목록 조회 (DERIVED_PENDING, DERIVED_REJECTED 상태의 포스트도 포함)
 		Page<PostEntity> posts = postEntityRepository.findAllByUserId(userId, PageRequest.of(page, size));
-
-		// 2. 이미지 조회
-		// 게시글 ID 목록 추출
-		List<Long> postIds = posts.getContent().stream()
-			.map(PostEntity::getId)
-			.toList();
-
-		// 배치로 모든 포스트 이미지 조회 (N+1 문제 해결)
-		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
-
-		// 포스트ID별로 그룹화
-		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
-			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
-
-		// 3. 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
-		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
-
-		// 4. 응답 생성
-		return posts.map(post -> {
-			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
-				.stream()
-				.map(image -> new GetPostsResponse.ImageDto(
-					imageUtil.createImageGetUrl(image.getImagePath()),
-					image.getId()
-				))
-				.toList();
-
-			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
-
-			return new GetPostsResponse(post.getId(), post.getTitle(), post.getPostStatus(), postImages, likeCount);
-		});
+		return createGetPostsResponse(posts);
 	}
 
+	// 포스트 삭제
 	@Transactional
 	public void deletePost(final long userId, final Long postId) {
 		PostEntity post = postEntityRepository.findById(postId)
@@ -272,6 +236,7 @@ public class PostService {
 		postEntityRepository.delete(post);
 	}
 
+	// 포스트 수정
 	@Transactional
 	public void updatePost(
 		final long userId,
@@ -367,6 +332,52 @@ public class PostService {
 			case ORIGINAL -> postEntityRepository.findAllByPostStatus(ORIGINAL, pageable);
 			case AI_DERIVED -> postEntityRepository.findAllByPostStatus(DERIVED_APPROVED, pageable);
 			case ALL -> postEntityRepository.findAllByPostStatusIn(List.of(ORIGINAL, DERIVED_APPROVED), pageable);
+		};
+	}
+
+	/**
+	 * 게시글 목록 페이지를 클라이언트 응답 DTO 형태로 변환합니다.
+	 * 좋아요 수와 이미지 정보를 함께 구성합니다.
+	 */
+	private Page<GetPostsResponse> createGetPostsResponse(Page<PostEntity> posts) {
+		// 게시글 ID 목록 추출
+		List<Long> postIds = posts.getContent().stream()
+			.map(PostEntity::getId)
+			.toList();
+
+		// 여러 게시글의 하트 수 조회 (한 번의 쿼리로 성능 최적화)
+		Map<Long, Long> likeCounts = postLikeService.getLikeCounts(postIds);
+		// 배치로 모든 포스트 이미지 조회
+		List<PostImageEntity> allPostImages = postImageEntityRepository.findAllByPostIdIn(postIds);
+
+		// 포스트ID별로 그룹화
+		Map<Long, List<PostImageEntity>> imagesByPostId = allPostImages.stream()
+			.collect(Collectors.groupingBy(PostImageEntity::getPostId));
+
+		return posts.map(post -> {
+			// Todo: 대표이미지 어떻게 앞으로 넣지
+			List<GetPostsResponse.ImageDto> postImages = imagesByPostId.getOrDefault(post.getId(), List.of())
+				.stream()
+				.map(image -> new GetPostsResponse.ImageDto(
+					imageUtil.createImageGetUrl(image.getImagePath()),
+					image.getId()
+				))
+				.toList();
+
+			long likeCount = likeCounts.getOrDefault(post.getId(), 0L);
+
+			return GetPostsResponse.of(post, postImages, likeCount);
+		});
+	}
+
+	/**
+	 * 검색 시 포함할 포스트 상태 목록을 포스트 타입에 따라 반환합니다.
+	 */
+	private List<PostStatus> resolveSearchTargetStatuses(PostType postType) {
+		return switch (postType) {
+			case ORIGINAL -> List.of(ORIGINAL);
+			case AI_DERIVED -> List.of(DERIVED_APPROVED);
+			case ALL -> List.of(ORIGINAL, DERIVED_APPROVED);
 		};
 	}
 
