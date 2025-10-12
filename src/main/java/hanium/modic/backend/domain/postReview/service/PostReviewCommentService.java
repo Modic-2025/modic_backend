@@ -2,6 +2,7 @@ package hanium.modic.backend.domain.postReview.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -40,14 +41,14 @@ public class PostReviewCommentService {
 			postReviewId, PageRequest.of(page, size));
 
 		// 2. N + 1 문제를 해결하기 위한 UserImage 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			prcs.stream().map(PostReviewCommentDto::userId).toList()
 		);
 
 		// 3. 댓글 userId에 해당하는 유저들의 프로필 이미지 조회
 		return prcs.map(prc -> {
-			final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(prc.userId());
-			final boolean hasUserImage = userImageUrl.isPresent();
+			final boolean hasUserImage = userImageUrlMap.containsKey(prc.userId());
+			final String userImageUrl = userImageUrlMap.get(prc.userId());
 
 			return new PostReviewCommentResponse(
 				prc.postReviewCommentId(),
@@ -56,7 +57,7 @@ public class PostReviewCommentService {
 				prc.createdAt(),
 				prc.text(),
 				hasUserImage,
-				userImageUrl.orElse(null)
+				userImageUrl
 			);
 		});
 	}

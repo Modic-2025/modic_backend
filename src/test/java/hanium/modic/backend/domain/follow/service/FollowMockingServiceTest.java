@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -133,7 +134,7 @@ class FollowMockingServiceTest {
 		Page<UserEntity> page = new PageImpl<>(List.of(user2, user3));
 		when(followRepository.findFollowersOrderByCreatedAt(eq(userId), any(PageRequest.class)))
 			.thenReturn(page);
-		when(userImageEntityRepository.findAllByUserIdIn(List.of(2L, 3L))).thenReturn(List.of()); // 프로필 없음
+		when(userImageService.createImageGetUrlMap(List.of(2L, 3L))).thenReturn(Map.of()); // 프로필 없음
 
 		// when
 		Page<GetFollowersResponse> result = followService.getFollowers(userId, 0, 10);
@@ -162,7 +163,7 @@ class FollowMockingServiceTest {
 
 		Page<UserEntity> page = new PageImpl<>(List.of(user4, user5));
 		when(followRepository.findFollowingOrderByCreatedAt(eq(userId), any(PageRequest.class))).thenReturn(page);
-		when(userImageEntityRepository.findAllByUserIdIn(List.of(2L, 3L))).thenReturn(List.of()); // 프로필 없음
+		when(userImageService.createImageGetUrlMap(List.of(2L, 3L))).thenReturn(Map.of()); // 프로필 없음
 
 		// when
 		Page<GetFollowingsResponse> result = followService.getFollowings(userId, 0, 10);
