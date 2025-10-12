@@ -38,6 +38,16 @@ public class RabbitMqConfig {
 	public static final String AI_IMAGE_REQUEST_DLQ_ROUTING_KEY = "ai.image.request.dlq";
 	public static final String AI_IMAGE_REQUEST_RETRY_ROUTING_KEY = "ai.image.request.retry";
 
+	// Similarity Check Request
+	public static final String VOTE_SIMILARITY_REQUEST_QUEUE = "vote.similarity.request.queue";
+	public static final String VOTE_SIMILARITY_REQUEST_EXCHANGE = "vote.similarity.request.exchange";
+	public static final String VOTE_SIMILARITY_REQUEST_ROUTING_KEY = "vote.similarity.request";
+
+	// Similarity Check Response
+	public static final String VOTE_SIMILARITY_RESPONSE_QUEUE = "vote.similarity.response.queue";
+	public static final String VOTE_SIMILARITY_RESPONSE_EXCHANGE = "vote.similarity.response.exchange";
+	public static final String VOTE_SIMILARITY_RESPONSE_ROUTING_KEY = "vote.similarity.response";
+
 	private final RabbitMqProperties rabbitMqProperties;
 
 	@Bean
@@ -127,6 +137,42 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(aiImageRequestRetryExchange)
 			.to(aiImageRequestDlx)
 			.with(AI_IMAGE_REQUEST_RETRY_ROUTING_KEY);
+	}
+
+	// Request Queue, Exchange, Binding
+	@Bean
+	public Queue voteSimilarityRequestQueue() {
+		return new Queue(VOTE_SIMILARITY_REQUEST_QUEUE, true);
+	}
+
+	@Bean
+	public TopicExchange voteSimilarityRequestExchange() {
+		return new TopicExchange(VOTE_SIMILARITY_REQUEST_EXCHANGE, true, false);
+	}
+
+	@Bean
+	public Binding voteSimilarityRequestBinding(Queue voteSimilarityRequestQueue, TopicExchange voteSimilarityRequestExchange) {
+		return BindingBuilder.bind(voteSimilarityRequestQueue)
+			.to(voteSimilarityRequestExchange)
+			.with(VOTE_SIMILARITY_REQUEST_ROUTING_KEY);
+	}
+
+	// Response Queue, Exchange, Binding
+	@Bean
+	public Queue voteSimilarityResponseQueue() {
+		return new Queue(VOTE_SIMILARITY_RESPONSE_QUEUE, true);
+	}
+
+	@Bean
+	public TopicExchange voteSimilarityResponseExchange() {
+		return new TopicExchange(VOTE_SIMILARITY_RESPONSE_EXCHANGE, true, false);
+	}
+
+	@Bean
+	public Binding voteSimilarityResponseBinding(Queue voteSimilarityResponseQueue, TopicExchange voteSimilarityResponseExchange) {
+		return BindingBuilder.bind(voteSimilarityResponseQueue)
+			.to(voteSimilarityResponseExchange)
+			.with(VOTE_SIMILARITY_RESPONSE_ROUTING_KEY);
 	}
 
 	@Bean
