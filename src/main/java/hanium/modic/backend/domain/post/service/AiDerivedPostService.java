@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.post.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
@@ -38,6 +40,9 @@ public class AiDerivedPostService {
 	private final SimilarityVoteRepository similarityVoteRepository;
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 
+	// AI 유사도 검사 요청 서비스
+	private final hanium.modic.backend.domain.vote.service.AiSimilarityRequestService aiSimilarityRequestService;
+
 	/**
 	 * AI 파생 포스트 생성 (투표 시스템 연동)
 	 * @param userId 사용자 ID
@@ -68,10 +73,14 @@ public class AiDerivedPostService {
 			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		}
 
-		// 원본 이미지 ID
-		Long originalImageId = postEntityRepository.findById(createdAiImage.getPostId())
-			.orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION))
-			.getThumbnailImageId();
+		// 원본 포스트 및 원본 이미지 조회
+		PostEntity originalPost = postEntityRepository.findById(createdAiImage.getPostId())
+			.orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
+		Long originalImageId = originalPost.getThumbnailImageId();
+
+		// 원본 이미지 경로 조회
+		PostImageEntity originalImage = postImageEntityRepository.findById(originalImageId)
+			.orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND_EXCEPTION));
 
 		// AI 파생 포스트 생성 - PENDING 상태로 생성 (투표 대기)
 		PostEntity aiDerivedPost = PostEntity.builder()
@@ -118,6 +127,18 @@ public class AiDerivedPostService {
 			.finalDecision(VoteDecision.PENDING) // 최종 결정 대기
 			.build();
 		voteSummaryRepository.save(voteSummary);
+
+		// AI 유사도 검사 요청 (트랜잭션 커밋 후 비동기 실행)
+		Long voteId = savedVote.getId();
+		String originalPath = originalImage.getImagePath();
+		String derivedPath = createdAiImage.getImagePath();
+
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				aiSimilarityRequestService.sendSimilarityCheckRequest(voteId, originalPath, derivedPath);
+			}
+		});
 
 		// 게시글 통계 초기화 (비동기)
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
