@@ -26,6 +26,7 @@ import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.web.vote.dto.response.VoteParticipationResponse;
 import hanium.modic.backend.web.vote.dto.response.GetVoteStreakResponse;
+import hanium.modic.backend.web.vote.dto.response.VoteSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,6 +49,7 @@ public class VotingService {
 	private final VoteRewardService voteRewardService;
 	private final VoteCompletionRewardService voteCompletionRewardService;
 	private final UserVoteStreakService userVoteStreakService;
+	private final VoteQueryService voteQueryService;
 
 	/**
 	 * 사용자의 투표 연속 정답 정보를 조회합니다.
@@ -114,12 +116,19 @@ public class VotingService {
 			// 9. 리워드 처리 (투표 참여 직후)
 			VoteRewardResult reward = voteRewardService.processVoteReward(voteId, userId, decision);
 
-			// 10. 응답 생성
+			// 10. 투표 현항 조회
+			VoteSummaryResponse voteResults = voteQueryService.getVoteResults(voteId);
+			float approveRate = Math.round((voteResults.approveWeight() * 10000f / voteResults.totalWeight())) / 100f;
+			float denyRate = Math.round((voteResults.denyWeight() * 10000f / voteResults.totalWeight())) / 100f;
+
+			// 11. 응답 생성
 			return VoteParticipationResponse.of(
 				voteId,
 				reward.isCorrectAnswer(),
 				reward.currentStreak(),
-				reward.receivedTicket()
+				reward.receivedTicket(),
+				approveRate,
+				denyRate
 			);
 		} catch (LockException e) {
 			log.error("투표 참여 락 획득 실패: voteId={}, userId={}", voteId, userId, e);
