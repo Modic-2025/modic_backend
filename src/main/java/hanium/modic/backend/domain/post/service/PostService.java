@@ -7,6 +7,7 @@ import static org.springframework.data.domain.Sort.Direction.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
 import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
@@ -52,6 +54,7 @@ public class PostService {
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = DESC;
 	private final ImageUtil imageUtil;
+	private final UserImageService userImageService;
 
 	// 일반 포스트 생성
 	@Transactional
@@ -104,8 +107,8 @@ public class PostService {
 		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		final String userName = userEntity.getName();
-		final String userImage = userEntity.getUserImageUrl();
-		final boolean hasUserImage = userImage != null;
+		final Optional<String> userImage = userImageService.createImageGetUrlOptional(userEntity.getId());
+		final boolean hasUserImage = userImage.isPresent();
 		final String userEmail = userEntity.getEmail();
 
 		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
@@ -134,8 +137,17 @@ public class PostService {
 			})
 			.toList();
 
-		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, simpleDerivedPostDtos);
+		return GetPostResponse.of(
+			userName,
+			hasUserImage,
+			userImage.orElse(null),
+			userEmail,
+			postEntity,
+			postImages,
+			likeCount,
+			isLikedByCurrentUser,
+			simpleDerivedPostDtos
+		);
 	}
 
 	// 비로그인 상태에서 단일 포스트 조회
@@ -146,8 +158,8 @@ public class PostService {
 		final UserEntity userEntity = userEntityRepository.findById(postEntity.getUserId())
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		final String userName = userEntity.getName();
-		final String userImage = userEntity.getUserImageUrl();
-		final boolean hasUserImage = userImage != null;
+		final Optional<String> userImage = userImageService.createImageGetUrlOptional(userEntity.getId());
+		final boolean hasUserImage = userImage.isPresent();
 		final String userEmail = userEntity.getEmail();
 
 		List<ImageDto> postImages = postImageEntityRepository.findAllByPostId(id)
@@ -176,8 +188,17 @@ public class PostService {
 			})
 			.toList();
 
-		return GetPostResponse.of(userName, hasUserImage, userImage, userEmail, postEntity, postImages, likeCount,
-			isLikedByCurrentUser, simpleDerivedPostDtos);
+		return GetPostResponse.of(
+			userName,
+			hasUserImage,
+			userImage.orElse(null),
+			userEmail,
+			postEntity,
+			postImages,
+			likeCount,
+			isLikedByCurrentUser,
+			simpleDerivedPostDtos
+		);
 	}
 
 	// 전체 포스트 목록 조회
@@ -193,6 +214,7 @@ public class PostService {
 	}
 
 	// 검색어로 포스트 목록 조회
+
 	/**
 	 * 제목 또는 설명에 검색어가 포함된 게시글 목록을 페이지 단위로 조회합니다.
 	 * 검색 대상은 전달받은 포스트 타입에 해당하는 게시글로 제한됩니다.

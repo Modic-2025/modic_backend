@@ -50,8 +50,12 @@ public interface FollowEntityRepository extends JpaRepository<FollowEntity, Long
 
 	// 팔로워 목록 조회 (팔로우 상태 포함)
 	@Query("""
-		    SELECT u.id as id, u.name as name, u.email as email, u.userImageUrl as userImageUrl,
-		           CASE WHEN f2.id IS NOT NULL THEN true ELSE false END as isFollowing
+		    SELECT new hanium.modic.backend.domain.follow.dto.FollowerWithStatus(
+		        u.id,
+		        u.name,
+		        u.email,
+		        CASE WHEN (f2.id IS NOT NULL) THEN true ELSE false END
+		    )
 		    FROM FollowEntity f
 		    JOIN UserEntity u ON f.myId = u.id
 		    LEFT JOIN FollowEntity f2 ON f2.myId = :currentUserId AND f2.followingId = u.id
@@ -66,8 +70,12 @@ public interface FollowEntityRepository extends JpaRepository<FollowEntity, Long
 
 	// 팔로잉 목록 조회 (팔로우 상태 포함)
 	@Query("""
-		    SELECT u.id as id, u.name as name, u.email as email, u.userImageUrl as userImageUrl,
-		           CASE WHEN f2.id IS NOT NULL THEN true ELSE false END as isFollowing
+		    SELECT new hanium.modic.backend.domain.follow.dto.FollowingWithStatus(
+		        u.id,
+		        u.name,
+		        u.email,
+		        CASE WHEN (f2.id IS NOT NULL) THEN true ELSE false END
+		    )
 		    FROM FollowEntity f
 		    JOIN UserEntity u ON f.followingId = u.id
 		    LEFT JOIN FollowEntity f2 ON f2.myId = :currentUserId AND f2.followingId = u.id

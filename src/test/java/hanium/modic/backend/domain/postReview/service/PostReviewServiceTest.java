@@ -24,6 +24,7 @@ import hanium.modic.backend.domain.postReview.repository.PostReviewImageReposito
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewDetailResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +38,8 @@ class PostReviewServiceTest {
 	private PostReviewImageRepository postReviewImageRepository;
 	@Mock
 	private UserEntityRepository userEntityRepository;
+	@Mock
+	private UserImageService userImageService;
 
 	@InjectMocks
 	private PostReviewService postReviewService;
@@ -57,7 +60,7 @@ class PostReviewServiceTest {
 
 		UserEntity mockUser = mock(UserEntity.class);
 		when(mockUser.getName()).thenReturn("testUser");
-		when(mockUser.getUserImageUrl()).thenReturn("https://example.com/user.jpg");
+		when(mockUser.getId()).thenReturn(userId);
 
 		PostReviewImageEntity mockImage1 = mock(PostReviewImageEntity.class);
 		when(mockImage1.getId()).thenReturn(1L);
@@ -72,6 +75,7 @@ class PostReviewServiceTest {
 		when(postReviewImageRepository.findAllByPostReviewId(reviewId)).thenReturn(mockImages);
 		when(postReviewImageService.createImageGetUrl(1L)).thenReturn("https://example.com/image1.jpg");
 		when(postReviewImageService.createImageGetUrl(2L)).thenReturn("https://example.com/image2.jpg");
+		when(userImageService.createImageGetUrlOptional(userId)).thenReturn(Optional.of("https://example.com/user.jpg"));
 
 		// When
 		PostReviewDetailResponse response = postReviewService.getPostReviewDetail(reviewId);
@@ -141,11 +145,12 @@ class PostReviewServiceTest {
 
 		UserEntity mockUser = mock(UserEntity.class);
 		when(mockUser.getName()).thenReturn("testUser");
-		when(mockUser.getUserImageUrl()).thenReturn("https://example.com/user.jpg");
+		when(mockUser.getId()).thenReturn(userId);
 
 		when(postReviewRepository.findById(reviewId)).thenReturn(Optional.of(mockReview));
 		when(userEntityRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 		when(postReviewImageRepository.findAllByPostReviewId(reviewId)).thenReturn(Collections.emptyList());
+		when(userImageService.createImageGetUrlOptional(userId)).thenReturn(Optional.of("https://example.com/user.jpg"));
 
 		// When
 		PostReviewDetailResponse response = postReviewService.getPostReviewDetail(reviewId);
@@ -176,11 +181,12 @@ class PostReviewServiceTest {
 
 		UserEntity mockUser = mock(UserEntity.class);
 		when(mockUser.getName()).thenReturn("testUser");
-		when(mockUser.getUserImageUrl()).thenReturn(null);
+		when(mockUser.getId()).thenReturn(userId);
 
 		when(postReviewRepository.findById(reviewId)).thenReturn(Optional.of(mockReview));
 		when(userEntityRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 		when(postReviewImageRepository.findAllByPostReviewId(reviewId)).thenReturn(Collections.emptyList());
+		when(userImageService.createImageGetUrlOptional(userId)).thenReturn(Optional.empty());
 
 		// When
 		PostReviewDetailResponse response = postReviewService.getPostReviewDetail(reviewId);

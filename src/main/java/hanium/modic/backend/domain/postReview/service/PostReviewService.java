@@ -5,6 +5,7 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -22,6 +23,7 @@ import hanium.modic.backend.domain.postReview.repository.PostReviewImageReposito
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewDetailResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +37,7 @@ public class PostReviewService {
 	private final PostEntityRepository postEntityRepository;
 	private final UserEntityRepository userEntityRepository;
 	private final PostReviewAuthorizationService postReviewAuthorizationService;
+	private final UserImageService userImageService;
 
 	// 포스트 리뷰 생성
 	@Transactional
@@ -120,13 +123,13 @@ public class PostReviewService {
 			.map(image -> postReviewImageService.createImageGetUrl(image.getId()))
 			.toList();
 
-		String userImageUrl = user.getUserImageUrl();
-		boolean hasUserImage = userImageUrl != null;
+		final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
+		final boolean hasUserImage = userImageUrl.isPresent();
 
 		return new PostReviewDetailResponse(
 			user.getName(),
 			hasUserImage,
-			userImageUrl,
+			userImageUrl.orElse(null),
 			postReview.getCreateAt(),
 			postReview.getId(),
 			postReview.getDescription(),
@@ -160,8 +163,8 @@ public class PostReviewService {
 			if (user == null)
 				throw new AppException(USER_NOT_FOUND_EXCEPTION);
 
-			String userImageUrl = user.getUserImageUrl();
-			boolean hasUserImage = userImageUrl != null;
+			final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
+			final boolean hasUserImage = userImageUrl.isPresent();
 
 			List<String> imageUrls = imageMap.getOrDefault(postReview.getId(), List.of()).stream()
 				.map(image -> postReviewImageService.createImageGetUrl(image.getId()))
@@ -170,7 +173,7 @@ public class PostReviewService {
 			return new PostReviewDetailResponse(
 				user.getName(),
 				hasUserImage,
-				userImageUrl,
+				userImageUrl.orElse(null),
 				postReview.getCreateAt(),
 				postReview.getId(),
 				postReview.getDescription(),

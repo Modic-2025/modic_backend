@@ -14,13 +14,13 @@ public record UserInfoResponse(
 	boolean hasUserImage,
 	String userImageUrl
 ) {
-	public static UserInfoResponse from(UserEntity user) {
+	public static UserInfoResponse of(UserEntity user, String userImageUrl) {
 		return new UserInfoResponse(
 			user.getId(),
 			user.getEmail(),
 			user.getName(),
-			user.getUserImageUrl() != null,
-			user.getUserImageUrl()
+			userImageUrl != null,
+			userImageUrl
 		);
 	}
 }

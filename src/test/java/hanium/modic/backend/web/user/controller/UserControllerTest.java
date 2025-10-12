@@ -137,7 +137,7 @@ class UserControllerTest extends BaseControllerTest {
 		Authentication authentication = new UsernamePasswordAuthenticationToken(mockUser, null, List.of());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		UserInfoResponse mockResponse = UserInfoResponse.from(mockUser);
+		UserInfoResponse mockResponse = UserInfoResponse.of(mockUser, "URL");
 		given(userService.getUserInfo(any(UserEntity.class))).willReturn(mockResponse);
 
 		// when & then

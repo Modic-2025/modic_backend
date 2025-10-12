@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.follow.service;
 
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -10,9 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.dto.FollowType;
+import hanium.modic.backend.domain.follow.dto.FollowerWithStatus;
+import hanium.modic.backend.domain.follow.dto.FollowingWithStatus;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
@@ -24,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class FollowService {
 	private final FollowEntityRepository followRepository;
 	private final UserEntityRepository userRepository;
+	private final UserImageService userImageService;
+	private final UserImageEntityRepository userImageRepository;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -50,88 +58,158 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회 (미인증 유저용)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<UserEntity> followers = followRepository.findFollowersOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followers.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
+		return followers
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
-				return new GetFollowersResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
+				return new GetFollowersResponse(
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
+					u.getEmail()
+				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 내 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersWithStatusResponse> getMyFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowersWithStatusOrderByCreatedAt(userId, userId, PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<FollowerWithStatus> followers = followRepository.findFollowersWithStatusOrderByCreatedAt(
+			userId, userId, PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followers.stream().map(FollowerWithStatus::id).toList()
+		);
+
+		return followers
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowersWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
-					u.getEmail(),
-					u.getIsFollowing()
+					u.id(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersWithStatusResponse> getFollowersWithStatus(
-		final long currentUserId, 
-		final long targetUserId, 
-		final int page, 
+		final long currentUserId,
+		final long targetUserId,
+		final int page,
 		final int size
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowersWithStatusOrderByCreatedAt(targetUserId, currentUserId, PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<FollowerWithStatus> followers = followRepository.findFollowersWithStatusOrderByCreatedAt(
+			targetUserId, currentUserId, PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followers.stream().map(FollowerWithStatus::id).toList()
+		);
+
+		return followers
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowersWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
-					u.getEmail(),
-					u.getIsFollowing()
+					u.id(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회 (미인증 유저용)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
+		// 1. 팔로잉들 조회
+		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followings.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
+		return followings
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
-				return new GetFollowingsResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
+				return new GetFollowingsResponse(
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
+					u.getEmail()
+				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 내 팔로잉 목록 조회 (인증 유저용 - isFollowing 항상 true)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsWithStatusResponse> getMyFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
+		// 1. 팔로잉들 조회
+		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followings.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowingsWithStatusResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl,
+					userImageUrl.orElse(null),
 					u.getName(),
 					u.getEmail(),
 					true // 내 팔로잉 목록이므로 항상 true
@@ -141,6 +219,7 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsWithStatusResponse> getFollowingsWithStatus(
 		final long currentUserId,
 		final long targetUserId,
@@ -149,17 +228,31 @@ public class FollowService {
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId, PageRequest.of(page, size))
+		// 1. 팔로잉들 조회
+		Page<FollowingWithStatus> followings = followRepository.findFollowingsWithStatusOrderByCreatedAt(
+			targetUserId,
+			currentUserId,
+			PageRequest.of(page, size)
+		);
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageRepository.findAllByUserIdIn(
+			followings.stream().map(FollowingWithStatus::id).toList()
+		);
+
+		// 3. 응답 생성
+		return followings
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowingsWithStatusResponse(
-					u.getId(),
+					u.id(),
 					hasUserImage,
-					userImageUrl,
-					u.getName(),
-					u.getEmail(),
-					u.getIsFollowing()
+					userImageUrl.orElse(null),
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}
