@@ -38,6 +38,14 @@ public class RabbitMqConfig {
 	public static final String AI_IMAGE_REQUEST_DLQ_ROUTING_KEY = "ai.image.request.dlq";
 	public static final String AI_IMAGE_REQUEST_RETRY_ROUTING_KEY = "ai.image.request.retry";
 
+	// DLQ (Dead Letter Queue) 및 재시도 관련 상수 - AI Image Created
+	public static final String AI_IMAGE_CREATED_DLX = "ai.image.created.dlx";
+	public static final String AI_IMAGE_CREATED_DLQ = "ai.image.created.dlq";
+	public static final String AI_IMAGE_CREATED_RETRY_EXCHANGE = "ai.image.created.retry.exchange";
+	public static final String AI_IMAGE_CREATED_RETRY_QUEUE = "ai.image.created.retry.queue";
+	public static final String AI_IMAGE_CREATED_DLQ_ROUTING_KEY = "ai.image.created.dlq";
+	public static final String AI_IMAGE_CREATED_RETRY_ROUTING_KEY = "ai.image.created.retry";
+
 	// Similarity Check Request
 	public static final String VOTE_SIMILARITY_REQUEST_QUEUE = "vote.similarity.request.queue";
 	public static final String VOTE_SIMILARITY_REQUEST_EXCHANGE = "vote.similarity.request.exchange";
@@ -72,7 +80,10 @@ public class RabbitMqConfig {
 
 	@Bean
 	public Queue aiImageCreatedQueue() {
-		return new Queue(AI_IMAGE_CREATED_QUEUE, true);
+		Map<String, Object> args = new HashMap<>();
+		args.put("x-dead-letter-exchange", AI_IMAGE_CREATED_DLX);
+		args.put("x-dead-letter-routing-key", AI_IMAGE_CREATED_RETRY_ROUTING_KEY);
+		return new Queue(AI_IMAGE_CREATED_QUEUE, true, false, false, args);
 	}
 
 	@Bean
@@ -85,6 +96,60 @@ public class RabbitMqConfig {
 		return BindingBuilder.bind(aiImageCreatedQueue)
 			.to(aiImageCreatedExchange)
 			.with(AI_IMAGE_CREATED_ROUTING_KEY);
+	}
+
+	// DLX (Dead Letter Exchange) - AI Image Created
+	@Bean
+	public TopicExchange aiImageCreatedDlx() {
+		return new TopicExchange(AI_IMAGE_CREATED_DLX, true, false);
+	}
+
+	// 최종 실패 메시지 저장소
+	@Bean
+	public Queue aiImageCreatedDlq() {
+		return new Queue(AI_IMAGE_CREATED_DLQ, true);
+	}
+
+	// DLX에서 최종 DLQ로의 바인딩
+	@Bean
+	public Binding aiImageCreatedDlqBinding(Queue aiImageCreatedDlq, TopicExchange aiImageCreatedDlx) {
+		return BindingBuilder.bind(aiImageCreatedDlq)
+			.to(aiImageCreatedDlx)
+			.with(AI_IMAGE_CREATED_DLQ_ROUTING_KEY);
+	}
+
+	// 재시도용 Exchange
+	@Bean
+	public TopicExchange aiImageCreatedRetryExchange() {
+		return new TopicExchange(AI_IMAGE_CREATED_RETRY_EXCHANGE, true, false);
+	}
+
+	// 재시도 대기 Queue (TTL 60초 설정, 만료 시 원래 exchange로 재전송)
+	@Bean
+	public Queue aiImageCreatedRetryQueue() {
+		Map<String, Object> args = new HashMap<>();
+		args.put("x-message-ttl", 60000); // 60초
+		args.put("x-dead-letter-exchange", AI_IMAGE_CREATED_EXCHANGE);
+		args.put("x-dead-letter-routing-key", AI_IMAGE_CREATED_ROUTING_KEY);
+		return new Queue(AI_IMAGE_CREATED_RETRY_QUEUE, true, false, false, args);
+	}
+
+	// 재시도 Exchange와 Queue 바인딩
+	@Bean
+	public Binding aiImageCreatedRetryBinding(Queue aiImageCreatedRetryQueue,
+		TopicExchange aiImageCreatedRetryExchange) {
+		return BindingBuilder.bind(aiImageCreatedRetryQueue)
+			.to(aiImageCreatedRetryExchange)
+			.with(AI_IMAGE_CREATED_RETRY_ROUTING_KEY);
+	}
+
+	// DLX에서 재시도 Exchange로의 바인딩
+	@Bean
+	public Binding aiImageCreatedDlxToRetryBinding(TopicExchange aiImageCreatedRetryExchange,
+		TopicExchange aiImageCreatedDlx) {
+		return BindingBuilder.bind(aiImageCreatedRetryExchange)
+			.to(aiImageCreatedDlx)
+			.with(AI_IMAGE_CREATED_RETRY_ROUTING_KEY);
 	}
 
 	// DLX (Dead Letter Exchange) - 실패한 메시지를 받아서 재시도 또는 최종 처리로 라우팅

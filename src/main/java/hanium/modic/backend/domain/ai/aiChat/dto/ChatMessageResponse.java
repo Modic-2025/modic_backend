@@ -35,4 +35,17 @@ public record ChatMessageResponse(
 	public static ChatMessageResponse from(AiChatMessageEntity entity) {
 		return from(entity, null);
 	}
+
+	public static ChatMessageResponse createErrorResponse(AiChatMessageEntity entity, String errorMessage) {
+		return new ChatMessageResponse(
+			entity.getId(),
+			entity.getMessageOrder(),
+			SenderType.AI,
+			errorMessage,
+			entity.getRequestId(),
+			null,
+			entity.getCreateAt(),
+			AiImageStatus.RESPONSE_FAILED
+		);
+	}
 }
