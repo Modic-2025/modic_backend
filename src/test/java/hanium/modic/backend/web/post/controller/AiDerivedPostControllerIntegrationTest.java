@@ -61,7 +61,7 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 			// given
 			UserEntity currentUser = ContextHolderUtil.getCurrentUser();
 
-			// PostEntity 생성 및 저장
+			// 먼저 임시 thumbnailImageId로 PostEntity 생성 및 저장
 			PostEntity postEntity = PostEntity.builder()
 				.userId(currentUser.getId())
 				.title("Original Post")
@@ -72,6 +72,21 @@ class AiDerivedPostControllerIntegrationTest extends BaseIntegrationTest {
 				.postStatus(PostStatus.ORIGINAL)
 				.thumbnailImageId(1L) // 임시 값
 				.build();
+			postEntity = postEntityRepository.save(postEntity);
+
+			// 원본 PostImageEntity 생성 및 저장 (서비스에서 원본 이미지 경로 조회용)
+			PostImageEntity originalPostImage = PostImageEntity.builder()
+				.imagePath("posts/original/image.jpg")
+				.fullImageName("original-image-full.jpg")
+				.imageName("original-image")
+				.extension(ImageExtension.JPG)
+				.imagePurpose(ImagePrefix.POST)
+				.postEntity(postEntity)
+				.build();
+			originalPostImage = postImageEntityRepository.save(originalPostImage);
+
+			// PostEntity의 thumbnailImageId를 실제 이미지 ID로 업데이트
+			postEntity.updateThumbnailImageId(originalPostImage.getId());
 			postEntity = postEntityRepository.save(postEntity);
 
 			// AiChatImageEntity 생성 및 저장

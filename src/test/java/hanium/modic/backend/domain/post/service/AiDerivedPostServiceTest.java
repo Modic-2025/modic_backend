@@ -8,13 +8,17 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
@@ -72,86 +76,99 @@ class AiDerivedPostServiceTest {
 	@Test
 	@DisplayName("AI 파생 포스트 생성 성공")
 	void createAiDerivedPost_Success() {
-		// given
-		Long userId = 1L;
-		Long createdAiImageId = 100L;
-		Long originalPostId = 1L;
-		String title = "AI Generated Post";
-		String description = "This is an AI derived post";
-		Long commercialPrice = 2000L;
-		Long nonCommercialPrice = 1000L;
-		Long ticketPrice = 300L;
-		Long newPostId = 2L;
+		try (MockedStatic<TransactionSynchronizationManager> mockedTxManager = mockStatic(
+			TransactionSynchronizationManager.class)) {
+			// given
+			Long userId = 1L;
+			Long createdAiImageId = 100L;
+			Long originalPostId = 1L;
+			String title = "AI Generated Post";
+			String description = "This is an AI derived post";
+			Long commercialPrice = 2000L;
+			Long nonCommercialPrice = 1000L;
+			Long ticketPrice = 300L;
+			Long newPostId = 2L;
 
-		UserEntity mockUser = UserFactory.createMockUser(userId);
-		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
-			createdAiImageId, userId, originalPostId, "request-123");
-		PostEntity mockOriginalPost = createMockPostWithId(originalPostId, mockUser);
-		// The thumbnail image ID from mockOriginalPost will be 1L (from createMockPostWithId)
-		Long originalImageId = mockOriginalPost.getThumbnailImageId();
-		PostImageEntity mockOriginalImage = PostImageEntity.builder()
-			.imagePath("posts/original/image.jpg")
-			.fullImageName("original.jpg")
-			.imageName("original")
-			.extension(mockAiImage.getExtension())
-			.imagePurpose(ImagePrefix.POST)
-			.postEntity(mockOriginalPost)
-			.build();
-		PostEntity mockSavedPost = createMockPostWithId(newPostId, mockUser);
+			UserEntity mockUser = UserFactory.createMockUser(userId);
+			AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
+				createdAiImageId, userId, originalPostId, "request-123");
+			PostEntity mockOriginalPost = createMockPostWithId(originalPostId, mockUser);
+			// The thumbnail image ID from mockOriginalPost will be 1L (from createMockPostWithId)
+			Long originalImageId = mockOriginalPost.getThumbnailImageId();
+			PostImageEntity mockOriginalImage = PostImageEntity.builder()
+				.imagePath("posts/original/image.jpg")
+				.fullImageName("original.jpg")
+				.imageName("original")
+				.extension(mockAiImage.getExtension())
+				.imagePurpose(ImagePrefix.POST)
+				.postEntity(mockOriginalPost)
+				.build();
+			PostEntity mockSavedPost = createMockPostWithId(newPostId, mockUser);
 
-		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
-		when(postEntityRepository.findById(originalPostId)).thenReturn(Optional.of(mockOriginalPost));
-		when(postImageEntityRepository.findById(originalImageId)).thenReturn(Optional.of(mockOriginalImage));
-		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
-		when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
-		when(voteSummaryRepository.save(any())).thenReturn(null);
-		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
+			when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
+			when(postEntityRepository.findById(originalPostId)).thenReturn(Optional.of(mockOriginalPost));
+			when(postImageEntityRepository.findById(originalImageId)).thenReturn(Optional.of(mockOriginalImage));
+			when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
+			when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
+			when(voteSummaryRepository.save(any())).thenReturn(null);
+			doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
 
-		// Create a mock vote entity with ID
-		SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);
-		when(mockSavedVote.getId()).thenReturn(1L); // Only stub the ID which is needed
+			// Create a mock vote entity with ID
+			SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);
+			when(mockSavedVote.getId()).thenReturn(1L); // Only stub the ID which is needed
 
-		when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenReturn(mockSavedVote);
-		doNothing().when(aiSimilarityRequestService).sendSimilarityCheckRequest(anyLong(), anyString(), anyString());
+			when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenReturn(mockSavedVote);
+			doNothing().when(aiSimilarityRequestService)
+				.sendSimilarityCheckRequest(anyLong(), anyString(), anyString());
 
-		// when
-		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
-			userId, createdAiImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
+			// Mock TransactionSynchronizationManager to capture and immediately execute the callback
+			mockedTxManager.when(
+					() -> TransactionSynchronizationManager.registerSynchronization(any(TransactionSynchronization.class)))
+				.thenAnswer(invocation -> {
+					TransactionSynchronization sync = invocation.getArgument(0);
+					sync.afterCommit(); // Immediately execute the callback
+					return null;
+				});
 
-		// then
-		assertThat(response).isNotNull();
-		assertThat(response.postId()).isEqualTo(mockSavedPost.getId());
+			// when
+			CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
+				userId, createdAiImageId, title, description, commercialPrice, nonCommercialPrice, ticketPrice);
 
-		// PostEntity 저장 검증
-		ArgumentCaptor<PostEntity> postCaptor = ArgumentCaptor.forClass(PostEntity.class);
-		verify(postEntityRepository, times(1)).save(postCaptor.capture());
-		PostEntity savedPost = postCaptor.getValue();
-		assertThat(savedPost.getUserId()).isEqualTo(userId);
-		assertThat(savedPost.getTitle()).isEqualTo(title);
-		assertThat(savedPost.getDescription()).isEqualTo(description);
-		assertThat(savedPost.getCommercialPrice()).isEqualTo(commercialPrice);
-		assertThat(savedPost.getNonCommercialPrice()).isEqualTo(nonCommercialPrice);
-		assertThat(savedPost.getTicketPrice()).isEqualTo(ticketPrice);
-		assertThat(savedPost.getParentPostId()).isEqualTo(mockAiImage.getPostId()); // 부모 포스트 ID 검증
+			// then
+			assertThat(response).isNotNull();
+			assertThat(response.postId()).isEqualTo(mockSavedPost.getId());
 
-		// PostImageEntity 저장 검증
-		ArgumentCaptor<PostImageEntity> imageCaptor = ArgumentCaptor.forClass(PostImageEntity.class);
-		verify(postImageEntityRepository, times(1)).save(imageCaptor.capture());
-		PostImageEntity savedImage = imageCaptor.getValue();
-		assertThat(savedImage.getImagePath()).isEqualTo(mockAiImage.getImagePath()); // s3 이미지는 같은 것을 사용
-		assertThat(savedImage.getFullImageName()).isEqualTo(mockAiImage.getFullImageName());
-		assertThat(savedImage.getImageName()).isEqualTo(mockAiImage.getImageName());
-		assertThat(savedImage.getExtension()).isEqualTo(mockAiImage.getExtension());
-		assertThat(savedImage.getImagePurpose()).isEqualTo(ImagePrefix.POST);
+			// PostEntity 저장 검증
+			ArgumentCaptor<PostEntity> postCaptor = ArgumentCaptor.forClass(PostEntity.class);
+			verify(postEntityRepository, times(1)).save(postCaptor.capture());
+			PostEntity savedPost = postCaptor.getValue();
+			assertThat(savedPost.getUserId()).isEqualTo(userId);
+			assertThat(savedPost.getTitle()).isEqualTo(title);
+			assertThat(savedPost.getDescription()).isEqualTo(description);
+			assertThat(savedPost.getCommercialPrice()).isEqualTo(commercialPrice);
+			assertThat(savedPost.getNonCommercialPrice()).isEqualTo(nonCommercialPrice);
+			assertThat(savedPost.getTicketPrice()).isEqualTo(ticketPrice);
+			assertThat(savedPost.getParentPostId()).isEqualTo(mockAiImage.getPostId()); // 부모 포스트 ID 검증
 
-		// AI 유사도 검사 요청 검증 (이미지 경로 전달 확인)
-		verify(aiSimilarityRequestService).sendSimilarityCheckRequest(
-			anyLong(),
-			eq("posts/original/image.jpg"),
-			eq(mockAiImage.getImagePath())
-		);
+			// PostImageEntity 저장 검증
+			ArgumentCaptor<PostImageEntity> imageCaptor = ArgumentCaptor.forClass(PostImageEntity.class);
+			verify(postImageEntityRepository, times(1)).save(imageCaptor.capture());
+			PostImageEntity savedImage = imageCaptor.getValue();
+			assertThat(savedImage.getImagePath()).isEqualTo(mockAiImage.getImagePath()); // s3 이미지는 같은 것을 사용
+			assertThat(savedImage.getFullImageName()).isEqualTo(mockAiImage.getFullImageName());
+			assertThat(savedImage.getImageName()).isEqualTo(mockAiImage.getImageName());
+			assertThat(savedImage.getExtension()).isEqualTo(mockAiImage.getExtension());
+			assertThat(savedImage.getImagePurpose()).isEqualTo(ImagePrefix.POST);
 
-		verify(createdAiImageRepository, times(1)).findById(createdAiImageId);
+			// AI 유사도 검사 요청 검증 (이미지 경로 전달 확인)
+			verify(aiSimilarityRequestService).sendSimilarityCheckRequest(
+				anyLong(),
+				eq("posts/original/image.jpg"),
+				eq(mockAiImage.getImagePath())
+			);
+
+			verify(createdAiImageRepository, times(1)).findById(createdAiImageId);
+		}
 	}
 
 	@Test
