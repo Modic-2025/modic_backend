@@ -46,11 +46,15 @@ public class VoteQueryService {
 
 	/**
 	 * 참여 가능한 랜덤 투표 1건을 조회합니다.
-	 * IN_PROGRESS 상태의 투표만 대상이며, 이미지 URL을 포함한 상세 정보를 반환합니다.
+	 * IN_PROGRESS 상태이면서 해당 사용자가 참여하지 않은 투표만 대상이며, 이미지 URL을 포함한 상세 정보를 반환합니다.
+	 *
+	 * @param userId 현재 인증된 사용자 ID (non-null, 인증 필수)
+	 * @return 투표 상세 정보
+	 * @throws AppException NO_AVAILABLE_VOTES_EXCEPTION - 참여 가능한 투표가 없는 경우
 	 */
-	public VoteDetailResponse getRandomVoteForParticipation() {
-		// 랜덤 투표 1건 조회 (IN_PROGRESS 상태만)
-		SimilarityVoteEntity vote = similarityVoteRepository.findRandomVoteForParticipation()
+	public VoteDetailResponse getRandomVoteForParticipation(Long userId) {
+		// 사용자가 참여하지 않은 랜덤 투표 조회
+		SimilarityVoteEntity vote = similarityVoteRepository.findRandomUnparticipatedVote(userId)
 			.orElseThrow(() -> new AppException(NO_AVAILABLE_VOTES_EXCEPTION));
 
 		// 투표 집계 정보 조회

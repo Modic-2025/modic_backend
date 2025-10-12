@@ -37,11 +37,17 @@ public class VoteController {
 	private final VotingService votingService;
 
 	@GetMapping("/random")
-	@Operation(summary = "랜덤 투표 조회", description = "참여 가능한 랜덤한 투표 1건을 조회합니다. 원본 이미지(A)와 생성된 이미지(B)의 presigned URL을 포함합니다.")
+	@Operation(
+		summary = "랜덤 투표 조회",
+		description = "참여 가능한 랜덤한 투표 1건을 조회합니다. 원본 이미지(A)와 생성된 이미지(B)의 presigned URL을 포함합니다. 인증된 사용자가 아직 참여하지 않은 투표만 조회됩니다."
+	)
 	@ApiResponse(responseCode = "200", description = "투표 조회 성공")
+	@ApiResponse(responseCode = "401", description = "인증이 필요합니다.[C-003]")
 	@ApiResponse(responseCode = "404", description = "참여 가능한 투표가 없습니다.[V-009]")
-	public ResponseEntity<AppResponse<VoteDetailResponse>> getRandomVote() {
-		VoteDetailResponse response = voteQueryService.getRandomVoteForParticipation();
+	public ResponseEntity<AppResponse<VoteDetailResponse>> getRandomVote(
+		@CurrentUser UserEntity user
+	) {
+		VoteDetailResponse response = voteQueryService.getRandomVoteForParticipation(user.getId());
 		return ok(AppResponse.ok(response));
 	}
 
