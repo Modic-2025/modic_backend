@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.user.service;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -79,16 +80,17 @@ public class UserService {
 		// 1. 이름으로 유저 목록 조회
 		Page<UserEntity> users = userEntityRepository.findByNameContainingIgnoreCase(keyword, pageable);
 
-		// 2. 유저들 프로필 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		// 2.한번에 이미지 조회
+		Map<Long, String> imageGetUrlMap = userImageService.createImageGetUrlMap(
 			users.map(UserEntity::getId).toList()
 		);
 
+		// 3. 각 유저의 이미지 URL 조회 및 응답 변환
 		return users.map(user -> {
-			final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
-			final boolean hasUserImage = userImageUrl.isPresent();
+			final boolean hasUserImage = imageGetUrlMap.containsKey(user.getId());
+			final String resolvedImageUrl = imageGetUrlMap.getOrDefault(user.getId(), null);
 
-			return SearchUsersResponse.of(user, hasUserImage, userImageUrl.orElse(null));
+			return SearchUsersResponse.of(user, hasUserImage, resolvedImageUrl);
 		});
 	}
 

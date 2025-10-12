@@ -2,7 +2,10 @@ package hanium.modic.backend.domain.user.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +50,19 @@ public class UserImageService extends ImageService {
 			.map(UserImageEntity::getImagePath)
 			.map(imageUtil::createImageGetUrl)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
+	}
+
+	/** 여러 이미지 URL 조회, Map<Id, Url>로 응답
+	* userIds에 해당하는 이미지가 없으면 Map에 포함되지 않음
+	*/
+	@Transactional(readOnly = true)
+	public Map<Long, String> createImageGetUrlMap(final List<Long> userIds) {
+		// 1. 이미지 엔티티 조회
+		List<UserImageEntity> images = userImageRepository.findAllByUserIdIn(userIds);
+
+		// 2. Map<userId, imagePath> 형태로 변환
+		return images.stream()
+			.collect(Collectors.toMap(UserImageEntity::getUserId, UserImageEntity::getImagePath));
 	}
 
 	// 이미지 삭제

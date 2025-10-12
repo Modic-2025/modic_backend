@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -135,7 +136,6 @@ class UserServiceTest {
 		assertThat(response.userName()).isEqualTo(user.getName());
 	}
 
-	// Searches users and returns mapped page with image urls.
 	@Test
 	@DisplayName("사용자 이름 검색 시 페이지 결과 반환")
 	void searchUsersByName_success() {
@@ -151,7 +151,7 @@ class UserServiceTest {
 		);
 
 		when(userEntityRepository.findByNameContainingIgnoreCase(eq("user"), any(Pageable.class))).thenReturn(users);
-		when(userImageEntityRepository.findAllByUserIdIn(List.of(1L, 2L))).thenReturn(List.of());
+		when(userImageService.createImageGetUrlMap(List.of(1L, 2L))).thenReturn(Map.of());
 
 		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
 
@@ -167,7 +167,6 @@ class UserServiceTest {
 		assertThat(pageable.getSort().getOrderFor("name").getDirection()).isEqualTo(Sort.Direction.ASC);
 	}
 
-	// Returns empty page when no users satisfy the keyword.
 	@Test
 	@DisplayName("사용자 이름 검색 시 결과가 없으면 빈 페이지 반환")
 	void searchUsersByName_emptyResult() {
@@ -188,29 +187,6 @@ class UserServiceTest {
 		assertThat(result.getContent()).isEmpty();
 		assertThat(result.getTotalElements()).isZero();
 		verify(userImageService, never()).createImageGetUrl(anyLong());
-	}
-
-	// Maps missing image urls to null when image service throws not-found.
-	@Test
-	@DisplayName("사용자 이미지가 없으면 null 로 반환")
-	void searchUsersByName_missingImage() {
-		final String keyword = "user";
-		final int page = 0;
-		final int size = 10;
-		UserEntity user = UserFactory.createMockUser(10L);
-		Page<UserEntity> users = new PageImpl<>(
-			List.of(user),
-			PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name")),
-			1
-		);
-
-		when(userEntityRepository.findByNameContainingIgnoreCase(eq("user"), any(Pageable.class))).thenReturn(users);
-		when(userImageEntityRepository.findAllByUserIdIn(List.of(10L))).thenReturn(List.of());
-
-		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
-
-		assertThat(result.getContent()).hasSize(1);
-		assertThat(result.getContent().get(0).userImageUrl()).isNull();
 	}
 
 	@Test
