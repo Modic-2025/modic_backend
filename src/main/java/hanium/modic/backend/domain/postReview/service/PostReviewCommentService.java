@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostReviewCommentService {
 
-	private final PostReviewCommentRepository commentRepository;
 	private final PostReviewRepository postReviewRepository;
 	private final UserEntityRepository userEntityRepository;
 	private final UserImageService userImageService;
@@ -63,7 +62,7 @@ public class PostReviewCommentService {
 		PostReviewEntity review = postReviewRepository.findById(postReviewId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_NOT_FOUND_EXCEPTION));
 
-		commentRepository.save(PostReviewCommentEntity.builder()
+		postReviewCommentRepository.save(PostReviewCommentEntity.builder()
 			.user(user)
 			.postReview(review)
 			.text(text)
@@ -73,7 +72,7 @@ public class PostReviewCommentService {
 	// 게시글 리뷰 댓글 수정
 	@Transactional
 	public void updateComment(long userId, long commentId, String text) {
-		PostReviewCommentEntity comment = commentRepository.findById(commentId)
+		PostReviewCommentEntity comment = postReviewCommentRepository.findById(commentId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_COMMENT_NOT_FOUND_EXCEPTION));
 
 		validateMyComment(userId, comment.getUserId());
@@ -83,11 +82,11 @@ public class PostReviewCommentService {
 	// 게시글 리뷰 댓글 삭제
 	@Transactional
 	public void deleteComment(long userId, long commentId) {
-		PostReviewCommentEntity comment = commentRepository.findById(commentId)
+		PostReviewCommentEntity comment = postReviewCommentRepository.findById(commentId)
 			.orElseThrow(() -> new AppException(POST_REVIEW_COMMENT_NOT_FOUND_EXCEPTION));
 
 		validateMyComment(userId, comment.getUserId());
-		commentRepository.delete(comment);
+		postReviewCommentRepository.delete(comment);
 	}
 
 	// 댓글 작성자가 본인인지 확인
