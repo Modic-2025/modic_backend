@@ -23,6 +23,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
@@ -41,6 +42,9 @@ class FollowMockingServiceTest {
 
 	@Mock
 	private UserImageService userImageService;
+
+	@Mock
+	private UserImageEntityRepository userImageEntityRepository;
 
 	@Test
 	@DisplayName("TEST1: 존재하지 않는 유저의 팔로워 목록 조회 시 예외 발생")
@@ -129,6 +133,7 @@ class FollowMockingServiceTest {
 		Page<UserEntity> page = new PageImpl<>(List.of(user2, user3));
 		when(followRepository.findFollowersOrderByCreatedAt(eq(userId), any(PageRequest.class)))
 			.thenReturn(page);
+		when(userImageEntityRepository.findAllByUserIdIn(List.of(2L, 3L))).thenReturn(List.of()); // 프로필 없음
 
 		// when
 		Page<GetFollowersResponse> result = followService.getFollowers(userId, 0, 10);
@@ -157,6 +162,7 @@ class FollowMockingServiceTest {
 
 		Page<UserEntity> page = new PageImpl<>(List.of(user4, user5));
 		when(followRepository.findFollowingOrderByCreatedAt(eq(userId), any(PageRequest.class))).thenReturn(page);
+		when(userImageEntityRepository.findAllByUserIdIn(List.of(2L, 3L))).thenReturn(List.of()); // 프로필 없음
 
 		// when
 		Page<GetFollowingsResponse> result = followService.getFollowings(userId, 0, 10);
