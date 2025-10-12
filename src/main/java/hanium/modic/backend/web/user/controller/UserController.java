@@ -80,7 +80,6 @@ public class UserController {
 		responses = {
 			@ApiResponse(responseCode = "400", description = "입력값 검증 실패[C-001]"),
 			@ApiResponse(responseCode = "401", description = "인증 필요[A-001]"),
-			@ApiResponse(responseCode = "404", description = "요청한 사용자를 찾을 수 없습니다.[U-002]")
 		}
 	)
 	public ResponseEntity<AppResponse<PageResponse<SearchUsersResponse>>> searchUsersByName(
@@ -89,7 +88,7 @@ public class UserController {
 		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
 	) {
 		Page<SearchUsersResponse> result = userService.searchUsersByName(
-			keyword, page, size
+			keyword.strip(), page, size
 		);
 		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(result)));
 	}
