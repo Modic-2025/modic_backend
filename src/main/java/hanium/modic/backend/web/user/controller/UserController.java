@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.user.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,10 +8,12 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
+import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
@@ -22,11 +25,15 @@ import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
 import hanium.modic.backend.web.user.dto.response.GetUserUpdateTokenResponse;
+import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -63,6 +70,28 @@ public class UserController {
 	)
 	public ResponseEntity<AppResponse<UserInfoResponse>> getUserInfo(@CurrentUser UserEntity user) {
 		return ResponseEntity.ok(AppResponse.ok(userService.getUserInfo(user)));
+	}
+
+	// Searches users by name keyword and returns paginated results.
+	@GetMapping("/search")
+	@Operation(
+		summary = "사용자 이름 검색 API",
+		description = "검색어를 기반으로 사용자 목록을 페이지 단위로 조회합니다. page는 0부터 시작합니다.",
+		responses = {
+			@ApiResponse(responseCode = "400", description = "입력값 검증 실패[C-001]"),
+			@ApiResponse(responseCode = "401", description = "인증 필요[A-001]"),
+			@ApiResponse(responseCode = "404", description = "요청한 사용자를 찾을 수 없습니다.[U-002]")
+		}
+	)
+	public ResponseEntity<AppResponse<PageResponse<SearchUsersResponse>>> searchUsersByName(
+		@RequestParam @NotBlank(message = "검색어는 필수입니다.") String keyword,
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
+	) {
+		Page<SearchUsersResponse> result = userService.searchUsersByName(
+			keyword, page, size
+		);
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(result)));
 	}
 
 	@PatchMapping("/name")

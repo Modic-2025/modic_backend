@@ -15,6 +15,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +37,7 @@ import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
+import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
 @WebMvcTest(controllers = UserController.class)
@@ -147,6 +150,16 @@ class UserControllerTest extends BaseControllerTest {
 			.andExpect(jsonPath("$.data.userEmail").value(mockUser.getEmail()));
 
 		SecurityContextHolder.clearContext();
+	}
+
+	// Returns 400 when search keyword is missing.
+	@Test
+	@DisplayName("사용자 이름 검색 API는 검색어 없이 호출되면 400을 반환한다")
+	void searchUsersByName_validationFail() throws Exception {
+		mockMvc.perform(get("/api/users/search")
+				.param("page", "0")
+				.param("size", "20"))
+			.andExpect(status().isBadRequest());
 	}
 
 	@ParameterizedTest(name = "[{index}] {0}")

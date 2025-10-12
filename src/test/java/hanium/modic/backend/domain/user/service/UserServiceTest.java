@@ -4,12 +4,20 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import hanium.modic.backend.common.error.ErrorCode;
@@ -18,7 +26,9 @@ import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
+import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
@@ -42,6 +52,9 @@ class UserServiceTest {
 
 	@Mock
 	private UserImageService userImageService;
+
+	@Mock
+	private UserImageEntityRepository userImageEntityRepository;
 
 	@Test
 	@DisplayName("유저 회원가입 테스트")
@@ -120,6 +133,84 @@ class UserServiceTest {
 		assertThat(response.id()).isEqualTo(userId);
 		assertThat(response.userEmail()).isEqualTo(user.getEmail());
 		assertThat(response.userName()).isEqualTo(user.getName());
+	}
+
+	// Searches users and returns mapped page with image urls.
+	@Test
+	@DisplayName("사용자 이름 검색 시 페이지 결과 반환")
+	void searchUsersByName_success() {
+		final String keyword = "user";
+		final int page = 0;
+		final int size = 10;
+		UserEntity first = UserFactory.createMockUser(1L);
+		UserEntity second = UserFactory.createMockUser(2L);
+		Page<UserEntity> users = new PageImpl<>(
+			List.of(first, second),
+			PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name")),
+			2
+		);
+
+		when(userEntityRepository.findByNameContainingIgnoreCase(eq("user"), any(Pageable.class))).thenReturn(users);
+		when(userImageEntityRepository.findAllByUserIdIn(List.of(1L, 2L))).thenReturn(List.of());
+
+		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
+
+		assertThat(result.getContent()).hasSize(2);
+		assertThat(result.getContent().get(0).userImageUrl()).isEqualTo(null);
+		assertThat(result.getContent().get(1).userImageUrl()).isEqualTo(null);
+
+		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+		verify(userEntityRepository).findByNameContainingIgnoreCase(eq("user"), pageableCaptor.capture());
+		Pageable pageable = pageableCaptor.getValue();
+		assertThat(pageable.getPageNumber()).isEqualTo(page);
+		assertThat(pageable.getPageSize()).isEqualTo(size);
+		assertThat(pageable.getSort().getOrderFor("name").getDirection()).isEqualTo(Sort.Direction.ASC);
+	}
+
+	// Returns empty page when no users satisfy the keyword.
+	@Test
+	@DisplayName("사용자 이름 검색 시 결과가 없으면 빈 페이지 반환")
+	void searchUsersByName_emptyResult() {
+		final String keyword = "absent";
+		final int page = 0;
+		final int size = 10;
+		Page<UserEntity> emptyPage = new PageImpl<>(
+			List.of(),
+			PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name")),
+			0
+		);
+
+		when(userEntityRepository.findByNameContainingIgnoreCase(eq("absent"), any(Pageable.class)))
+			.thenReturn(emptyPage);
+
+		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
+
+		assertThat(result.getContent()).isEmpty();
+		assertThat(result.getTotalElements()).isZero();
+		verify(userImageService, never()).createImageGetUrl(anyLong());
+	}
+
+	// Maps missing image urls to null when image service throws not-found.
+	@Test
+	@DisplayName("사용자 이미지가 없으면 null 로 반환")
+	void searchUsersByName_missingImage() {
+		final String keyword = "user";
+		final int page = 0;
+		final int size = 10;
+		UserEntity user = UserFactory.createMockUser(10L);
+		Page<UserEntity> users = new PageImpl<>(
+			List.of(user),
+			PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name")),
+			1
+		);
+
+		when(userEntityRepository.findByNameContainingIgnoreCase(eq("user"), any(Pageable.class))).thenReturn(users);
+		when(userImageEntityRepository.findAllByUserIdIn(List.of(10L))).thenReturn(List.of());
+
+		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
+
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).userImageUrl()).isNull();
 	}
 
 	@Test

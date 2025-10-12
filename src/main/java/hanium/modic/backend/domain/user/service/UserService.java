@@ -2,6 +2,10 @@ package hanium.modic.backend.domain.user.service;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +16,9 @@ import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
+import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +33,7 @@ public class UserService {
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
 	private final AuthService authService;
 	private final UserImageService userImageService;
+	private final UserImageEntityRepository userImageEntityRepository;
 
 	// 회원가입
 	@Transactional
@@ -62,6 +69,27 @@ public class UserService {
 	public UserInfoResponse getUserInfo(UserEntity user) {
 		Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
 		return UserInfoResponse.of(user, userImageUrl.orElse(null));
+	}
+
+	// 이름으로 회원 목록 조회
+	@Transactional(readOnly = true)
+	public Page<SearchUsersResponse> searchUsersByName(final String keyword, final int page, final int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+
+		// 1. 이름으로 유저 목록 조회
+		Page<UserEntity> users = userEntityRepository.findByNameContainingIgnoreCase(keyword, pageable);
+
+		// 2. 유저들 프로필 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			users.map(UserEntity::getId).toList()
+		);
+
+		return users.map(user -> {
+			final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
+			final boolean hasUserImage = userImageUrl.isPresent();
+
+			return SearchUsersResponse.of(user, hasUserImage, userImageUrl.orElse(null));
+		});
 	}
 
 	// 유저 이름 변경
