@@ -9,6 +9,7 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -261,6 +262,21 @@ public class RabbitMqConfig {
 			}
 		}
 		return connectionFactory;
+	}
+
+	@Bean
+	public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+		CachingConnectionFactory connectionFactory) {
+		SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+		factory.setConnectionFactory(connectionFactory);
+		factory.setMessageConverter(jackson2JsonMessageConverter());
+
+		// 리스너에서 예외 발생 시 메시지를 다시 큐로 반환하지 않음
+		// DLQ가 설정된 큐는 x-dead-letter-exchange를 통해 DLX로 라우팅되고
+		// DLQ에서 실패해도 무한 루프가 발생하지 않음
+		factory.setDefaultRequeueRejected(false);
+
+		return factory;
 	}
 
 	@Bean
