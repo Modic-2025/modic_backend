@@ -251,10 +251,14 @@ public class RabbitMqConfig {
 
 		connectionFactory.setRequestedHeartBeat(120); // 2분
 
-		try {
-			connectionFactory.getRabbitConnectionFactory().useSslProtocol("TLSv1.2");
-		} catch (Exception e) {
-			throw new RuntimeException("RabbitMQ SSL 설정 실패", e);
+		// AWS AmazonMQ는 포트 5671에서 자동으로 SSL을 사용
+		// 포트 5671일 경우에만 SSL 프로토콜 활성화
+		if (rabbitMqProperties.getPort() == 5671) {
+			try {
+				connectionFactory.getRabbitConnectionFactory().useSslProtocol();
+			} catch (Exception e) {
+				throw new RuntimeException("RabbitMQ SSL 설정 실패", e);
+			}
 		}
 		return connectionFactory;
 	}
