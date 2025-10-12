@@ -32,7 +32,6 @@ public class FollowService {
 	private final UserEntityRepository userRepository;
 	private final UserImageService userImageService;
 	private final UserImageEntityRepository userImageRepository;
-	private final UserImageEntityRepository userImageEntityRepository;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -68,7 +67,7 @@ public class FollowService {
 			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followers.stream().map(UserEntity::getId).toList()
 		);
 
@@ -99,7 +98,7 @@ public class FollowService {
 			userId, userId, PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followers.stream().map(FollowerWithStatus::id).toList()
 		);
 
@@ -135,7 +134,7 @@ public class FollowService {
 			targetUserId, currentUserId, PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followers.stream().map(FollowerWithStatus::id).toList()
 		);
 
@@ -166,7 +165,7 @@ public class FollowService {
 			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followings.stream().map(UserEntity::getId).toList()
 		);
 
@@ -193,10 +192,11 @@ public class FollowService {
 		validateUserExists(userId);
 
 		// 1. 팔로잉들 조회
-		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size));
+		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followings.stream().map(UserEntity::getId).toList()
 		);
 
@@ -236,7 +236,7 @@ public class FollowService {
 		);
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageEntityRepository.findAllByUserIdIn(
+		userImageRepository.findAllByUserIdIn(
 			followings.stream().map(FollowingWithStatus::id).toList()
 		);
 
