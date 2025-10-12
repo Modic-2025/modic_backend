@@ -12,8 +12,8 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.util.KeyGenerator;
-import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageRequest;
-import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageResponse;
+import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
+import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
@@ -23,7 +23,6 @@ import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.ai.aiServer.service.AiServerService;
-import hanium.modic.backend.web.ai.aiServer.dto.response.SendUserMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,7 +45,7 @@ public class AiChatMessageService {
 
 	// 사용자의 메시지,이미지 저장 후 AI 요청
 	@Transactional
-	public SendUserMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
+	public ChatMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
 		// 메시지랑 이미지 둘 다 비어있으면 에러
 		validateRequestMessageNotEmpty(request);
 
@@ -89,7 +88,7 @@ public class AiChatMessageService {
 		// Ai 요청
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
-		return new SendUserMessageResponse(requestId);
+		return ChatMessageResponse.from(message);
 	}
 
 	// 요청 메세지가 비어있는지 검증

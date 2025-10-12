@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.aiChat.dto.ChatContextResetResponse;
-import hanium.modic.backend.domain.ai.aiChat.dto.GetChatRoomResponse;
+import hanium.modic.backend.web.ai.aiChat.dto.response.GetChatRoomResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import lombok.RequiredArgsConstructor;

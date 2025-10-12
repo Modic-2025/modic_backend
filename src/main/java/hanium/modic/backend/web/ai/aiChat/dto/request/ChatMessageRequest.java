@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.ai.aiChat.dto;
+package hanium.modic.backend.web.ai.aiChat.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

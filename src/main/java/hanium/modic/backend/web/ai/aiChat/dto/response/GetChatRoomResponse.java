@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.ai.aiChat.dto;
+package hanium.modic.backend.web.ai.aiChat.dto.response;
 
 import java.time.LocalDateTime;
 

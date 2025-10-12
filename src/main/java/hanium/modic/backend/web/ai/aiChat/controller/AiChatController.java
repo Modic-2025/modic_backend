@@ -15,14 +15,13 @@ import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.domain.ai.aiChat.dto.ChatContextResetResponse;
-import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageRequest;
-import hanium.modic.backend.domain.ai.aiChat.dto.ChatMessageResponse;
-import hanium.modic.backend.domain.ai.aiChat.dto.GetChatRoomResponse;
+import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
+import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
+import hanium.modic.backend.web.ai.aiChat.dto.response.GetChatRoomResponse;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiServer.service.AiResponseSseService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.web.ai.aiServer.dto.response.SendUserMessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -84,12 +83,12 @@ public class AiChatController {
 		}
 	)
 	@PostMapping("/messages")
-	public ResponseEntity<AppResponse<SendUserMessageResponse>> sendUserMessage(
+	public ResponseEntity<AppResponse<ChatMessageResponse>> sendUserMessage(
 		@Parameter(description = "ai chat room ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Valid @RequestBody ChatMessageRequest request,
 		@CurrentUser UserEntity user
 	) {
-		SendUserMessageResponse response = aiChatMessageService.sendUserMessage(user.getId(), postId, request);
+		ChatMessageResponse response = aiChatMessageService.sendUserMessage(user.getId(), postId, request);
 
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
