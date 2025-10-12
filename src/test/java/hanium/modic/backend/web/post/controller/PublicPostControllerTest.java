@@ -55,8 +55,8 @@ class PublicPostControllerTest extends BaseControllerTest {
 
 		GetPostResponse mockResponse = new GetPostResponse(
 			mockUser.getName(),
-			mockUser.getUserImageUrl() != null,
-			mockUser.getUserImageUrl(),
+			false,
+			null,
 			mockUser.getEmail(),
 			mockPost.getId(),
 			mockPost.getUserId(),

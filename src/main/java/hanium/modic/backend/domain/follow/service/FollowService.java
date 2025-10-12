@@ -81,16 +81,16 @@ public class FollowService {
 
 		return followRepository.findFollowersWithStatusOrderByCreatedAt(userId, userId, PageRequest.of(page, size))
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();
 
 				return new GetFollowersWithStatusResponse(
-					u.getId(),
+					u.id(),
 					hasUserImage,
 					userImageUrl.orElse(null),
-					u.getName(),
-					u.getEmail(),
-					u.getIsFollowing()
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}
@@ -109,16 +109,16 @@ public class FollowService {
 		return followRepository.findFollowersWithStatusOrderByCreatedAt(targetUserId, currentUserId,
 				PageRequest.of(page, size))
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();
 
 				return new GetFollowersWithStatusResponse(
-					u.getId(),
+					u.id(),
 					hasUserImage,
 					userImageUrl.orElse(null),
-					u.getName(),
-					u.getEmail(),
-					u.getIsFollowing()
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}
@@ -180,16 +180,16 @@ public class FollowService {
 		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId,
 				PageRequest.of(page, size))
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();
 
 				return new GetFollowingsWithStatusResponse(
-					u.getId(),
+					u.id(),
 					hasUserImage,
 					userImageUrl.orElse(null),
-					u.getName(),
-					u.getEmail(),
-					u.getIsFollowing()
+					u.name(),
+					u.email(),
+					u.isFollowing()
 				);
 			});
 	}

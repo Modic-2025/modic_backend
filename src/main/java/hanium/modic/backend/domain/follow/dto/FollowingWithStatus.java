@@ -1,9 +1,9 @@
 package hanium.modic.backend.domain.follow.dto;
 
-public interface FollowingWithStatus {
-	Long getId();
-	String getName();
-	String getEmail();
-	String getUserImageUrl();
-	Boolean getIsFollowing();
+public record FollowingWithStatus(
+	Long id,
+	String name,
+	String email,
+	Boolean isFollowing
+) {
 }
