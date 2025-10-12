@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.follow.service;
 
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class FollowService {
 	private final FollowEntityRepository followRepository;
 	private final UserEntityRepository userRepository;
+	private final UserImageService userImageService;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -50,31 +54,41 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회 (미인증 유저용)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
 		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
-				return new GetFollowersResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
+				return new GetFollowersResponse(
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
+					u.getEmail()
+				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 내 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersWithStatusResponse> getMyFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
 		return followRepository.findFollowersWithStatusOrderByCreatedAt(userId, userId, PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowersWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
 					u.getEmail(),
 					u.getIsFollowing()
 				);
@@ -83,23 +97,26 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로워 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowersWithStatusResponse> getFollowersWithStatus(
-		final long currentUserId, 
-		final long targetUserId, 
-		final int page, 
+		final long currentUserId,
+		final long targetUserId,
+		final int page,
 		final int size
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowersWithStatusOrderByCreatedAt(targetUserId, currentUserId, PageRequest.of(page, size))
+		return followRepository.findFollowersWithStatusOrderByCreatedAt(targetUserId, currentUserId,
+				PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowersWithStatusResponse(
-					u.getId(), 
-					hasUserImage, 
-					userImageUrl, 
-					u.getName(), 
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
 					u.getEmail(),
 					u.getIsFollowing()
 				);
@@ -108,30 +125,40 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회 (미인증 유저용)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
-				return new GetFollowingsResponse(u.getId(), hasUserImage, userImageUrl, u.getName(), u.getEmail());
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
+				return new GetFollowingsResponse(
+					u.getId(),
+					hasUserImage,
+					userImageUrl.orElse(null),
+					u.getName(),
+					u.getEmail()
+				);
 			});
 	}
 
 	// TODO : 정렬 기준 고려
 	// 내 팔로잉 목록 조회 (인증 유저용 - isFollowing 항상 true)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsWithStatusResponse> getMyFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowingsWithStatusResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl,
+					userImageUrl.orElse(null),
 					u.getName(),
 					u.getEmail(),
 					true // 내 팔로잉 목록이므로 항상 true
@@ -141,6 +168,7 @@ public class FollowService {
 
 	// TODO : 정렬 기준 고려
 	// 팔로잉 목록 조회 (인증 유저용 - 팔로우 상태 포함)
+	@Transactional(readOnly = true)
 	public Page<GetFollowingsWithStatusResponse> getFollowingsWithStatus(
 		final long currentUserId,
 		final long targetUserId,
@@ -149,14 +177,16 @@ public class FollowService {
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId, PageRequest.of(page, size))
+		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId,
+				PageRequest.of(page, size))
 			.map(u -> {
-				final String userImageUrl = u.getUserImageUrl();
-				final boolean hasUserImage = userImageUrl != null;
+				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
+				final boolean hasUserImage = userImageUrl.isPresent();
+
 				return new GetFollowingsWithStatusResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl,
+					userImageUrl.orElse(null),
 					u.getName(),
 					u.getEmail(),
 					u.getIsFollowing()

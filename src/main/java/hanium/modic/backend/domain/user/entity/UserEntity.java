@@ -48,9 +48,6 @@ public class UserEntity extends BaseEntity {
 	@Column(name = "coin", nullable = false)
 	private Long coin = 0L;
 
-	@Column(name = "user_image_url")
-	private String userImageUrl;
-
 	@Builder
 	private UserEntity(String email, String password, String name, String uniqueId) {
 		this.email = email;
@@ -77,23 +74,12 @@ public class UserEntity extends BaseEntity {
 		return this;
 	}
 
-	// 유저 이미지 URL 업데이트
-	public void updateUserImage(String userImageUrl) {
-		this.userImageUrl = userImageUrl;
-	}
-
-	// 유저 이미지 URL 삭제
-	public void deleteUserImage() {
-		this.userImageUrl = null;
-	}
-
 	// 유저 이름 업데이트
 	public void updateName(String name) {
 		if (name == null || name.isBlank()) {
 			throw new AppException(USER_INPUT_EXCEPTION);
 		}
 		this.name = name;
-
 	}
 
 	// 유저 비밀번호 업데이트

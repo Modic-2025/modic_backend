@@ -23,6 +23,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowingsResponse;
 
@@ -37,6 +38,9 @@ class FollowMockingServiceTest {
 
 	@Mock
 	private UserEntityRepository userRepository;
+
+	@Mock
+	private UserImageService userImageService;
 
 	@Test
 	@DisplayName("TEST1: 존재하지 않는 유저의 팔로워 목록 조회 시 예외 발생")

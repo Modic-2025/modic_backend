@@ -21,6 +21,7 @@ import hanium.modic.backend.domain.profile.service.ProfileService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.profile.dto.GetMyProfileResponse;
 import hanium.modic.backend.web.profile.dto.GetProfileResponse;
 
@@ -38,6 +39,9 @@ class ProfileServiceTest {
 
 	@Mock
 	private FollowEntityRepository followRepository;
+
+	@Mock
+	private UserImageService userImageService;
 
 	@Test
 	@DisplayName("TEST1: 내 프로필 조회 성공")

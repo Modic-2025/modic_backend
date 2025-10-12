@@ -11,14 +11,20 @@ import org.springframework.test.web.servlet.ResultActions;
 import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
+import hanium.modic.backend.domain.image.domain.ImageExtension;
+import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.entity.UserImageEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 
 public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private UserEntityRepository userEntityRepository;
+	@Autowired
+	private UserImageEntityRepository userImageRepository;
 
 	@Test
 	@DisplayName("TEST1: 내 프로필 조회 성공")
@@ -45,10 +51,20 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("TEST2: 타인 프로필 조회 성공")
 	@WithCustomUser(email = "viewer@test.com")
 	void getOtherProfileSuccess() throws Exception {
-		// given: 조회 대상 사용자 저장
-		UserEntity target =UserFactory.createMockUserWithoutId("Target");
-		target.updateUserImage("url");
+		// given:
+		// 1. 조회 대상 사용자 저장
+		UserEntity target = UserFactory.createMockUserWithoutId("Target");
 		target = userEntityRepository.save(target);
+		// 2. 조회 대상 사용자 프로필 이미지 저장
+		UserImageEntity image = UserImageEntity.builder()
+			.user(target)
+			.imagePath("profiles/" + target.getId() + "/image.png")
+			.fullImageName("image.png")
+			.imageName("image")
+			.extension(ImageExtension.PNG)
+			.imagePurpose(ImagePrefix.PROFILE)
+			.build();
+		userImageRepository.save(image);
 
 		// when: 타인의 프로필 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles")

@@ -2,6 +2,8 @@ package hanium.modic.backend.domain.user.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +32,21 @@ public class UserImageService extends ImageService {
 		this.userImageRepository = userImageRepository;
 	}
 
+	// 이미지 URL 조회 - Optional 응답
+	@Transactional(readOnly = true)
+	public Optional<String> createImageGetUrlOptional(final long userId) {
+		return userImageRepository.findByUserId(userId)
+			.map(UserImageEntity::getImagePath)
+			.map(imageUtil::createImageGetUrl);
+	}
+
 	// 이미지 URL 조회
+	@Transactional(readOnly = true)
 	public String createImageGetUrl(final long userId) {
-		UserImageEntity userImage = userImageRepository.findByUserId(userId)
+		return userImageRepository.findByUserId(userId)
+			.map(UserImageEntity::getImagePath)
+			.map(imageUtil::createImageGetUrl)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
-		return imageUtil.createImageGetUrl(userImage.getImagePath());
 	}
 
 	// 이미지 삭제
@@ -42,14 +54,10 @@ public class UserImageService extends ImageService {
 	public void deleteImage(final long userId, final long imageId) {
 		validateUserImageOwnership(userId, imageId);
 
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-
 		UserImageEntity image = userImageRepository.findById(imageId)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 		userImageRepository.delete(image);
 		imageUtil.deleteImage(image.getImagePath());
-		user.deleteUserImage();
 	}
 
 	// 이미지 저장

@@ -43,6 +43,7 @@ import hanium.modic.backend.domain.postLike.service.PostLikeService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostsResponse;
@@ -64,6 +65,8 @@ class PostServiceTest {
 	private AsyncPostStatisticsService asyncPostStatisticsService;
 	@Mock
 	private ImageUtil imageUtil;
+	@Mock
+	private UserImageService userImageService;
 
 	@InjectMocks
 	private PostService postService;
@@ -178,6 +181,7 @@ class PostServiceTest {
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(userEntityRepository.findById(mockPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(userImageService.createImageGetUrlOptional(mockPost.getUserId())).thenReturn(Optional.empty());
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn("https://signed-url.com/image.jpg");
 		when(postLikeService.getLikeCount(postId)).thenReturn(5L);
@@ -690,6 +694,7 @@ class PostServiceTest {
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockAiDerivedPost));
 		when(userEntityRepository.findById(mockAiDerivedPost.getUserId())).thenReturn(Optional.of(mockUser));
+		when(userImageService.createImageGetUrlOptional(mockAiDerivedPost.getUserId())).thenReturn(Optional.empty());
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
 		when(imageUtil.createImageGetUrl(anyString())).thenReturn(URL);
 		when(postLikeService.getLikeCount(postId)).thenReturn(3L);

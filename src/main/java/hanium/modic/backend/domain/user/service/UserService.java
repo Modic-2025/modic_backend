@@ -1,5 +1,7 @@
 package hanium.modic.backend.domain.user.service;
 
+import java.util.Optional;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class UserService {
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
 	private final AuthService authService;
+	private final UserImageService userImageService;
 
 	// 회원가입
 	@Transactional
@@ -57,7 +60,8 @@ public class UserService {
 
 	// 회원 정보 조회
 	public UserInfoResponse getUserInfo(UserEntity user) {
-		return UserInfoResponse.from(user);
+		Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
+		return UserInfoResponse.of(user, userImageUrl.orElse(null));
 	}
 
 	// 유저 이름 변경

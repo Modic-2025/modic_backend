@@ -40,6 +40,9 @@ class UserServiceTest {
 	@Mock
 	private AuthService authService;
 
+	@Mock
+	private UserImageService userImageService;
+
 	@Test
 	@DisplayName("유저 회원가입 테스트")
 	void userCreateTest() {
