@@ -25,6 +25,25 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 	Optional<SimilarityVoteEntity> findRandomVoteForParticipation();
 
 	/**
+	 * 사용자가 참여하지 않은 랜덤 투표 조회
+	 * IN_PROGRESS 상태이면서 해당 사용자가 아직 투표하지 않은 투표 중 1건만 반환
+	 *
+	 * @param userId 투표 참여 이력을 확인할 사용자 ID
+	 * @return 조건을 만족하는 랜덤 투표
+	 */
+	@Query(value = "SELECT * FROM similarity_vote sv " +
+		"WHERE sv.status = 'IN_PROGRESS' " +
+		"AND NOT EXISTS (" +
+		"  SELECT 1 FROM similarity_vote_result svr " +
+		"  WHERE svr.vote_id = sv.id " +
+		"  AND svr.user_id = :userId" +
+		") " +
+		"ORDER BY RAND() " +
+		"LIMIT 1",
+		nativeQuery = true)
+	Optional<SimilarityVoteEntity> findRandomUnparticipatedVote(@Param("userId") Long userId);
+
+	/**
 	 * 파생 이미지 생성자 ID 조회 (타입 안전)
 	 * @param voteId 투표 ID
 	 * @return 파생 이미지 생성자의 사용자 ID
