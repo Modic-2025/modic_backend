@@ -47,7 +47,7 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 	@Query(value = """
 		WITH RECURSIVE post_tree AS (
 			SELECT id, user_id, title, description, commercial_price, non_commercial_price,
-			       ticket_price, is_ai_derived_post, parent_post_id, post_status,
+			       ticket_price, parent_post_id, post_status, thumbnail_image_id,
 			       create_at, update_at
 			FROM post
 			WHERE id = :postId
@@ -55,7 +55,7 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 			UNION ALL
 		
 			SELECT p.id, p.user_id, p.title, p.description, p.commercial_price, p.non_commercial_price,
-			       p.ticket_price, p.is_ai_derived_post, p.parent_post_id, p.post_status,
+			       p.ticket_price, p.parent_post_id, p.post_status, p.thumbnail_image_id,
 			       p.create_at, p.update_at
 			FROM post p
 			INNER JOIN post_tree pt ON p.parent_post_id = pt.id
