@@ -63,6 +63,9 @@ class AiDerivedPostServiceTest {
 	@Mock
 	private SimilarityVoteSummaryRepository voteSummaryRepository;
 
+	@Mock
+	private hanium.modic.backend.domain.vote.service.AiSimilarityRequestService aiSimilarityRequestService;
+
 	@InjectMocks
 	private AiDerivedPostService aiDerivedPostService;
 
@@ -72,33 +75,44 @@ class AiDerivedPostServiceTest {
 		// given
 		Long userId = 1L;
 		Long createdAiImageId = 100L;
-		Long originalImageId = 200L;
+		Long originalPostId = 1L;
 		String title = "AI Generated Post";
 		String description = "This is an AI derived post";
 		Long commercialPrice = 2000L;
 		Long nonCommercialPrice = 1000L;
 		Long ticketPrice = 300L;
-		Long postId = 1L;
+		Long newPostId = 2L;
 
 		UserEntity mockUser = UserFactory.createMockUser(userId);
 		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
-			createdAiImageId, userId, postId, "request-123");
-		PostEntity mockSavedPost = createMockPostWithId(postId, mockUser);
+			createdAiImageId, userId, originalPostId, "request-123");
+		PostEntity mockOriginalPost = createMockPostWithId(originalPostId, mockUser);
+		// The thumbnail image ID from mockOriginalPost will be 1L (from createMockPostWithId)
+		Long originalImageId = mockOriginalPost.getThumbnailImageId();
+		PostImageEntity mockOriginalImage = PostImageEntity.builder()
+			.imagePath("posts/original/image.jpg")
+			.fullImageName("original.jpg")
+			.imageName("original")
+			.extension(mockAiImage.getExtension())
+			.imagePurpose(ImagePrefix.POST)
+			.postEntity(mockOriginalPost)
+			.build();
+		PostEntity mockSavedPost = createMockPostWithId(newPostId, mockUser);
 
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
-		when(postEntityRepository.findById(anyLong())).thenReturn(Optional.of(mockSavedPost));
+		when(postEntityRepository.findById(originalPostId)).thenReturn(Optional.of(mockOriginalPost));
+		when(postImageEntityRepository.findById(originalImageId)).thenReturn(Optional.of(mockOriginalImage));
 		when(postEntityRepository.save(any(PostEntity.class))).thenReturn(mockSavedPost);
+		when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
+		when(voteSummaryRepository.save(any())).thenReturn(null);
 		doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
-		when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenAnswer(invocation -> {
-			SimilarityVoteEntity arg = invocation.getArgument(0);
-			return SimilarityVoteEntity.builder()
-				.originalImageId(arg.getOriginalImageId())
-				.derivedImageId(arg.getDerivedImageId())
-				.derivedPostId(1L)
-				.voteType(VoteType.SIMILARITY_CHECK)
-				.status(VoteStatus.PENDING)
-				.build();
-		});
+
+		// Create a mock vote entity with ID
+		SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);
+		when(mockSavedVote.getId()).thenReturn(1L); // Only stub the ID which is needed
+
+		when(similarityVoteRepository.save(any(SimilarityVoteEntity.class))).thenReturn(mockSavedVote);
+		doNothing().when(aiSimilarityRequestService).sendSimilarityCheckRequest(anyLong(), anyString(), anyString());
 
 		// when
 		CreatePostResponse response = aiDerivedPostService.createAiDerivedPost(
@@ -129,6 +143,13 @@ class AiDerivedPostServiceTest {
 		assertThat(savedImage.getImageName()).isEqualTo(mockAiImage.getImageName());
 		assertThat(savedImage.getExtension()).isEqualTo(mockAiImage.getExtension());
 		assertThat(savedImage.getImagePurpose()).isEqualTo(ImagePrefix.POST);
+
+		// AI 유사도 검사 요청 검증 (이미지 경로 전달 확인)
+		verify(aiSimilarityRequestService).sendSimilarityCheckRequest(
+			anyLong(),
+			eq("posts/original/image.jpg"),
+			eq(mockAiImage.getImagePath())
+		);
 
 		verify(createdAiImageRepository, times(1)).findById(createdAiImageId);
 	}
