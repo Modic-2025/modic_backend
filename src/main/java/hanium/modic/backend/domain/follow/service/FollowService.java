@@ -12,9 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.dto.FollowType;
+import hanium.modic.backend.domain.follow.dto.FollowerWithStatus;
+import hanium.modic.backend.domain.follow.dto.FollowingWithStatus;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
@@ -28,6 +31,8 @@ public class FollowService {
 	private final FollowEntityRepository followRepository;
 	private final UserEntityRepository userRepository;
 	private final UserImageService userImageService;
+	private final UserImageEntityRepository userImageRepository;
+	private final UserImageEntityRepository userImageEntityRepository;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -58,7 +63,17 @@ public class FollowService {
 	public Page<GetFollowersResponse> getFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowersOrderByCreatedAt(userId, PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<UserEntity> followers = followRepository.findFollowersOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followers.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
+		return followers
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
 				final boolean hasUserImage = userImageUrl.isPresent();
@@ -79,7 +94,16 @@ public class FollowService {
 	public Page<GetFollowersWithStatusResponse> getMyFollowers(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowersWithStatusOrderByCreatedAt(userId, userId, PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<FollowerWithStatus> followers = followRepository.findFollowersWithStatusOrderByCreatedAt(
+			userId, userId, PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followers.stream().map(FollowerWithStatus::id).toList()
+		);
+
+		return followers
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();
@@ -106,8 +130,16 @@ public class FollowService {
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowersWithStatusOrderByCreatedAt(targetUserId, currentUserId,
-				PageRequest.of(page, size))
+		// 1. 팔로워들 조회
+		Page<FollowerWithStatus> followers = followRepository.findFollowersWithStatusOrderByCreatedAt(
+			targetUserId, currentUserId, PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followers.stream().map(FollowerWithStatus::id).toList()
+		);
+
+		return followers
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();
@@ -129,7 +161,17 @@ public class FollowService {
 	public Page<GetFollowingsResponse> getFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
-		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
+		// 1. 팔로잉들 조회
+		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId,
+			PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followings.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
+		return followings
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
 				final boolean hasUserImage = userImageUrl.isPresent();
@@ -150,6 +192,15 @@ public class FollowService {
 	public Page<GetFollowingsWithStatusResponse> getMyFollowings(final long userId, final int page, final int size) {
 		validateUserExists(userId);
 
+		// 1. 팔로잉들 조회
+		Page<UserEntity> followings = followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size));
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followings.stream().map(UserEntity::getId).toList()
+		);
+
+		// 3. 응답 생성
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
@@ -177,8 +228,20 @@ public class FollowService {
 	) {
 		validateUserExists(targetUserId);
 
-		return followRepository.findFollowingsWithStatusOrderByCreatedAt(targetUserId, currentUserId,
-				PageRequest.of(page, size))
+		// 1. 팔로잉들 조회
+		Page<FollowingWithStatus> followings = followRepository.findFollowingsWithStatusOrderByCreatedAt(
+			targetUserId,
+			currentUserId,
+			PageRequest.of(page, size)
+		);
+
+		// 2. userImage N + 1 해결을 위한 배치 조회
+		userImageEntityRepository.findAllByUserIdIn(
+			followings.stream().map(FollowingWithStatus::id).toList()
+		);
+
+		// 3. 응답 생성
+		return followings
 			.map(u -> {
 				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
 				final boolean hasUserImage = userImageUrl.isPresent();

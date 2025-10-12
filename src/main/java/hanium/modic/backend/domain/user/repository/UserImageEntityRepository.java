@@ -1,5 +1,6 @@
 package hanium.modic.backend.domain.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import hanium.modic.backend.domain.user.entity.UserImageEntity;
@@ -10,4 +11,6 @@ public interface UserImageEntityRepository extends JpaRepository<UserImageEntity
 	Optional<UserImageEntity> findByUserId(Long userId);
 
 	boolean existsByImagePath(String imagePath);
+
+	List<UserImageEntity> findAllByUserIdIn(List<Long> userIds);
 }
