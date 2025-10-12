@@ -2,7 +2,7 @@ package hanium.modic.backend.domain.follow.service;
 
 import static hanium.modic.backend.domain.follow.dto.FollowType.*;
 
-import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -67,20 +67,20 @@ public class FollowService {
 			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followers.stream().map(UserEntity::getId).toList()
 		);
 
 		// 3. 응답 생성
 		return followers
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.getId());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.getId(), null);
 
 				return new GetFollowersResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.getName(),
 					u.getEmail()
 				);
@@ -98,19 +98,19 @@ public class FollowService {
 			userId, userId, PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followers.stream().map(FollowerWithStatus::id).toList()
 		);
 
 		return followers
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.id());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.id(), null);
 
 				return new GetFollowersWithStatusResponse(
 					u.id(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.name(),
 					u.email(),
 					u.isFollowing()
@@ -134,19 +134,19 @@ public class FollowService {
 			targetUserId, currentUserId, PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followers.stream().map(FollowerWithStatus::id).toList()
 		);
 
 		return followers
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.id());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.id(), null);
 
 				return new GetFollowersWithStatusResponse(
 					u.id(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.name(),
 					u.email(),
 					u.isFollowing()
@@ -165,20 +165,20 @@ public class FollowService {
 			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followings.stream().map(UserEntity::getId).toList()
 		);
 
 		// 3. 응답 생성
 		return followings
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.getId());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.getId(), null);
 
 				return new GetFollowingsResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.getName(),
 					u.getEmail()
 				);
@@ -196,20 +196,20 @@ public class FollowService {
 			PageRequest.of(page, size));
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followings.stream().map(UserEntity::getId).toList()
 		);
 
 		// 3. 응답 생성
 		return followRepository.findFollowingOrderByCreatedAt(userId, PageRequest.of(page, size))
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.getId());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.getId());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.getId(), null);
 
 				return new GetFollowingsWithStatusResponse(
 					u.getId(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.getName(),
 					u.getEmail(),
 					true // 내 팔로잉 목록이므로 항상 true
@@ -236,20 +236,20 @@ public class FollowService {
 		);
 
 		// 2. userImage N + 1 해결을 위한 배치 조회
-		userImageRepository.findAllByUserIdIn(
+		Map<Long, String> userImageUrlMap = userImageService.createImageGetUrlMap(
 			followings.stream().map(FollowingWithStatus::id).toList()
 		);
 
 		// 3. 응답 생성
 		return followings
 			.map(u -> {
-				final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(u.id());
-				final boolean hasUserImage = userImageUrl.isPresent();
+				final boolean hasUserImage = userImageUrlMap.containsKey(u.id());
+				final String userImageUrl = userImageUrlMap.getOrDefault(u.id(), null);
 
 				return new GetFollowingsWithStatusResponse(
 					u.id(),
 					hasUserImage,
-					userImageUrl.orElse(null),
+					userImageUrl,
 					u.name(),
 					u.email(),
 					u.isFollowing()
