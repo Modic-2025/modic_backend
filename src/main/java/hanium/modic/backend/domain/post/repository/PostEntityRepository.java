@@ -59,7 +59,6 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 			       p.create_at, p.update_at
 			FROM post p
 			INNER JOIN post_tree pt ON p.parent_post_id = pt.id
-			WHERE p.post_status = 'DERIVED_APPROVED'
 		)
 		SELECT * FROM post_tree ORDER BY id
 		""", nativeQuery = true)
