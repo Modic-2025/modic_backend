@@ -21,6 +21,7 @@ import hanium.modic.backend.domain.profile.service.ProfileService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.profile.dto.GetMyProfileResponse;
 import hanium.modic.backend.web.profile.dto.GetProfileResponse;
@@ -41,6 +42,9 @@ class ProfileServiceTest {
 	private FollowEntityRepository followRepository;
 
 	@Mock
+	private UserImageEntityRepository userImageEntityRepository;
+
+	@Mock
 	private UserImageService userImageService;
 
 	@Test
@@ -52,6 +56,7 @@ class ProfileServiceTest {
 		when(postRepository.countByUserId(1L)).thenReturn(5L);
 		when(followRepository.countByMyId(1L)).thenReturn(3L);
 		when(followRepository.countByFollowingId(1L)).thenReturn(7L);
+		when(userImageEntityRepository.findByUserId(1L)).thenReturn(Optional.empty());
 
 		// when
 		GetMyProfileResponse response = profileService.getMyProfile(me);
@@ -77,6 +82,8 @@ class ProfileServiceTest {
 		when(postRepository.countByUserId(userId)).thenReturn(4L);
 		when(followRepository.countByMyId(userId)).thenReturn(2L);
 		when(followRepository.countByFollowingId(userId)).thenReturn(9L);
+		when(userImageService.createImageGetUrlOptional(userId)).thenReturn(Optional.empty());
+		when(userImageEntityRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
 		// when
 		GetProfileResponse response = profileService.getProfile(userId);

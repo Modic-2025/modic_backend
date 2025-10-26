@@ -62,7 +62,7 @@ public class ProfileService {
 		final long followingCount = followRepository.countByMyId(userId); // TODO: 추후 개선 필요
 		final long followerCount = followRepository.countByFollowingId(userId); // TODO: 추후 개선 필요
 		final Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(userId);
-		final Optional<Long> userImageId = userImageEntityRepository.findByUserId(user.getId())
+		final Optional<Long> userImageId = userImageEntityRepository.findByUserId(userId)
 			.map(UserImageEntity::getId);
 		final boolean hasUserImage = userImageUrl.isPresent();
 
