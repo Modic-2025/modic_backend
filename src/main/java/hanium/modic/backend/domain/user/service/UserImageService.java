@@ -104,6 +104,41 @@ public class UserImageService extends ImageService {
 		);
 	}
 
+	// 이미지 변경
+	@Transactional
+	public UserImageEntity updateImage(
+		final long userId,
+		final ImagePrefix imagePrefix,
+		final String fullFileName,
+		final String imagePath
+	) {
+		// 기존 이미지 조회
+		UserImageEntity userImage = userImageRepository.findByUserId(userId)
+			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
+
+		// 검증(새 이미지 저장되었는지, 중복 경로, 소유권)
+		imageValidationService.validateImageSaved(imagePath);
+		validateDuplicatedImagePath(imagePath);
+		validateUserImageOwnership(userId, userImage.getId());
+
+
+		// 이미지 정보 업데이트
+		final ParsedImageName parsedImageName = imageUtil.parseFullImageName(fullFileName);
+		userImage.updateImage(
+			imagePath,
+			fullFileName,
+			parsedImageName.imageName(),
+			ImageExtension.from(parsedImageName.fileExtension()),
+			imagePrefix
+		);
+		userImage = userImageRepository.save(userImage);
+
+		// 기존 이미지 삭제
+		imageUtil.deleteImage(userImage.getImagePath());
+
+		return userImage;
+	}
+
 	// 중복된 이미지 경로 검증
 	private void validateDuplicatedImagePath(final String imagePath) {
 		if (userImageRepository.existsByImagePath(imagePath)) {
