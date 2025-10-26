@@ -65,7 +65,7 @@ public class AiChatMessageService {
 		validateAiChatImageExistence(request.aiChatImageId());
 
 		// 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(userId, postId);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(aiChatRoom.getId());
 
 		// 요청 ID 생성
 		String requestId = keyGenerator.generateKey();

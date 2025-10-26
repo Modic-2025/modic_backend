@@ -93,10 +93,7 @@ public class AiImageCreatedListener {
 		aiChatImageRepository.save(aiChatImage);
 
 		// 2. 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(
-			requestChatMessage.getUserId(),
-			requestChatMessage.getPostId()
-		);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(aiChatRoom.getId());
 
 		// 3.응답 메시지 저장
 		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()
@@ -126,13 +123,12 @@ public class AiImageCreatedListener {
 	}
 
 	// 응답 이미지가 없는 경우, 단순 채팅만 저장 후 응답
-	private void handleFailedImageGeneration(AiImageResponseMessageDto message,
-		AiChatMessageEntity requestChatMessage) {
+	private void handleFailedImageGeneration(
+		AiImageResponseMessageDto message,
+		AiChatMessageEntity requestChatMessage
+	) {
 		// 1.다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(
-			requestChatMessage.getUserId(),
-			requestChatMessage.getPostId()
-		);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(requestChatMessage.getAiChatRoomId());
 
 		// 2.응답 메시지 저장
 		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()

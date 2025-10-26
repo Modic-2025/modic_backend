@@ -132,7 +132,7 @@ public class AiServerService {
 
 		// 2.채팅 저장
 		// 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(userId, postId);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(chatMessage.getAiChatRoomId());
 
 		// 메시지 저장
 		AiChatMessageEntity message = AiChatMessageEntity.builder()

@@ -20,16 +20,16 @@ public class AiChatMessageOrderService {
 	 * (userId, postId) 기준으로 다음 messageOrder 값을 원자적으로 가져옵니다.
 	 */
 	@Transactional
-	public Long nextMessageOrder(Long userId, Long postId) {
-		AiChatMessageOrderEntity seq = aiChatMessageOrderRepository.findForUpdate(userId, postId)
+	public Long nextMessageOrder(Long aiChatRoomId) {
+		AiChatMessageOrderEntity seq = aiChatMessageOrderRepository.findForUpdate(aiChatRoomId)
 			.orElseGet(() -> {
 				try {
 					return aiChatMessageOrderRepository.save(
-						new AiChatMessageOrderEntity(userId, postId, 0L)
+						new AiChatMessageOrderEntity(aiChatRoomId, 0L)
 					);
 				} catch (DataIntegrityViolationException e) {
 					// 다른 트랜잭션이 이미 생성한 경우, 다시 조회
-					return aiChatMessageOrderRepository.findForUpdate(userId, postId)
+					return aiChatMessageOrderRepository.findForUpdate(aiChatRoomId)
 						.orElseThrow(() -> new AppException(ErrorCode.AI_CHAT_MESSAGE_ORDER_NOT_FOUND));
 				}
 			});
