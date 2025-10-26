@@ -11,6 +11,7 @@ public record GetProfileResponse(
 	String userName,
 	boolean hasUserImage,
 	String userImageUrl,
+	Long userImageId,
 	long postCount,
 	long followerCount,
 	long followingCount
