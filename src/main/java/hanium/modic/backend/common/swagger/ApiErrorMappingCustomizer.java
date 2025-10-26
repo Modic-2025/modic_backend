@@ -19,10 +19,10 @@ public class ApiErrorMappingCustomizer {
 	private static final String ERROR_EXAMPLE_JSON = """
 		{
 		  "isSuccess": false,
-		  "status": "%s",
+		  "status": "%d",
 		  "code": "%s",
 		  "message": "%s",
-		  "reasons": {}
+		  "reason": {}
 		}
 		""";
 
