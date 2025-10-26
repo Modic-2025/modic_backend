@@ -13,11 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.common.util.TempPasswordGenerator;
 import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.domain.auth.service.component.EmailSender;
+import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
 import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
@@ -28,13 +30,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
 
+	// 유저 관련
 	private final UserEntityRepository userEntityRepository;
-
-	private final BCryptPasswordEncoder passwordEncoder;
 	private final UserUpdateTokenRepository userUpdateTokenRepository;
-	private final AuthService authService;
 	private final UserImageService userImageService;
-	private final UserImageEntityRepository userImageEntityRepository;
+
+	// 인증 관련
+	private final AuthService authService;
+
+	// 기타
+	private final BCryptPasswordEncoder passwordEncoder;
+	private final EmailSender emailSender;
 
 	// 회원가입
 	@Transactional
@@ -165,5 +171,28 @@ public class UserService {
 	private String generateUpdateToken() {
 		// 토큰 생성 로직 (예: UUID 사용)
 		return java.util.UUID.randomUUID().toString();
+	}
+
+	// 임시 비밀번호 발급
+	public void resetUserPassword(
+		final String email,
+		final String code
+	) {
+		authService.checkEmailCodeAndDelete(email, code);
+
+		UserEntity user = userEntityRepository.findByEmail(email)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		// 임시 비밀번호 생성
+		final String newPassword = TempPasswordGenerator.generateTempPassword(10);
+
+		// 이메일로 임시 비밀번호 전송
+		EmailDto emailDto = EmailDto.resetPassword(email, newPassword);
+		emailSender.sendEmail(emailDto);
+
+		// 비밀번호 변경(이메일 전송 실패를 대비하여 이후에 처리)
+		final String encodedPassword = passwordEncoder.encode(newPassword);
+		user.updatePassword(encodedPassword);
+		userEntityRepository.save(user);
 	}
 }

@@ -79,12 +79,12 @@ public class AuthController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping(value = "/email/verification", params = "type=sign-up")
+	@PostMapping(value = "/email/verification")
 	@Operation(
-		summary = "이메일 인증 코드 발송 API (회원가입)",
+		summary = "이메일 인증 코드 발송 API (회원가입, 비밀번호 재설정)",
 		description = """
 			회원가입 시 입력한 이메일로 인증 코드를 전송합니다.
-			type = sign-up
+			type = sign-up or reset-password
 			""",
 		responses = {
 			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
@@ -92,7 +92,6 @@ public class AuthController {
 		}
 	)
 	public ResponseEntity<AppResponse<Void>> sendEmailVerification(
-		@RequestParam(name = "type", required = true) String type,
 		@RequestBody @Valid SendEmailRequest request
 	) {
 		authService.sendEmailVerification(request.email());

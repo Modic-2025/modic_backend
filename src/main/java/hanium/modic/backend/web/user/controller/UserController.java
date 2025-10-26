@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
-import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.swagger.ApiErrorMapping;
@@ -22,6 +21,7 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
+import hanium.modic.backend.web.user.dto.request.ResetUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
@@ -33,7 +33,6 @@ import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -135,6 +134,19 @@ public class UserController {
 			request.newPassword(),
 			request.updateToken()
 		);
+		return ResponseEntity.ok().build();
+	}
+
+	@PatchMapping("/password/reset")
+	@Operation(
+		summary = "임시 비밀번호 발급 API",
+		description = "이메일로 임시 비밀번호를 발급합니다."
+	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION, USER_NOT_FOUND_EXCEPTION, EMAIL_CODE_MISMATCH_EXCEPTION})
+	public ResponseEntity<AppResponse<Void>> resetUserPassword(
+		@RequestBody @Valid ResetUserPasswordRequest request
+	) {
+		userService.resetUserPassword(request.email(), request.code());
 		return ResponseEntity.ok().build();
 	}
 
