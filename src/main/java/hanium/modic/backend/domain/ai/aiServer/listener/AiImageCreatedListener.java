@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageOrderService;
 import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
@@ -34,6 +35,7 @@ public class AiImageCreatedListener {
 	private final AiChatMessageRepository aiChatMessageRepository;
 	private final AiChatRoomRepository aiChatRoomRepository;
 	private final AiResponseSseService aiResponseSseService;
+	private final AiChatMessageOrderService aiChatMessageOrderService;
 
 	// MQ에서 이미지 생성 완료 메시지 수신
 	// 요청 메시지 변경 및 응답 메시지 저장&SSE 응답
@@ -91,8 +93,10 @@ public class AiImageCreatedListener {
 		aiChatImageRepository.save(aiChatImage);
 
 		// 2. 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(requestChatMessage.getUserId(),
-			requestChatMessage.getPostId());
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(
+			requestChatMessage.getUserId(),
+			requestChatMessage.getPostId()
+		);
 
 		// 3.응답 메시지 저장
 		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()
@@ -125,8 +129,10 @@ public class AiImageCreatedListener {
 	private void handleFailedImageGeneration(AiImageResponseMessageDto message,
 		AiChatMessageEntity requestChatMessage) {
 		// 1.다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(requestChatMessage.getUserId(),
-			requestChatMessage.getPostId());
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(
+			requestChatMessage.getUserId(),
+			requestChatMessage.getPostId()
+		);
 
 		// 2.응답 메시지 저장
 		AiChatMessageEntity responseChatMessage = AiChatMessageEntity.builder()

@@ -54,17 +54,6 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessageEnti
 		@Param("contextResetAt") LocalDateTime contextResetAt,
 		Pageable pageable);
 
-	/**
-	 * 특정 사용자-포스트의 다음 메시지 순서 조회
-	 */
-	@Query("SELECT COALESCE(MAX(cm.messageOrder), 0) + 1 " +
-		"FROM AiChatMessageEntity cm " +
-		"WHERE cm.userId = :userId AND cm.postId = :postId")
-	Long findNextMessageOrder(
-		@Param("userId") Long userId,
-		@Param("postId") Long postId);
-
-
 	Optional<AiChatMessageEntity> findByRequestIdAndSenderType(String requestId, SenderType senderType);
 
 	/**
