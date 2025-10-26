@@ -1,5 +1,7 @@
 package hanium.modic.backend.web.ai.aiChat.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
+import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.ai.aiChat.dto.ChatContextResetResponse;
 import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
 import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
@@ -97,6 +101,7 @@ public class AiChatController {
 		summary = "채팅 메시지 목록 조회",
 		description = """
 			채팅 메시지 목록을 페이지네이션으로 조회합니다.
+			page를 -1로 조회하면, 가장 마지막 페이지를 조회합니다.
 			senderType을 통해 유저요청(USER)과 AI응답(AI)을 구분할 수 있습니다.
 			
 			status를 통해 GPT 응답 상태를 구분할 수 있습니다.
@@ -105,17 +110,17 @@ public class AiChatController {
 			- REQUEST_FAILED, // AI 요청 실패 상태 -> SSE에 연결해도 답장을 받을 수 없습니다.
 			- RESPONSE // AI의 응답을 의미
 			
-			""",
-		responses = {
-			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]"),
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
-		}
+			"""
 	)
+	@ApiErrorMapping({
+		AI_IMAGE_PERMISSION_NOT_FOUND,
+		USER_INPUT_EXCEPTION
+	})
 	@GetMapping("/messages")
 	public ResponseEntity<AppResponse<PageResponse<ChatMessageResponse>>> getChatMessages(
 		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Parameter(description = "페이지 번호 (0부터 시작)")
-		@RequestParam(defaultValue = "0") @Min(0) int page,
+		@RequestParam(defaultValue = "0") @Min(-1) int page,
 		@Parameter(description = "페이지 크기 (최대 50)")
 		@RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
 		@CurrentUser UserEntity user

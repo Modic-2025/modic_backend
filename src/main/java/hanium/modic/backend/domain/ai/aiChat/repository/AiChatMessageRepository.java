@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,14 +19,14 @@ import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 public interface AiChatMessageRepository extends JpaRepository<AiChatMessageEntity, Long> {
 
 	/**
-	 * 특정 사용자-포스트의 메시지 목록 조회 (페이지네이션, 최신순)
+	 * 특정 사용자-포스트의 메시지 목록 조회 (페이지네이션, 오래된 순)
 	 */
 	@Query("SELECT cm FROM AiChatMessageEntity cm " +
 		"WHERE cm.userId = :userId AND cm.postId = :postId " +
-		"ORDER BY cm.messageOrder DESC")
-	Page<AiChatMessageEntity> findByUserIdAndPostIdOrderByMessageOrderDesc(
+		"ORDER BY cm.messageOrder ASC")
+	Page<AiChatMessageEntity> findByUserIdAndPostIdOrderByMessageOrderAsc(
 		@Param("userId") Long userId,
-		@Param("postId") Long postId, 
+		@Param("postId") Long postId,
 		Pageable pageable
 	);
 
@@ -67,4 +66,9 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessageEnti
 
 
 	Optional<AiChatMessageEntity> findByRequestIdAndSenderType(String requestId, SenderType senderType);
+
+	/**
+	 * 특정 사용자-포스트의 메시지 개수 조회
+	 */
+	long countByUserIdAndPostId(Long userId, Long postId);
 }

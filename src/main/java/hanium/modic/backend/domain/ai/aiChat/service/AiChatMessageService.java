@@ -120,15 +120,29 @@ public class AiChatMessageService {
 
 	// 채팅 메시지 페이징 조회
 	@Transactional(readOnly = true)
-	public PageResponse<ChatMessageResponse> getMessages(Long userId, Long postId, int page, int size) {
+	public PageResponse<ChatMessageResponse> getMessages(
+		final Long userId,
+		final Long postId,
+		int page, // page는 -1인 경우 마지막 페이지 조회로 변경됨
+		final int size
+	) {
 		// 채팅방 접근 권한 검증
 		aiChatRoomService.validateChatRoomAccess(userId, postId);
 
-		Pageable pageable = PageRequest.of(page, size);
+		// page가 -1인 경우 마지막 페이지로 변환
+		if (page == -1) {
+			// 마지막 페이지 조회를 위한 총 메시지 개수 계산
+			long totalMessages = aiChatMessageRepository.countByUserIdAndPostId(userId, postId);
+			page = (int) ((totalMessages - 1) / size); // 0-based index
+			if (page < 0) {
+				page = 0; // 메시지가 없는 경우 첫 페이지로 설정
+			}
+		}
 
 		// Page 조회
+		Pageable pageable = PageRequest.of(page, size);
 		Page<AiChatMessageEntity> messagePage = aiChatMessageRepository
-			.findByUserIdAndPostIdOrderByMessageOrderDesc(userId, postId, pageable);
+			.findByUserIdAndPostIdOrderByMessageOrderAsc(userId, postId, pageable);
 
 		// 엔티티 → DTO 변환
 		Page<ChatMessageResponse> responsePage = messagePage.map(msg -> {
