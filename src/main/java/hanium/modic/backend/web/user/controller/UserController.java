@@ -1,5 +1,7 @@
 package hanium.modic.backend.web.user.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
+import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
@@ -47,12 +51,9 @@ public class UserController {
 	@PostMapping
 	@Operation(
 		summary = "회원가입 API",
-		description = "이메일, 비밀번호, 이름을 입력하여 회원가입을 진행합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
-		}
+		description = "이메일, 비밀번호, 이름을 입력하여 회원가입을 진행합니다."
 	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION, USER_EMAIL_DUPLICATED_EXCEPTION})
 	public ResponseEntity<AppResponse<UserCreateResponse>> createUser(@RequestBody @Valid UserCreateRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(AppResponse.created(userService.createUser(
@@ -76,12 +77,9 @@ public class UserController {
 	@GetMapping("/search")
 	@Operation(
 		summary = "사용자 이름 검색 API",
-		description = "검색어를 기반으로 사용자 목록을 페이지 단위로 조회합니다. page는 0부터 시작합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "입력값 검증 실패[C-001]"),
-			@ApiResponse(responseCode = "401", description = "인증 필요[A-001]"),
-		}
+		description = "검색어를 기반으로 사용자 목록을 페이지 단위로 조회합니다. page는 0부터 시작합니다."
 	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION})
 	public ResponseEntity<AppResponse<PageResponse<SearchUsersResponse>>> searchUsersByName(
 		@RequestParam @NotBlank(message = "검색어는 필수입니다.") String keyword,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
@@ -96,11 +94,9 @@ public class UserController {
 	@PatchMapping("/name")
 	@Operation(
 		summary = "유저 이름 변경 API",
-		description = "로그인한 유저의 이름을 변경합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-		}
+		description = "로그인한 유저의 이름을 변경합니다."
 	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION})
 	public ResponseEntity<AppResponse<Void>> updateUserName(
 		@CurrentUser UserEntity user,
 		@RequestBody @Valid UpdateUserNameRequest request
@@ -113,13 +109,9 @@ public class UserController {
 	@PatchMapping("/email")
 	@Operation(
 		summary = "유저 이메일 변경 API",
-		description = "로그인한 유저의 이메일을 변경합니다. (토큰 필요)",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "409", description = "이미 사용중인 이메일입니다.[U-001]"),
-			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-008]")
-		}
+		description = "로그인한 유저의 이메일을 변경합니다. (토큰 필요)"
 	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION, USER_EMAIL_DUPLICATED_EXCEPTION, USER_UPDATE_TOKEN_INVALID_EXCEPTION})
 	public ResponseEntity<AppResponse<Void>> updateUserEmail(
 		@CurrentUser UserEntity user,
 		@RequestBody @Valid UpdateUserEmailRequest request
@@ -131,12 +123,9 @@ public class UserController {
 	@PatchMapping("/password")
 	@Operation(
 		summary = "유저 비밀번호 변경 API",
-		description = "로그인한 유저의 비밀번호를 변경합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "400", description = "토큰이 유효하지 않습니다.[U-008]")
-		}
+		description = "로그인한 유저의 비밀번호를 변경합니다."
 	)
+	@ApiErrorMapping({USER_INPUT_EXCEPTION, USER_UPDATE_TOKEN_INVALID_EXCEPTION})
 	public ResponseEntity<AppResponse<Void>> updateUserPassword(
 		@CurrentUser UserEntity user,
 		@RequestBody @Valid UpdateUserPasswordRequest request
@@ -162,13 +151,13 @@ public class UserController {
 	@PostMapping("/coins/transfer")
 	@Operation(
 		summary = "코인 송금 API",
-		description = "유저가 다른 유저에게 코인을 송금합니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "코인이 부족합니다.[U-004]"),
-			@ApiResponse(responseCode = "400", description = "자신에게 코인을 송금할 수 없습니다.[U-005]"),
-			@ApiResponse(responseCode = "500", description = "코인 송금에 실패하였습니다.[U-006]")
-		}
+		description = "유저가 다른 유저에게 코인을 송금합니다."
 	)
+	@ApiErrorMapping({
+		USER_COIN_NOT_ENOUGH_EXCEPTION,
+		USER_COIN_TRANSFER_SAME_USER_EXCEPTION,
+		USER_COIN_TRANSFER_FAIL_EXCEPTION
+	})
 	public ResponseEntity<AppResponse<Void>> transferCoins(
 		@CurrentUser UserEntity user,
 		@RequestBody @Valid TransferCoinsRequest request
