@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageOrderService;
 import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
@@ -50,6 +51,7 @@ public class AiServerService {
 	private final ObjectMapper objectMapper;
 	private final AiResponseSseService aiResponseSseService;
 	private final AiChatService aiChatService;
+	private final AiChatMessageOrderService aiChatMessageOrderService;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	// 빠른 응답을 위해 비동기 처리, 응답은 SSE를 통해 클라이언트에 전달
@@ -130,7 +132,7 @@ public class AiServerService {
 
 		// 2.채팅 저장
 		// 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(userId, postId);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(userId, postId);
 
 		// 메시지 저장
 		AiChatMessageEntity message = AiChatMessageEntity.builder()

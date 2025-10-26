@@ -34,14 +34,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AiChatMessageService {
 
+	// aiChatMessage 관련
 	private final AiChatMessageRepository aiChatMessageRepository;
+	private final AiChatMessageOrderService aiChatMessageOrderService;
+
+	// aiChatRoom 관련
 	private final AiChatRoomService aiChatRoomService;
+	private final AiChatRoomRepository aiChatRoomRepository;
+
+	// aiServer 관련
 	private final AiServerService aiServerService;
+
+	// aiChatImage 관련
 	private final AiChatImageRepository aiChatImageRepository;
 	private final AiChatImageService aiChatImageService;
 
 	private final KeyGenerator keyGenerator;
-	private final AiChatRoomRepository aiChatRoomRepository;
+
 
 	// 사용자의 메시지,이미지 저장 후 AI 요청
 	@Transactional
@@ -56,7 +65,7 @@ public class AiChatMessageService {
 		validateAiChatImageExistence(request.aiChatImageId());
 
 		// 다음 메시지 순서 조회
-		Long messageOrder = aiChatMessageRepository.findNextMessageOrder(userId, postId);
+		Long messageOrder = aiChatMessageOrderService.nextMessageOrder(userId, postId);
 
 		// 요청 ID 생성
 		String requestId = keyGenerator.generateKey();
