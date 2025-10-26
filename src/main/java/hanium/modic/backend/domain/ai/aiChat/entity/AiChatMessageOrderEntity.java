@@ -14,28 +14,23 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "ai_chat_message_order",
-	uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "post_id"}))
+	uniqueConstraints = @UniqueConstraint(columnNames = {"ai_chat_room_id"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class AiChatMessageOrderEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "user_id", nullable = false)
-	private Long userId;
-
-	@Column(name = "post_id", nullable = false)
-	private Long postId;
+	@Column(name = "ai_chat_room_id", nullable = false)
+	private Long aiChatRoomId;
 
 	@Column(name = "last_order", nullable = false)
 	private Long lastOrder;
 
-	public AiChatMessageOrderEntity(Long userId, Long postId, Long lastOrder) {
-		this.userId = userId;
-		this.postId = postId;
+	public AiChatMessageOrderEntity(Long aiChatRoomId, Long lastOrder) {
+		this.aiChatRoomId = aiChatRoomId;
 		this.lastOrder = lastOrder;
 	}
 
