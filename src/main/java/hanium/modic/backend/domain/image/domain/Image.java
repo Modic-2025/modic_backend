@@ -36,4 +36,18 @@ public class Image extends BaseEntity {
 	@Enumerated(STRING)
 	@Column(nullable = false)
 	private ImagePrefix imagePurpose;
+
+	public void updateImage(
+		String imagePath,
+		String fullImageName,
+		String imageName,
+		ImageExtension extension,
+		ImagePrefix imagePurpose
+	) {
+		this.imagePath = imagePath;
+		this.fullImageName = fullImageName;
+		this.imageName = imageName;
+		this.extension = extension;
+		this.imagePurpose = imagePurpose;
+	}
 }
