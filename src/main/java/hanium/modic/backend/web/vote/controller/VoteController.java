@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.vote.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.http.ResponseEntity.ok;
 
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.vote.service.VoteQueryService;
 import hanium.modic.backend.domain.vote.service.VotingService;
@@ -84,13 +86,8 @@ public class VoteController {
 
 	@PostMapping("/{voteId}/decisions")
 	@Operation(summary = "투표 참여", description = "사용자가 특정 투표에 대해 자신의 결정을 제출합니다.")
-	@ApiResponse(responseCode = "200", description = "투표 참여 성공")
-	@ApiResponse(responseCode = "400", description = "이미 투표에 참여했습니다.[V-002]")
-	@ApiResponse(responseCode = "400", description = "진행 중인 투표가 아닙니다.[V-005]")
-	@ApiResponse(responseCode = "400", description = "일일 투표 한도를 초과했습니다.[V-006]")
-	@ApiResponse(responseCode = "403", description = "투표 권한이 없습니다.[V-004]")
-	@ApiResponse(responseCode = "404", description = "해당 투표를 찾을 수 없습니다.[V-001]")
-	@ApiResponse(responseCode = "500", description = "투표 집계 업데이트에 실패했습니다.[V-008]")
+	@ApiErrorMapping({DUPLICATE_VOTE_EXCEPTION, VOTE_NOT_IN_PROGRESS_EXCEPTION, VOTE_DAILY_LIMIT_EXCEEDED_EXCEPTION,
+		VOTE_NOT_FOUND_EXCEPTION, VOTE_UPDATE_FAIL_EXCEPTION})
 	public ResponseEntity<AppResponse<VoteParticipationResponse>> participateVote(
 		@PathVariable @Min(1) Long voteId,
 		@CurrentUser UserEntity user,
