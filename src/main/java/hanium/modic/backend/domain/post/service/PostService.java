@@ -298,17 +298,17 @@ public class PostService {
 			similarityVoteRepository.deleteByDerivedPostId(postId);
 		}
 
+		// 댓글 삭제
+		postReviewCommentRepository.deleteAllByPostId(postId);
+
 		// 후기 이미지 삭제
 		List<PostReviewEntity> postReviews = postReviewRepository.findAllByPostId(postId);
 		List<PostReviewImageEntity> postReviewImages = postReviewImageRepository.findAllByPostReviewIdIn(
-				postReviews.stream().map(PostReviewEntity::getId).toList());
+			postReviews.stream().map(PostReviewEntity::getId).toList());
 		postReviewImageService.deleteImages(postReviewImages);
 
 		// 후기 삭제
 		postReviewRepository.deleteAllInBatch(postReviews);
-
-		// 댓글 삭제
-		postReviewCommentRepository.deleteAllByPostId(postId);
 
 		// 포스트 좋아요 삭제
 		postLikeEntityRepository.deleteAllByPostId(postId);
