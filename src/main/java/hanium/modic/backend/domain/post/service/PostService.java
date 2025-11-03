@@ -25,11 +25,20 @@ import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.postLike.repository.PostLikeEntityRepository;
+import hanium.modic.backend.domain.postLike.repository.PostStatisticsEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.domain.postLike.service.PostLikeService;
+import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
+import hanium.modic.backend.domain.postReview.entity.PostReviewImageEntity;
+import hanium.modic.backend.domain.postReview.repository.PostReviewCommentRepository;
+import hanium.modic.backend.domain.postReview.repository.PostReviewImageRepository;
+import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
+import hanium.modic.backend.domain.postReview.service.PostReviewImageService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse;
 import hanium.modic.backend.web.post.dto.response.GetPostResponse.ImageDto;
 import hanium.modic.backend.web.post.dto.response.GetPostTreeResponse;
@@ -40,21 +49,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostService {
 
+	// 포스트 관련
 	private final PostEntityRepository postEntityRepository;
-
 	private final PostImageEntityRepository postImageEntityRepository;
 	private final PostImageService postImageService;
 
+	// 투표 관련
+	private final SimilarityVoteRepository similarityVoteRepository;
+
+	// 유저 관련
 	private final UserEntityRepository userEntityRepository;
+	private final UserImageService userImageService;
 
 	// 하트 기능 관련 의존성
 	private final PostLikeService postLikeService;
 	private final AsyncPostStatisticsService asyncPostStatisticsService;
 
+	private final ImageUtil imageUtil;
+
 	private static final String SORT_CRITERIA = "id";
 	private static final Sort.Direction SORT_DIRECTION = DESC;
-	private final ImageUtil imageUtil;
-	private final UserImageService userImageService;
+	private final PostReviewRepository postReviewRepository;
+	private final PostReviewImageRepository postReviewImageRepository;
+	private final PostReviewImageService postReviewImageService;
+	private final PostReviewCommentRepository postReviewCommentRepository;
+	private final PostLikeEntityRepository postLikeEntityRepository;
+	private final PostStatisticsEntityRepository postStatisticsEntityRepository;
 
 	// 일반 포스트 생성
 	@Transactional
@@ -253,8 +273,46 @@ public class PostService {
 
 		validatePostRole(userId, post.getUserId());
 
-		postImageEntityRepository.findAllByPostId(postId)
-			.forEach(postImageEntity -> postImageService.deleteImage(postImageEntity.getId()));
+		if (
+			post.getPostStatus() == PostStatus.ORIGINAL
+		) {
+			// 원본 포스트인 경우
+
+			// 포스트 이미지 소프트 삭제
+			postImageEntityRepository.findAllByPostId(postId)
+				.forEach(postImageEntity -> postImageService.deleteImageSoftly(postImageEntity.getId()));
+		} else if (
+			post.getPostStatus() == PostStatus.DERIVED_APPROVED ||
+			post.getPostStatus() == PostStatus.DERIVED_PENDING ||
+			post.getPostStatus() == PostStatus.DERIVED_REJECTED
+		){
+			// 파생 포스트인 경우
+
+			// 투표 summary, 이미지는 AI 학습을 위해 삭제하지 않음
+
+			// 투표 관련 내용 삭제
+			similarityVoteRepository.deleteByDerivedPostId(postId);
+		}
+
+		// 후기 이미지 삭제
+		List<PostReviewEntity> postReviews = postReviewRepository.findAllByPostId(postId);
+		List<PostReviewImageEntity> postReviewImages = postReviewImageRepository.findAllByPostReviewIdIn(
+				postReviews.stream().map(PostReviewEntity::getId).toList());
+		postReviewImageService.deleteImages(postReviewImages);
+
+		// 후기 삭제
+		postReviewRepository.deleteAllInBatch(postReviews);
+
+		// 댓글 삭제
+		postReviewCommentRepository.deleteAllByPostId(postId);
+
+		// 포스트 좋아요 삭제
+		postLikeEntityRepository.deleteAllByPostId(postId);
+
+		// 포스트 통계 삭제 (비동기)
+		postStatisticsEntityRepository.deleteByPostId(postId);
+
+		// 포스트 자체 삭제
 		postEntityRepository.delete(post);
 	}
 

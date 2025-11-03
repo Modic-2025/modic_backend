@@ -560,7 +560,7 @@ class PostServiceTest {
 		// Then
 		verify(postEntityRepository, times(1)).findById(postId);
 		verify(postImageEntityRepository, times(1)).findAllByPostId(postId);
-		verify(postImageService, times(2)).deleteImage(any(Long.class));
+		verify(postImageService, times(2)).deleteImageSoftly(any(Long.class));
 		verify(postEntityRepository, times(1)).delete(mockPost);
 	}
 

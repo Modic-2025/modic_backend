@@ -63,4 +63,6 @@ public interface SimilarityVoteRepository extends JpaRepository<SimilarityVoteEn
 		"JOIN PostEntity p ON p.id = pi.postId " +
 		"WHERE sv.id = :voteId")
 	Optional<Long> findOriginalImageOwnerId(@Param("voteId") Long voteId);
+
+	void deleteByDerivedPostId(Long postId);
 }
