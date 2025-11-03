@@ -42,9 +42,6 @@ class VoteControllerTest extends BaseControllerTest {
 			100L,
 			"https://example.com/original.jpg",
 			"https://example.com/derived.jpg",
-			50L,
-			30L,
-			80L,
 			VoteStatus.IN_PROGRESS
 		);
 
