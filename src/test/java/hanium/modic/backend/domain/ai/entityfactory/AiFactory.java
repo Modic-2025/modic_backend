@@ -18,6 +18,8 @@ public class AiFactory {
 			.imageName("ai-image")
 			.extension(ImageExtension.PNG)
 			.imagePurpose(ImagePrefix.AI_RESPONSE)
+			.fromOriginImage(true)
+			.description("test")
 			.build();
 	}
 

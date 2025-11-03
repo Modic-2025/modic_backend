@@ -70,24 +70,29 @@ public class AiDerivedPostService {
 		AiChatImageEntity createdAiImage = AiChatImageRepository.findById(createdAiImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
 
-		// 2. 소유자 검증(내가 생성한 이미지가 아니면 거부)
+		// 2. 생성된 AI 이미지가 원작자로부터 파생되지 않은 이미지 거부
+		if (!createdAiImage.getFromOriginImage()) {
+			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
+		}
+
+		// 3. 소유자 검증(내가 생성한 이미지가 아니면 거부)
 		if (!createdAiImage.getUserId().equals(userId)) {
 			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		}
 
-		// 3. 이미 해당 이미지로 파생 포스트가 생성되었는지 확인
+		// 4. 이미 해당 이미지로 파생 포스트가 생성되었는지 확인
 		validateDuplicateDerivedPost(createdAiImage.getPostId(), createdAiImageId);
 
-		// 4. 원본 포스트 조회
+		// 5. 원본 포스트 조회
 		PostEntity originalPost = postEntityRepository.findById(createdAiImage.getPostId())
 			.orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 		Long originalImageId = originalPost.getThumbnailImageId();
 
-		// 5. 원본 이미지 조회
+		// 6. 원본 이미지 조회
 		PostImageEntity originalImage = postImageEntityRepository.findById(originalImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND_EXCEPTION));
 
-		// AI 파생 포스트 생성 - PENDING 상태로 생성 (투표 대기)
+		// 7. AI 파생 포스트 생성 - PENDING 상태로 생성 (투표 대기)
 		PostEntity aiDerivedPost = PostEntity.builder()
 			.userId(userId)
 			.title(title)
@@ -101,7 +106,7 @@ public class AiDerivedPostService {
 			.build();
 		PostEntity savedPost = postEntityRepository.save(aiDerivedPost);
 
-		// 파생 포스트 이미지 저장
+		// 8. 파생 포스트 이미지 저장
 		PostImageEntity postImage = PostImageEntity.builder()
 			.imagePath(createdAiImage.getImagePath()) // 기존 AI 이미지 경로 사용, AI 이미지 Entity 삭제되어도 S3는 삭제 x
 			.fullImageName(createdAiImage.getFullImageName())
@@ -112,7 +117,7 @@ public class AiDerivedPostService {
 			.build();
 		postImageEntityRepository.save(postImage);
 
-		// 투표 시스템 연동: SimilarityVoteEntity 생성 (PENDING 상태)
+		// 9. 투표 시스템 연동: SimilarityVoteEntity 생성 (PENDING 상태)
 		SimilarityVoteEntity similarityVote = SimilarityVoteEntity.builder()
 			.originalImageId(originalImageId)
 			.derivedImageId(createdAiImageId)
@@ -122,7 +127,7 @@ public class AiDerivedPostService {
 			.build();
 		SimilarityVoteEntity savedVote = similarityVoteRepository.save(similarityVote);
 
-		// 투표 집계 초기화: SimilarityVoteSummaryEntity 생성 (기본값 0)
+		// 10. 투표 집계 초기화: SimilarityVoteSummaryEntity 생성 (기본값 0)
 		SimilarityVoteSummaryEntity voteSummary = SimilarityVoteSummaryEntity.builder()
 			.voteId(savedVote.getId())
 			.approveWeight(0L)
@@ -133,7 +138,7 @@ public class AiDerivedPostService {
 			.build();
 		voteSummaryRepository.save(voteSummary);
 
-		// AI 유사도 검사 요청 (트랜잭션 커밋 후 비동기 실행)
+		// 11. AI 유사도 검사 요청 (트랜잭션 커밋 후 비동기 실행)
 		Long voteId = savedVote.getId();
 		String originalPath = originalImage.getImagePath();
 		String derivedPath = createdAiImage.getImagePath();
