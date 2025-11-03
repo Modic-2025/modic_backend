@@ -33,4 +33,9 @@ public interface PostLikeEntityRepository extends JpaRepository<PostLikeEntity, 
 	 * 특정 게시글의 하트 수 조회 (백업용 - 통계 테이블 오류시 사용)
 	 */
 	long countByPostId(Long postId);
+
+	/**
+	 * 특정 게시글의 모든 하트 삭제 (게시글 삭제시 사용)
+	 */
+	void deleteAllByPostId(Long postId);
 }

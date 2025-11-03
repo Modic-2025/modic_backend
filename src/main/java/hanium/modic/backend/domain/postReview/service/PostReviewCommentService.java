@@ -4,7 +4,6 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +18,6 @@ import hanium.modic.backend.domain.postReview.repository.PostReviewCommentReposi
 import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.postReview.dto.response.PostReviewCommentResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +30,6 @@ public class PostReviewCommentService {
 	private final UserEntityRepository userEntityRepository;
 	private final UserImageService userImageService;
 	private final PostReviewCommentRepository postReviewCommentRepository;
-	private final UserImageEntityRepository userImageEntityRepository;
 
 	// 게시글 리뷰 댓글 목록 조회
 	public Page<PostReviewCommentResponse> getComments(final long postReviewId, final int page, final int size) {

@@ -88,7 +88,7 @@ class PostImageServiceTest {
 
 	@Test
 	@DisplayName("deleteImage - 이미지 삭제 성공")
-	void deleteImage_success() {
+	void deleteImage_Softly_success() {
 		// given
 		final Long imageId = 1L;
 		final String imagePath = "posts/uuid-test-image.jpg";
@@ -104,7 +104,7 @@ class PostImageServiceTest {
 		doNothing().when(postImageEntityRepository).delete(postImageEntity);
 
 		// when
-		postImageService.deleteImage(imageId);
+		postImageService.deleteImageSoftly(imageId);
 
 		// then
 		verify(postImageEntityRepository, times(1)).findById(imageId);
@@ -114,13 +114,13 @@ class PostImageServiceTest {
 
 	@Test
 	@DisplayName("deleteImage - 이미지 없으면 예외 발생")
-	void deleteImage_fail_notFound() {
+	void deleteImage_Softly_fail_notFound() {
 		// given
 		Long imageId = 1L;
 		when(postImageEntityRepository.findById(imageId)).thenReturn(Optional.empty());
 
 		// when
-		AppException appException = assertThrows(AppException.class, () -> postImageService.deleteImage(imageId));
+		AppException appException = assertThrows(AppException.class, () -> postImageService.deleteImageSoftly(imageId));
 
 		// then
 		assertThat(IMAGE_NOT_FOUND_EXCEPTION.getCode()).isEqualTo(appException.getErrorCode().getCode());
@@ -249,7 +249,7 @@ class PostImageServiceTest {
 
 	@Test
 	@DisplayName("deleteImages - null 또는 빈 리스트인 경우 아무것도 하지 않음")
-	void deleteImages_withNullOrEmptyList() {
+	void deleteImages_withNullOrEmptyListSoftly() {
 		// when
 		postImageService.deleteImages(null);
 		postImageService.deleteImages(List.of());
@@ -340,14 +340,14 @@ class PostImageServiceTest {
 
 	@Test
 	@DisplayName("이미지 삭제 - 존재하지 않는 이미지 ID")
-	void deleteImage_notFound() {
+	void deleteImage_Softly_notFound() {
 		// given
 		final Long nonExistentImageId = 999L;
 		when(postImageEntityRepository.findById(nonExistentImageId)).thenReturn(Optional.empty());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class, () -> {
-			postImageService.deleteImage(nonExistentImageId);
+			postImageService.deleteImageSoftly(nonExistentImageId);
 		});
 
 		assertEquals(IMAGE_NOT_FOUND_EXCEPTION.getCode(), exception.getErrorCode().getCode());
@@ -390,7 +390,7 @@ class PostImageServiceTest {
 
 	@Test
 	@DisplayName("대용량 이미지 리스트 삭제")
-	void deleteImages_largeList() {
+	void deleteImages_largeListSoftly() {
 		// given
 		final int imageCount = 100;
 		List<PostImageEntity> images = new ArrayList<>();

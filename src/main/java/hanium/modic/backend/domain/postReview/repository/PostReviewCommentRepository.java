@@ -25,5 +25,6 @@ public interface PostReviewCommentRepository extends JpaRepository<PostReviewCom
 		""")
 	Page<PostReviewCommentDto> findAllByPostReviewIdOrderByCreateAtDesc(Long postReviewId, Pageable pageable);
 
+	void deleteAllByPostId(Long postId);
 }
 

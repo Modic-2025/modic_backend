@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.image.dto.CreateImageSaveUrlDto;
 import hanium.modic.backend.domain.image.dto.ParsedImageName;
 import hanium.modic.backend.domain.image.service.ImageService;
 import hanium.modic.backend.domain.image.service.ImageValidationService;
@@ -38,9 +37,9 @@ public class PostImageService extends ImageService {
 		return imageUtil.createImageGetUrl(image.getImagePath());
 	}
 
-	// 이미지 삭제
+	// 이미지 삭제(s3 이미지는 삭제하지 않음)
 	@Transactional
-	public void deleteImage(final Long id) {
+	public void deleteImageSoftly(final Long id) {
 		PostImageEntity image = postImageEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(IMAGE_NOT_FOUND_EXCEPTION));
 
