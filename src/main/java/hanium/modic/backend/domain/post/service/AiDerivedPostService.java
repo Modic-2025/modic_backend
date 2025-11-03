@@ -1,5 +1,7 @@
 package hanium.modic.backend.domain.post.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -64,21 +66,24 @@ public class AiDerivedPostService {
 		Long nonCommercialPrice,
 		Long ticketPrice
 	) {
-		// 생성된 AI 이미지 조회
+		// 1. 생성된 AI 이미지 조회
 		AiChatImageEntity createdAiImage = AiChatImageRepository.findById(createdAiImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
 
-		// 소유자 검증
+		// 2. 소유자 검증(내가 생성한 이미지가 아니면 거부)
 		if (!createdAiImage.getUserId().equals(userId)) {
 			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
 		}
 
-		// 원본 포스트 및 원본 이미지 조회
+		// 3. 이미 해당 이미지로 파생 포스트가 생성되었는지 확인
+		validateDuplicateDerivedPost(createdAiImage.getPostId(), createdAiImageId);
+
+		// 4. 원본 포스트 조회
 		PostEntity originalPost = postEntityRepository.findById(createdAiImage.getPostId())
 			.orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND_EXCEPTION));
 		Long originalImageId = originalPost.getThumbnailImageId();
 
-		// 원본 이미지 경로 조회
+		// 5. 원본 이미지 조회
 		PostImageEntity originalImage = postImageEntityRepository.findById(originalImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND_EXCEPTION));
 
@@ -144,5 +149,13 @@ public class AiDerivedPostService {
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
 
 		return CreatePostResponse.of(savedPost.getId());
+	}
+
+	// 중복 파생 포스트 검증
+	private void validateDuplicateDerivedPost(Long parentPostId, Long aiImageId) {
+		boolean exists = postEntityRepository.existsByParentPostIdAndThumbnailImageId(parentPostId, aiImageId);
+		if (exists) {
+			throw new AppException(DUPLICATE_DERIVED_POST_EXCEPTION);
+		}
 	}
 }

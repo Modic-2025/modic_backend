@@ -63,4 +63,6 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 		SELECT * FROM post_tree ORDER BY id
 		""", nativeQuery = true)
 	List<PostEntity> findAllDescendantsByPostId(@Param("postId") Long postId);
+
+	boolean existsByParentPostIdAndThumbnailImageId(Long postId, Long createdAiImageId);
 }

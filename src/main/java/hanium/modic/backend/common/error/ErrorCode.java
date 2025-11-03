@@ -46,6 +46,9 @@ public enum ErrorCode {
 	NOT_AI_DERIVED_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-004", "AI 파생 포스트가 아닙니다."),
 	THUMBNAIL_IMAGE_NOT_IN_IMAGE_LIST_EXCEPTION(HttpStatus.BAD_REQUEST, "P-005", "썸네일 이미지는 이미지 목록에 포함되어야 합니다."),
 
+	// Derived Post
+	DUPLICATE_DERIVED_POST_EXCEPTION(HttpStatus.CONFLICT, "DP-001", "이미 해당 이미지로 파생 포스트가 생성되었습니다."),
+
 	// Post Like
 	CANNOT_LIKE_OWN_POST_EXCEPTION(HttpStatus.BAD_REQUEST, "PL-001", "자신의 게시글에는 하트를 할 수 없습니다."),
 	POST_LIKE_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "PL-002", "좋아요 처리에 실패하였습니다."),
