@@ -38,8 +38,14 @@ import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.domain.postLike.repository.PostLikeEntityRepository;
+import hanium.modic.backend.domain.postLike.repository.PostStatisticsEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
 import hanium.modic.backend.domain.postLike.service.PostLikeService;
+import hanium.modic.backend.domain.postReview.repository.PostReviewCommentRepository;
+import hanium.modic.backend.domain.postReview.repository.PostReviewImageRepository;
+import hanium.modic.backend.domain.postReview.repository.PostReviewRepository;
+import hanium.modic.backend.domain.postReview.service.PostReviewImageService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -67,6 +73,18 @@ class PostServiceTest {
 	private ImageUtil imageUtil;
 	@Mock
 	private UserImageService userImageService;
+	@Mock
+	private PostReviewRepository postReviewRepository;
+	@Mock
+	private PostReviewImageRepository postReviewImageRepository;
+	@Mock
+	private PostReviewImageService postReviewImageService;
+	@Mock
+	private PostReviewCommentRepository postReviewCommentRepository;
+	@Mock
+	private PostLikeEntityRepository postLikeEntityRepository;
+	@Mock
+	private PostStatisticsEntityRepository postStatisticsEntityRepository;
 
 	@InjectMocks
 	private PostService postService;
@@ -553,6 +571,14 @@ class PostServiceTest {
 
 		when(postEntityRepository.findById(postId)).thenReturn(Optional.of(mockPost));
 		when(postImageEntityRepository.findAllByPostId(postId)).thenReturn(mockImages);
+		when(postReviewRepository.findAllByPostId(postId)).thenReturn(List.of());
+		when(postReviewImageRepository.findAllByPostReviewIdIn(anyList())).thenReturn(List.of());
+		doNothing().when(postReviewImageService).deleteImages(anyList());
+		doNothing().when(postReviewRepository).deleteAllInBatch(anyList());
+		doNothing().when(postReviewCommentRepository).deleteAllByPostId(postId);
+		doNothing().when(postLikeEntityRepository).deleteAllByPostId(postId);
+		doNothing().when(postStatisticsEntityRepository).deleteByPostId(postId);
+		doNothing().when(postEntityRepository).delete(mockPost);
 
 		// When
 		postService.deletePost(userId, postId);

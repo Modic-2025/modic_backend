@@ -65,16 +65,20 @@ public class PostService {
 	private final PostLikeService postLikeService;
 	private final AsyncPostStatisticsService asyncPostStatisticsService;
 
-	private final ImageUtil imageUtil;
-
-	private static final String SORT_CRITERIA = "id";
-	private static final Sort.Direction SORT_DIRECTION = DESC;
+	// 포스트 리뷰 관련
 	private final PostReviewRepository postReviewRepository;
 	private final PostReviewImageRepository postReviewImageRepository;
 	private final PostReviewImageService postReviewImageService;
 	private final PostReviewCommentRepository postReviewCommentRepository;
+
+	// 좋아요 관련
 	private final PostLikeEntityRepository postLikeEntityRepository;
 	private final PostStatisticsEntityRepository postStatisticsEntityRepository;
+
+	private final ImageUtil imageUtil;
+
+	private static final String SORT_CRITERIA = "id";
+	private static final Sort.Direction SORT_DIRECTION = DESC;
 
 	// 일반 포스트 생성
 	@Transactional
