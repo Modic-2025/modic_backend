@@ -13,6 +13,7 @@ import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.service.UserVoteStreakService;
+import hanium.modic.backend.domain.vote.dto.VoteRewardResult;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteResultEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
