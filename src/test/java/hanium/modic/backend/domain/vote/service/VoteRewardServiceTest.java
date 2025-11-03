@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.user.service.UserVoteStreakService;
+import hanium.modic.backend.domain.vote.dto.VoteRewardResult;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
 import hanium.modic.backend.domain.vote.enums.VoteDecision;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;

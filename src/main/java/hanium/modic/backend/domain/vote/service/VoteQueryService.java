@@ -57,10 +57,6 @@ public class VoteQueryService {
 		SimilarityVoteEntity vote = similarityVoteRepository.findRandomUnparticipatedVote(userId)
 			.orElseThrow(() -> new AppException(NO_AVAILABLE_VOTES_EXCEPTION));
 
-		// 투표 집계 정보 조회
-		SimilarityVoteSummaryEntity summary = voteSummaryRepository.findByVoteId(vote.getId())
-			.orElseThrow(() -> new AppException(VOTE_SUMMARY_NOT_FOUND_EXCEPTION));
-
 		// 원본 이미지 조회 및 URL 생성
 		PostImageEntity originalImage = postImageEntityRepository.findById(vote.getOriginalImageId())
 			.orElseThrow(() -> new AppException(VOTE_NOT_FOUND_EXCEPTION));
@@ -77,9 +73,6 @@ public class VoteQueryService {
 			vote.getId(),
 			originalImageUrl,
 			derivedImageUrl,
-			summary.getApproveWeight(),
-			summary.getDenyWeight(),
-			summary.getTotalWeight(),
 			vote.getStatus()
 		);
 	}

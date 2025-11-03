@@ -13,6 +13,7 @@ import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.common.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.service.UserVoteStreakService;
+import hanium.modic.backend.domain.vote.dto.VoteRewardResult;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteResultEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
@@ -89,9 +90,6 @@ public class VotingService {
 				if (voteResultRepository.existsByVoteIdAndUserId(voteId, userId)) {
 					throw new AppException(DUPLICATE_VOTE_EXCEPTION);
 				}
-
-				// 4. 투표 권한 검증
-				validateVotePermission(voteId, userId);
 
 				// 5. 일일 투표 제한 체크
 				validateDailyVoteLimit(userId);
@@ -239,49 +237,6 @@ public class VotingService {
 			log.error("파생 포스트 상태 업데이트 실패: voteId={}", voteId, e);
 			// 투표 완료는 성공했으므로 예외를 던지지 않고 로그만 남김
 		}
-	}
-
-	/**
-	 * 투표 권한 검증 (타입 안전한 방식으로 개선)
-	 * 파생 이미지 생성자와 원작 이미지 소유자는 투표 불가능
-	 *
-	 * @param voteId 투표 ID
-	 * @param userId 사용자 ID
-	 */
-	private void validateVotePermission(Long voteId, Long userId) {
-		// 각각의 ID를 별도로 조회 (타입 안전성 보장)
-		Long creatorId = similarityVoteRepository.findDerivedImageCreatorId(voteId)
-			.orElseThrow(() -> {
-				log.error("파생 이미지 생성자 ID 조회 실패: voteId={}", voteId);
-				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
-			});
-
-		Long ownerId = similarityVoteRepository.findOriginalImageOwnerId(voteId)
-			.orElseThrow(() -> {
-				log.error("원작 이미지 소유자 ID 조회 실패: voteId={}", voteId);
-				return new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
-			});
-
-		// 명확한 변수명으로 권한 검증
-		if (isRestrictedUser(userId, creatorId, ownerId)) {
-			log.warn("투표 권한 거부: voteId={}, userId={}, creatorId={}, ownerId={}",
-				voteId, userId, creatorId, ownerId);
-			throw new AppException(VOTE_PERMISSION_DENIED_EXCEPTION);
-		}
-
-		log.debug("투표 권한 검증 통과: voteId={}, userId={}", voteId, userId);
-	}
-
-	/**
-	 * 권한 검증 로직을 별도 메서드로 분리 (테스트 용이성)
-	 *
-	 * @param userId 현재 사용자 ID
-	 * @param creatorId 파생 이미지 생성자 ID
-	 * @param ownerId 원작 이미지 소유자 ID
-	 * @return 제한된 사용자 여부
-	 */
-	private boolean isRestrictedUser(Long userId, Long creatorId, Long ownerId) {
-		return userId.equals(creatorId) || userId.equals(ownerId);
 	}
 
 	/**

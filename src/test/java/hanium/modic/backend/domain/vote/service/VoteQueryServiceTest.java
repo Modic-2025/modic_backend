@@ -67,8 +67,6 @@ class VoteQueryServiceTest {
 
 		when(similarityVoteRepository.findRandomUnparticipatedVote(userId))
 			.thenReturn(Optional.of(mockVote));
-		when(voteSummaryRepository.findByVoteId(voteId))
-			.thenReturn(Optional.of(mockSummary));
 		when(postImageEntityRepository.findById(1L))
 			.thenReturn(Optional.of(mockPostImage));
 		when(aiChatImageRepository.findById(2L))
@@ -102,26 +100,6 @@ class VoteQueryServiceTest {
 		assertThatThrownBy(() -> voteQueryService.getRandomVoteForParticipation(userId))
 			.isInstanceOf(AppException.class)
 			.hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_AVAILABLE_VOTES_EXCEPTION);
-	}
-
-	@Test
-	@DisplayName("투표 집계 정보가 없으면 예외 발생")
-	void getRandomVoteForParticipation_NoSummary() {
-		// Given
-		Long userId = 1L;
-		Long voteId = 100L;
-		SimilarityVoteEntity mockVote = mock(SimilarityVoteEntity.class);
-
-		when(mockVote.getId()).thenReturn(voteId);
-		when(similarityVoteRepository.findRandomUnparticipatedVote(userId))
-			.thenReturn(Optional.of(mockVote));
-		when(voteSummaryRepository.findByVoteId(voteId))
-			.thenReturn(Optional.empty());
-
-		// When & Then
-		assertThatThrownBy(() -> voteQueryService.getRandomVoteForParticipation(userId))
-			.isInstanceOf(AppException.class)
-			.hasFieldOrPropertyWithValue("errorCode", ErrorCode.VOTE_SUMMARY_NOT_FOUND_EXCEPTION);
 	}
 
 	private SimilarityVoteEntity createMockVote(Long voteId) {
