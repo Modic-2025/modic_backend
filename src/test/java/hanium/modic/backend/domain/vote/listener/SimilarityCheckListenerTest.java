@@ -77,8 +77,9 @@ class SimilarityCheckListenerTest {
 		assertThat(voteSummary.getDenyWeight()).isEqualTo(0L);
 		assertThat(voteSummary.getTotalWeight()).isEqualTo(10L);
 		assertThat(voteSummary.getAiDecision()).isEqualTo(VoteDecision.APPROVE);
+		assertThat(vote.getStatus()).isEqualTo(VoteStatus.IN_PROGRESS);
 		verify(voteSummaryRepository).save(voteSummary);
-		verify(similarityVoteRepository, never()).save(any()); // VoteEntity는 상태 변경 없음
+		verify(similarityVoteRepository).save(vote); // VoteEntity는 IN_PROGRESS 상태로 저장
 	}
 
 	@Test
@@ -119,8 +120,9 @@ class SimilarityCheckListenerTest {
 		assertThat(voteSummary.getDenyWeight()).isEqualTo(10L);
 		assertThat(voteSummary.getTotalWeight()).isEqualTo(10L);
 		assertThat(voteSummary.getAiDecision()).isEqualTo(VoteDecision.DENY);
+		assertThat(vote.getStatus()).isEqualTo(VoteStatus.IN_PROGRESS);
 		verify(voteSummaryRepository).save(voteSummary);
-		verify(similarityVoteRepository, never()).save(any()); // VoteEntity는 상태 변경 없음
+		verify(similarityVoteRepository).save(vote); // VoteEntity는 상태 변경 없음
 	}
 
 	@Test
