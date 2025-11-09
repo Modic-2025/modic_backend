@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
@@ -45,6 +46,8 @@ class AuthControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 
 	@MockitoBean
+	private CookieUtil cookieUtil;
+	@MockitoBean
 	private AuthService authService;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,6 +62,8 @@ class AuthControllerTest extends BaseControllerTest {
 
 		when(authService.login(email, password))
 			.thenReturn(new LoginResponse("accessToken", "refreshToken"));
+		when(cookieUtil.createRefreshCookie("refreshToken"))
+			.thenReturn(new Cookie("refreshToken", "refreshToken"));
 
 		// when
 		MvcResult result = mockMvc.perform(post("/api/auth/login")
@@ -127,6 +132,8 @@ class AuthControllerTest extends BaseControllerTest {
 		ReissueResponse mockResponse = new ReissueResponse(newAccessToken, newRefreshToken);
 
 		when(authService.reissue(oldRefreshToken)).thenReturn(mockResponse);
+		when(cookieUtil.createRefreshCookie(newRefreshToken))
+			.thenReturn(new Cookie("refreshToken", newRefreshToken));
 
 		// when, then
 		mockMvc.perform(post("/api/auth/reissue")

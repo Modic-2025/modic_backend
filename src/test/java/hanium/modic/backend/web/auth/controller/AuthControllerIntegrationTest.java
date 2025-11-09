@@ -41,6 +41,9 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 	@Autowired
 	private AuthCodeRepository authCodeRepository;
 
+	@Autowired
+	private CookieUtil cookieUtil;
+
 	@Test
 	@DisplayName("로그인 API 테스트")
 	void loginApiSuccessTest() throws Exception {
@@ -77,7 +80,7 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 			.build();
 		refreshTokenRepository.save(refreshToken);
 
-		Cookie refreshCookie = CookieUtil.createRefreshCookie(token.refreshToken());
+		Cookie refreshCookie = cookieUtil.createRefreshCookie(token.refreshToken());
 
 		// when, then
 		mockMvc.perform(post("/api/auth/reissue")

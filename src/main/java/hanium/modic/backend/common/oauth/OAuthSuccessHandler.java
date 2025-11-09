@@ -26,6 +26,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final CookieUtil cookieUtil;
 
 	@Override
 	@Transactional
@@ -44,7 +45,7 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
 		// 엑세스 토큰과 리프레시 토큰을 응답 헤더와 쿠키에 설정
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + token.accessToken());
-		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(token.refreshToken());
+		Cookie refreshTokenCookie = cookieUtil.createRefreshCookie(token.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
 		// Todo: 리다이렉트 URL을 환경 변수로 관리

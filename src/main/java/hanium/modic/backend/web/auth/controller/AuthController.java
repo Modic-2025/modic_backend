@@ -37,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
+	private final CookieUtil cookieUtil;
 
 	@PostMapping("/login")
 	@Operation(
@@ -52,7 +53,7 @@ public class AuthController {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + loginResponse.accessToken());
-		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(loginResponse.refreshToken());
+		Cookie refreshTokenCookie = cookieUtil.createRefreshCookie(loginResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
 		return ResponseEntity.ok(AppResponse.ok(loginResponse));
@@ -73,7 +74,7 @@ public class AuthController {
 		ReissueResponse reissueResponse = authService.reissue(refreshToken);
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + reissueResponse.accessToken());
-		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(reissueResponse.refreshToken());
+		Cookie refreshTokenCookie = cookieUtil.createRefreshCookie(reissueResponse.refreshToken());
 		response.addCookie(refreshTokenCookie);
 
 		return ResponseEntity.ok().build();

@@ -16,16 +16,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.ActiveProfiles;
 
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.jwt.RefreshToken;
 import hanium.modic.backend.common.jwt.RefreshTokenRepository;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.dto.Token;
+import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import jakarta.servlet.http.Cookie;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class OAuthSuccessHandlerTest {
 
@@ -43,6 +46,9 @@ class OAuthSuccessHandlerTest {
 
 	@Mock
 	private CustomOAuth2User customOAuth2User;
+
+	@Mock
+	private CookieUtil cookieUtil;
 
 	private MockHttpServletRequest request;
 	private MockHttpServletResponse response;
@@ -64,6 +70,8 @@ class OAuthSuccessHandlerTest {
 		when(authentication.getPrincipal()).thenReturn(customOAuth2User);
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
+		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
+			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -88,6 +96,8 @@ class OAuthSuccessHandlerTest {
 		when(authentication.getPrincipal()).thenReturn(customOAuth2User);
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
+		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
+			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -104,6 +114,8 @@ class OAuthSuccessHandlerTest {
 		when(authentication.getPrincipal()).thenReturn(customOAuth2User);
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
+		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
+			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -123,6 +135,8 @@ class OAuthSuccessHandlerTest {
 		when(authentication.getPrincipal()).thenReturn(customOAuth2User);
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
+		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
+			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
