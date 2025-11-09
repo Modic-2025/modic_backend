@@ -1,5 +1,7 @@
 package hanium.modic.backend.common.security.principal;
 
+import static hanium.modic.backend.domain.user.enums.UserRole.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -7,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.enums.UserRole;
 import lombok.Data;
 
 @Data
@@ -58,7 +61,7 @@ public class UserPrincipal implements UserDetails, AuthenticatedUser {
 
 	@Override
 	public boolean isEnabled() {
-		return true;
+		return user.getUserRole() != WITHDRAWN;
 	}
 
 	@Override
