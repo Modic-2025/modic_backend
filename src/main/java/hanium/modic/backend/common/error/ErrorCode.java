@@ -91,6 +91,7 @@ public enum ErrorCode {
 	AI_IMAGE_ACCESS_DENIED_EXCEPTION(HttpStatus.FORBIDDEN, "AI-011", "AI 이미지에 대한 권한이 없습니다."),
 	AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI-012", "AI 서버와의 통신 중 에러가 발생하였습니다."),
 	CANT_REGISTER_AI_IMAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-013", "원작자 이미지와 무관한 이미지는 파생 포스트로 등록할 수 없습니다."),
+	AI_IMAGE_NOT_FROM_ORIGIN_EXCEPTION(HttpStatus.BAD_REQUEST, "AI-014", "원작자로부터 파생된 이미지가 아닙니다."),
 
 	// AI Chat
 	AI_CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-001", "AI 채팅방을 찾을 수 없습니다."),
