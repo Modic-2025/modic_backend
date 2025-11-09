@@ -36,7 +36,8 @@ public class AiDerivedPostController {
 		AI_IMAGE_NOT_FOUND_EXCEPTION,
 		AI_IMAGE_ACCESS_DENIED_EXCEPTION,
 		DUPLICATE_DERIVED_POST_EXCEPTION,
-		CANT_REGISTER_AI_IMAGE_EXCEPTION
+		CANT_REGISTER_AI_IMAGE_EXCEPTION,
+		AI_IMAGE_NOT_FROM_ORIGIN_EXCEPTION
 	})
 	public ResponseEntity<AppResponse<CreatePostResponse>> createAiDerivedPost(
 		@CurrentUser UserEntity currentUser,

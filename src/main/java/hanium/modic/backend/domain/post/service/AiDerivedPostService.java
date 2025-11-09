@@ -72,7 +72,7 @@ public class AiDerivedPostService {
 
 		// 2. 생성된 AI 이미지가 원작자로부터 파생되지 않은 이미지 거부
 		if (!createdAiImage.getFromOriginImage()) {
-			throw new AppException(ErrorCode.AI_IMAGE_ACCESS_DENIED_EXCEPTION);
+			throw new AppException(ErrorCode.AI_IMAGE_NOT_FROM_ORIGIN_EXCEPTION);
 		}
 
 		// 3. 소유자 검증(내가 생성한 이미지가 아니면 거부)
