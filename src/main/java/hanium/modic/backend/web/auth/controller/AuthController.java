@@ -82,7 +82,7 @@ public class AuthController {
 		HttpServletRequest request,
 		HttpServletResponse response
 	) {
-		String accessToken = jwtTokenProvider.extractAccessToken(request).orElse(null);
+		String accessToken = jwtTokenProvider.extractAccessToken(request).get(); // accessToken은 무조건 존재함
 		authService.logout(refreshToken, accessToken);
 
 		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();

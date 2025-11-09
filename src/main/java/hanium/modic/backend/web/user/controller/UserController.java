@@ -84,7 +84,7 @@ public class UserController {
 		HttpServletRequest request,
 		HttpServletResponse response
 	) {
-		String accessToken = jwtTokenProvider.extractAccessToken(request).orElse(null);
+		String accessToken = jwtTokenProvider.extractAccessToken(request).get(); // accessToken은 무조건 존재함
 		userService.deleteAndLogout(user.getId(), refreshToken, accessToken);
 
 		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
