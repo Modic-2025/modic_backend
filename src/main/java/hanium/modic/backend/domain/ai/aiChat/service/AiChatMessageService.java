@@ -12,8 +12,6 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.util.KeyGenerator;
-import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
-import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
@@ -23,6 +21,8 @@ import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.ai.aiServer.service.AiServerService;
+import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
+import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,7 +50,6 @@ public class AiChatMessageService {
 	private final AiChatImageService aiChatImageService;
 
 	private final KeyGenerator keyGenerator;
-
 
 	// 사용자의 메시지,이미지 저장 후 AI 요청
 	@Transactional
@@ -97,7 +96,7 @@ public class AiChatMessageService {
 		// Ai 요청
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
-		return ChatMessageResponse.from(message);
+		return ChatMessageResponse.of(message, aiChatImageService.createImageGetUrl(request.aiChatImageId()));
 	}
 
 	// 요청 메세지가 비어있는지 검증
@@ -142,7 +141,7 @@ public class AiChatMessageService {
 		if (page == -1) {
 			// 마지막 페이지 조회를 위한 총 메시지 개수 계산
 			long totalMessages = aiChatMessageRepository.countByUserIdAndPostId(userId, postId);
-			page = (int) ((totalMessages - 1) / size); // 0-based index
+			page = (int)((totalMessages - 1) / size); // 0-based index
 			if (page < 0) {
 				page = 0; // 메시지가 없는 경우 첫 페이지로 설정
 			}
@@ -157,11 +156,11 @@ public class AiChatMessageService {
 		Page<ChatMessageResponse> responsePage = messagePage.map(msg -> {
 			// 이미지 없는 경우
 			if (msg.getAiChatImageId() == null) {
-				return ChatMessageResponse.from(msg, null);
+				return ChatMessageResponse.from(msg);
 			}
 			// 이미지 있는 경우, URL 생성
 			String imageUrl = aiChatImageService.createImageGetUrl(msg.getAiChatImageId());
-			return ChatMessageResponse.from(msg, imageUrl);
+			return ChatMessageResponse.of(msg, imageUrl);
 		});
 
 		// PageResponse로 감싸서 반환

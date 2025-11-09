@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.ai.aiChat.service.AiChatImageService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageOrderService;
 import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
@@ -41,17 +42,24 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class AiServerService {
 
+	// message 관련
 	private final MessageQueueService messageQueueService;
-	private final PostImageEntityRepository postImageEntityRepository;
-	private final AiChatRoomService aiChatRoomService;
-	private final AiChatRoomRepository aiChatRoomRepository;
-	private final AiImagePermissionService aiImagePermissionService;
-	private final AiChatImageRepository aiChatImageRepository;
-	private final AiChatMessageRepository aiChatMessageRepository;
-	private final ObjectMapper objectMapper;
 	private final AiResponseSseService aiResponseSseService;
 	private final AiChatService aiChatService;
+	private final AiChatMessageRepository aiChatMessageRepository;
 	private final AiChatMessageOrderService aiChatMessageOrderService;
+
+	// aiChatRoom 관련
+	private final AiChatRoomService aiChatRoomService;
+	private final AiChatRoomRepository aiChatRoomRepository;
+
+	// Image 관련
+	private final AiImagePermissionService aiImagePermissionService;
+	private final AiChatImageRepository aiChatImageRepository;
+	private final PostImageEntityRepository postImageEntityRepository;
+	private final AiChatImageService aiChatImageService;
+
+	private final ObjectMapper objectMapper;
 
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	// 빠른 응답을 위해 비동기 처리, 응답은 SSE를 통해 클라이언트에 전달
@@ -60,7 +68,7 @@ public class AiServerService {
 	public void processAiRequest(
 		final Long nowUserId,
 		AiChatMessageEntity chatMessage,
-		List<AiChatImageEntity> aiChatImages
+		List<AiChatImageEntity> aiChatImages // 없으면 빈 리스트
 	) {
 		final Long postId = chatMessage.getPostId();
 
@@ -75,7 +83,7 @@ public class AiServerService {
 
 			if (requestCategory == RequestCategory.CHAT_GENERATION) {
 				// 채팅응답일 경우 채팅 생성 요청
-				requestChatCreation(chatMessage);
+				requestChatCreation(chatMessage, aiChatImages);
 			} else {
 				// 이미지 생성용인 경우 이미지 생성 요청
 				requestImageCreation(chatMessage, aiChatImages, nowUserId);
@@ -95,11 +103,11 @@ public class AiServerService {
         The user can provide both text and/or an image.
         
         Decide the intent:
-        - "IMAGE_GENERATION": 
+        - "IMAGE_GENERATION":
             * If the user only provides an image without text.
             * If the text is asking to generate, modify, or create a new image.
             * If the user provides both image and text, but the text still indicates a new image should be generated.
-        - "CHAT_GENERATION": 
+        - "CHAT_GENERATION":
             * If the user only wants a conversational response.
             * If the user provides both image and text, but the text indicates normal chat about the image, not a request for new generation.
 
@@ -119,7 +127,8 @@ public class AiServerService {
 
 	// 채팅응답일 경우 채팅 생성 요청
 	private void requestChatCreation(
-		AiChatMessageEntity chatMessage
+		AiChatMessageEntity chatMessage,
+		List<AiChatImageEntity> aiChatImages
 	) {
 		final Long userId = chatMessage.getUserId();
 		final Long postId = chatMessage.getPostId();
@@ -151,11 +160,18 @@ public class AiServerService {
 		// 3.채팅룸 요약 업데이트
 		aiChatRoomService.updateChatSummary(userId, postId, response.newSummary());
 
+		// 3. 사용자가 보낸 image 조회
+		String imageUrl;
+		if (aiChatImages.isEmpty()) {
+			imageUrl = null;
+		} else {
+			imageUrl = aiChatImageService.createImageGetUrl(aiChatImages.get(0).getId());
+		}
+
 		// 4. SSE로 실시간 응답
-		// TODO: 실시간 응답으로 바꿔야 함.
 		aiResponseSseService.sendToClient(
 			chatMessage.getRequestId(),
-			ChatMessageResponse.from(message)
+			ChatMessageResponse.of(message, imageUrl)
 		);
 	}
 
