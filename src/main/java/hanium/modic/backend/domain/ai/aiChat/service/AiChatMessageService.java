@@ -77,7 +77,7 @@ public class AiChatMessageService {
 			.messageOrder(messageOrder)
 			.senderType(SenderType.USER)
 			.textContent(request.textContent())
-			.aiChatImageId(request.aiChatImageId())
+			.aiChatImageId(request.aiChatImageId()) // null 가능
 			.status(AiImageStatus.REQUEST_PENDING)
 			.requestId(requestId)
 			.build();
@@ -96,7 +96,12 @@ public class AiChatMessageService {
 		// Ai 요청
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
-		return ChatMessageResponse.of(message, aiChatImageService.createImageGetUrl(request.aiChatImageId()));
+		// 이미지 유무에 따른 응답 생성
+		if (request.aiChatImageId() == null) {
+			return ChatMessageResponse.from(message);
+		} else {
+			return ChatMessageResponse.of(message, aiChatImageService.createImageGetUrl(request.aiChatImageId()));
+		}
 	}
 
 	// 요청 메세지가 비어있는지 검증
