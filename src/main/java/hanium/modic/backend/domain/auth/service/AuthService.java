@@ -2,6 +2,7 @@ package hanium.modic.backend.domain.auth.service;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
@@ -41,6 +42,7 @@ public class AuthService {
 	private final EmailSender emailSender;
 
 	// 로그인 처리
+	@Transactional
 	public LoginResponse login(final String email, final String password) {
 		UserEntity user = userEntityRepository.findByEmail(email)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
@@ -65,6 +67,7 @@ public class AuthService {
 		return LoginResponse.from(token);
 	}
 
+	@Transactional
 	public void logout(final String refreshToken, final String accessToken) {
 		jwtTokenProvider.setBlackList(refreshToken);
 		jwtTokenProvider.setBlackList(accessToken);
@@ -75,6 +78,7 @@ public class AuthService {
 		refreshTokenRepository.deleteById(user.getId());
 	}
 
+	@Transactional
 	public ReissueResponse reissue(final String refreshToken) {
 		if (blackListRepository.existsById(refreshToken)) {
 			throw new AppException(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);

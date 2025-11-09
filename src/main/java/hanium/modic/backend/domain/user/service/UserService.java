@@ -74,12 +74,16 @@ public class UserService {
 
 	// 회원탈퇴
 	@Transactional
-	public void deleteUser(final long id) {
+	public void deleteAndLogout(final long id, final String refreshToken, final String accessToken) {
+		// 소프트 삭제 처리
 		UserEntity user = userEntityRepository.findById(id)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 		user.softWithdraw();
 
 		userEntityRepository.save(user);
+
+		// 관련 토큰 삭제
+		authService.logout(refreshToken, accessToken);
 	}
 
 	// 회원 정보 조회
