@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
 import hanium.modic.backend.common.jwt.JwtTokenProvider;
+import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.service.UserCoinService;
@@ -48,12 +49,14 @@ class UserControllerTest extends BaseControllerTest {
 	private UserService userService;
 	@MockitoBean
 	private UserCoinService userCoinService;
+	@MockitoBean
+	private CookieUtil cookieUtil;
+	@MockitoBean
+	private JwtTokenProvider jwtTokenProvider;
 
 	@Autowired
 	private MockMvc mockMvc;
 
-	@MockitoBean
-	private JwtTokenProvider jwtTokenProvider;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
