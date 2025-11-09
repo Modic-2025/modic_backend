@@ -122,7 +122,8 @@ public class AiChatImageService extends ImageService {
 				createdImage.getId(),
 				createImageGetUrl(createdImage.getId()),
 				createdImage.getPostId(),
-				createdImage.getAiChatRoomId()
+				createdImage.getAiChatRoomId(),
+				createdImage.getFromOriginImage()
 			)
 		);
 
