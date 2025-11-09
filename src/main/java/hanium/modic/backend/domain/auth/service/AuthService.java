@@ -14,6 +14,7 @@ import hanium.modic.backend.domain.auth.service.component.CodeManager;
 import hanium.modic.backend.domain.auth.service.component.EmailSender;
 import hanium.modic.backend.domain.auth.service.dto.EmailDto;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.enums.UserRole;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
@@ -43,6 +44,11 @@ public class AuthService {
 	public LoginResponse login(final String email, final String password) {
 		UserEntity user = userEntityRepository.findByEmail(email)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		// 탈퇴한 회원이 로그인 시도 시, 로그인 막음
+		if (user.getUserRole() == UserRole.WITHDRAWN) {
+			throw new AppException(ErrorCode.WITHDRAWN_USER_EXCEPTION);
+		}
 
 		if (!passwordEncoder.matches(password, user.getPassword())) {
 			throw new AppException(ErrorCode.USER_PASSWORD_MISMATCH_EXCEPTION);

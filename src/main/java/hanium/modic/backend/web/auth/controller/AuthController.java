@@ -69,10 +69,13 @@ public class AuthController {
 	@PostMapping("/logout")
 	@Operation(
 		summary = "로그아웃 API",
-		description = "리프레시 토큰을 통해 로그아웃합니다. 로그아웃된 토큰으로 요청시 [C-005] - 차단된 토큰입니다를 반환합니다."
+		description = """
+			리프레시 토큰을 통해 로그아웃합니다. <br>
+			로그아웃된 토큰으로 요청시 [C-005] - 차단된 토큰입니다를 반환합니다.
+			"""
 	)
 	@ApiErrorMapping({
-		USER_NOT_FOUND_EXCEPTION
+		USER_NOT_FOUND_EXCEPTION,
 	})
 	public ResponseEntity<AppResponse<Void>> logout(
 		@CookieValue(name = "refreshToken") String refreshToken,
