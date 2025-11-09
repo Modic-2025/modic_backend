@@ -88,7 +88,7 @@ public class AuthController {
 		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
 		response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshTokenCookie.toString());
 
-		return ResponseEntity.ok().build();
+		return ResponseEntity.ok(AppResponse.noContent());
 	}
 
 	@PostMapping("/reissue")
