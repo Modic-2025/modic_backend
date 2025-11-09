@@ -5,6 +5,7 @@ import static hanium.modic.backend.common.error.ErrorCode.*;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,6 +62,16 @@ public class UserController {
 				request.name(),
 				request.code()
 			)));
+	}
+
+	@DeleteMapping
+	@Operation(
+		summary = "회원탈퇴 API",
+		description = "로그인한 유저의 계정을 삭제합니다."
+	)
+	public ResponseEntity<AppResponse<Void>> deleteUser(@CurrentUser UserEntity user) {
+		userService.deleteUser(user.getId());
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/me")

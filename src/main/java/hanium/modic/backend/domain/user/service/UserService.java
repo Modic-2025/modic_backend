@@ -72,6 +72,16 @@ public class UserService {
 		}
 	}
 
+	// 회원탈퇴
+	@Transactional
+	public void deleteUser(final long id) {
+		UserEntity user = userEntityRepository.findById(id)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+		user.softWithdraw();
+
+		userEntityRepository.save(user);
+	}
+
 	// 회원 정보 조회
 	public UserInfoResponse getUserInfo(UserEntity user) {
 		Optional<String> userImageUrl = userImageService.createImageGetUrlOptional(user.getId());
