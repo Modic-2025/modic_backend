@@ -21,4 +21,12 @@ public class DevCookieUtil implements CookieUtil {
 		cookie.setMaxAge(COOKIE_MAX_AGE);
 		return cookie;
 	}
+
+	public Cookie deleteRefreshCookie() {
+		Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
+		cookie.setHttpOnly(true);
+		cookie.setPath("/");  // 생성 시와 동일해야 함
+		cookie.setMaxAge(0);  // 브라우저에서 즉시 삭제
+		return cookie;
+	}
 }

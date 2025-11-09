@@ -58,6 +58,16 @@ public class AuthService {
 		return LoginResponse.from(token);
 	}
 
+	public void logout(final String refreshToken, final String accessToken) {
+		jwtTokenProvider.setBlackList(refreshToken);
+		jwtTokenProvider.setBlackList(accessToken);
+
+		UserEntity user = jwtTokenProvider.getUser(refreshToken)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+		refreshTokenRepository.deleteById(user.getId());
+	}
+
 	public ReissueResponse reissue(final String refreshToken) {
 		if (blackListRepository.existsById(refreshToken)) {
 			throw new AppException(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);

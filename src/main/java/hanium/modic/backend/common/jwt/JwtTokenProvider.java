@@ -14,6 +14,7 @@ import hanium.modic.backend.common.oauth.CustomOAuth2User;
 import hanium.modic.backend.common.property.property.TokenProperty;
 import hanium.modic.backend.common.security.principal.AuthenticatedUser;
 import hanium.modic.backend.common.security.principal.UserPrincipal;
+import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.dto.Token;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -21,6 +22,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -93,6 +95,12 @@ public class JwtTokenProvider {
 		if (blackListRepository.existsById(accessToken)) {
 			throw new AppException(ErrorCode.TOKEN_BLACKLISTED_EXCEPTION);
 		}
+	}
+
+	public Optional<String> extractAccessToken(HttpServletRequest request) {
+		return Optional.ofNullable(request.getHeader(AuthConstant.AUTHORIZATION)).filter(
+			accessToken -> accessToken.startsWith(AuthConstant.BEARER)
+		).map(accessToken -> accessToken.replace(AuthConstant.BEARER, ""));
 	}
 
 	public String getType(String token) {

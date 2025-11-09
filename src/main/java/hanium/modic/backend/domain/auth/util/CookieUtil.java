@@ -4,4 +4,6 @@ import jakarta.servlet.http.Cookie;
 
 public interface CookieUtil {
 	Cookie createRefreshCookie(final String refreshToken);
+
+	Cookie deleteRefreshCookie();
 }

@@ -1,5 +1,7 @@
 package hanium.modic.backend.web.auth.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.response.AppResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
@@ -24,6 +28,7 @@ import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -38,6 +43,7 @@ public class AuthController {
 
 	private final AuthService authService;
 	private final CookieUtil cookieUtil;
+	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/login")
 	@Operation(
@@ -57,6 +63,28 @@ public class AuthController {
 		response.addCookie(refreshTokenCookie);
 
 		return ResponseEntity.ok(AppResponse.ok(loginResponse));
+	}
+
+	@PostMapping("/logout")
+	@Operation(
+		summary = "로그아웃 API",
+		description = "리프레시 토큰을 통해 로그아웃합니다. 로그아웃된 토큰으로 요청시 [C-005] - 차단된 토큰입니다를 반환합니다."
+	)
+	@ApiErrorMapping({
+		USER_NOT_FOUND_EXCEPTION
+	})
+	public ResponseEntity<AppResponse<Void>> logout(
+		@CookieValue(name = "refreshToken") String refreshToken,
+		HttpServletRequest request,
+		HttpServletResponse response
+	) {
+		String accessToken = jwtTokenProvider.extractAccessToken(request).orElse(null);
+		authService.logout(refreshToken, accessToken);
+
+		Cookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
+		response.addCookie(deleteRefreshTokenCookie);
+
+		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/reissue")
