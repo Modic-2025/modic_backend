@@ -118,7 +118,7 @@ public class AiImageCreatedListener {
 		// 6.클라이언트는 이미지 생성 요청 후 SSE 연결을 맺어, SSE 연결 객체가 아래 Service에 존재한다. 이를 사용해 이미지를 응답한다.
 		aiResponseSseService.sendToClient(
 			message.requestId(),
-			ChatMessageResponse.from(responseChatMessage, imageUrl)
+			ChatMessageResponse.of(responseChatMessage, imageUrl)
 		);
 	}
 
