@@ -59,10 +59,6 @@ public class AiSimilarityRequestService {
 				requestDto
 			);
 
-			// 4. 투표 상태 → IN_PROGRESS
-			vote.updateStatus(VoteStatus.IN_PROGRESS);
-			similarityVoteRepository.save(vote);
-
 			log.info("[유사도 검사 요청 완료] voteId={}", voteId);
 
 		} catch (Exception e) {

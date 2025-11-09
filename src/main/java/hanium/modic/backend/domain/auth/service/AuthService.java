@@ -39,6 +39,7 @@ public class AuthService {
 
 	private final EmailSender emailSender;
 
+	// 로그인 처리
 	public LoginResponse login(final String email, final String password) {
 		UserEntity user = userEntityRepository.findByEmail(email)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
@@ -83,6 +84,7 @@ public class AuthService {
 		return ReissueResponse.from(token);
 	}
 
+	// 이메일 인증 코드 전송
 	public void sendEmailVerification(final String email) {
 		if (userEntityRepository.existsByEmail(email)) {
 			throw new AppException(ErrorCode.USER_EMAIL_DUPLICATED_EXCEPTION);
