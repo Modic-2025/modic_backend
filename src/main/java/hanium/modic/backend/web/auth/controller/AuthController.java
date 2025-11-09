@@ -2,6 +2,8 @@ package hanium.modic.backend.web.auth.controller;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -27,7 +29,6 @@ import hanium.modic.backend.web.auth.dto.VerifyEmailCodeRequest;
 import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -59,8 +60,8 @@ public class AuthController {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + loginResponse.accessToken());
-		Cookie refreshTokenCookie = cookieUtil.createRefreshCookie(loginResponse.refreshToken());
-		response.addCookie(refreshTokenCookie);
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshCookie(loginResponse.refreshToken());
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 		return ResponseEntity.ok(AppResponse.ok(loginResponse));
 	}
@@ -81,8 +82,8 @@ public class AuthController {
 		String accessToken = jwtTokenProvider.extractAccessToken(request).orElse(null);
 		authService.logout(refreshToken, accessToken);
 
-		Cookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
-		response.addCookie(deleteRefreshTokenCookie);
+		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
+		response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshTokenCookie.toString());
 
 		return ResponseEntity.ok().build();
 	}
@@ -102,8 +103,8 @@ public class AuthController {
 		ReissueResponse reissueResponse = authService.reissue(refreshToken);
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + reissueResponse.accessToken());
-		Cookie refreshTokenCookie = cookieUtil.createRefreshCookie(reissueResponse.refreshToken());
-		response.addCookie(refreshTokenCookie);
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshCookie(reissueResponse.refreshToken());
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 		return ResponseEntity.ok().build();
 	}

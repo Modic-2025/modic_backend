@@ -1,32 +1,35 @@
 package hanium.modic.backend.domain.auth.util;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
-
-import jakarta.servlet.http.Cookie;
 
 // 개발 환경용 쿠키 유틸리티
 @Component
 @Profile({"local", "dev", "test"})
 public class DevCookieUtil implements CookieUtil {
 
-	private final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+	private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-	private final int COOKIE_MAX_AGE = 60 * 60 * 24 * 3;
+	private static final int COOKIE_MAX_AGE = 60 * 60 * 24 * 3;
 
-	public Cookie createRefreshCookie(final String refreshToken) {
-		Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
-		cookie.setHttpOnly(true);
-		cookie.setPath("/");
-		cookie.setMaxAge(COOKIE_MAX_AGE);
-		return cookie;
+	public ResponseCookie createRefreshCookie(final String refreshToken) {
+		return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, refreshToken)
+			.httpOnly(true)
+			.secure(true)
+			.path("/")
+			.maxAge(COOKIE_MAX_AGE)
+			.sameSite("Lax")  // 또는 "Strict"
+			.build();
 	}
 
-	public Cookie deleteRefreshCookie() {
-		Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
-		cookie.setHttpOnly(true);
-		cookie.setPath("/");  // 생성 시와 동일해야 함
-		cookie.setMaxAge(0);  // 브라우저에서 즉시 삭제
-		return cookie;
+	public ResponseCookie deleteRefreshCookie() {
+		return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+			.httpOnly(true)
+			.secure(true)
+			.path("/")
+			.maxAge(0)
+			.sameSite("Lax")
+			.build();
 	}
 }

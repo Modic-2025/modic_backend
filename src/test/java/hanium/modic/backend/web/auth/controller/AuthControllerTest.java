@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -66,7 +67,7 @@ class AuthControllerTest extends BaseControllerTest {
 		when(authService.login(email, password))
 			.thenReturn(new LoginResponse("accessToken", "refreshToken"));
 		when(cookieUtil.createRefreshCookie("refreshToken"))
-			.thenReturn(new Cookie("refreshToken", "refreshToken"));
+			.thenReturn(ResponseCookie.from("refreshToken", "refreshToken").build());
 
 		// when
 		MvcResult result = mockMvc.perform(post("/api/auth/login")
@@ -136,7 +137,7 @@ class AuthControllerTest extends BaseControllerTest {
 
 		when(authService.reissue(oldRefreshToken)).thenReturn(mockResponse);
 		when(cookieUtil.createRefreshCookie(newRefreshToken))
-			.thenReturn(new Cookie("refreshToken", newRefreshToken));
+			.thenReturn(ResponseCookie.from("refreshToken", newRefreshToken).build());
 
 		// when, then
 		mockMvc.perform(post("/api/auth/reissue")

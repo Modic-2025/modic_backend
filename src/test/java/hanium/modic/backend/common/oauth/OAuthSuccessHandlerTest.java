@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -71,7 +72,7 @@ class OAuthSuccessHandlerTest {
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
 		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
-			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
+			.thenReturn(ResponseCookie.from("refreshToken", "refreshToken").build());
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -97,7 +98,7 @@ class OAuthSuccessHandlerTest {
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
 		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
-			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
+			.thenReturn(ResponseCookie.from("refreshToken", "refreshToken").build());
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -115,7 +116,7 @@ class OAuthSuccessHandlerTest {
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
 		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
-			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
+			.thenReturn(ResponseCookie.from("refreshToken", mockToken.refreshToken()).build());
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
@@ -136,7 +137,7 @@ class OAuthSuccessHandlerTest {
 		when(customOAuth2User.getUserEntity()).thenReturn(mockUser);
 		when(jwtTokenProvider.createToken(customOAuth2User)).thenReturn(mockToken);
 		when(cookieUtil.createRefreshCookie(mockToken.refreshToken()))
-			.thenReturn(new Cookie("refreshToken", mockToken.refreshToken()));
+			.thenReturn(ResponseCookie.from("refreshToken", "refreshToken").build());
 
 		// when
 		oAuthSuccessHandler.onAuthenticationSuccess(request, response, authentication);
