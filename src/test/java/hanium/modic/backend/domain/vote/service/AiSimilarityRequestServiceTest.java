@@ -69,8 +69,7 @@ class AiSimilarityRequestServiceTest {
 			})
 		);
 
-		assertThat(vote.getStatus()).isEqualTo(VoteStatus.IN_PROGRESS);
-		verify(similarityVoteRepository).save(vote);
+		assertThat(vote.getStatus()).isEqualTo(VoteStatus.PENDING); // AI 투표전까지는 PENDING 상태 유지
 	}
 
 	@Test

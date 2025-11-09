@@ -19,7 +19,7 @@ public record ChatMessageResponse(
 	LocalDateTime createdAt,
 	AiImageStatus status // 이미지 상태
 ) {
-	public static ChatMessageResponse from(AiChatMessageEntity entity, String imageUrl) {
+	public static ChatMessageResponse of(AiChatMessageEntity entity, String imageUrl) {
 		return new ChatMessageResponse(
 			entity.getId(),
 			entity.getMessageOrder(),
@@ -33,7 +33,7 @@ public record ChatMessageResponse(
 	}
 
 	public static ChatMessageResponse from(AiChatMessageEntity entity) {
-		return from(entity, null);
+		return of(entity, null);
 	}
 
 	public static ChatMessageResponse createErrorResponse(AiChatMessageEntity entity, String errorMessage) {

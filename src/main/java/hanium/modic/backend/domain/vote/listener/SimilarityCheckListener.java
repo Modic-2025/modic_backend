@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.vote.listener;
 
 import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+import static hanium.modic.backend.domain.vote.enums.VoteStatus.*;
 
 import java.util.Optional;
 
@@ -44,9 +45,12 @@ public class SimilarityCheckListener {
 			log.error("[유사도 검사 실패] 투표를 찾을 수 없습니다. voteId={}", response.voteId());
 			return;
 		}
-		SimilarityVoteEntity vote = voteOpt.get();
 
-		// 2. SimilarityVoteSummaryEntity 조회
+		// 2. Vote 상태를 IN_PROGRESS로 업데이트
+		SimilarityVoteEntity vote = voteOpt.get();
+		vote.updateStatus(IN_PROGRESS);
+
+		// 3. SimilarityVoteSummaryEntity 조회
 		Optional<SimilarityVoteSummaryEntity> voteSummaryOpt = voteSummaryRepository.findByVoteId(response.voteId());
 		if (voteSummaryOpt.isEmpty()) {
 			log.error("[유사도 검사 실패] 투표 집계를 찾을 수 없습니다. voteId={}", response.voteId());
@@ -55,10 +59,10 @@ public class SimilarityCheckListener {
 		}
 		SimilarityVoteSummaryEntity voteSummary = voteSummaryOpt.get();
 
-		// 3. AI 가중치 조회 (VoteProperties)
+		// 4. AI 가중치 조회 (VoteProperties)
 		int aiVoteWeight = voteProperties.getAiVoteWeight();
 
-		// 4. 판단에 따라 가중치 추가
+		// 5. 판단에 따라 가중치 추가
 		if (response.decision() == VoteDecision.APPROVE) {
 			voteSummary.addApproveWeight((long) aiVoteWeight);
 			voteSummary.setAiDecision(VoteDecision.APPROVE);
@@ -73,8 +77,9 @@ public class SimilarityCheckListener {
 			return;
 		}
 
-		// 5. SimilarityVoteSummaryEntity 저장
+		// 6. SimilarityVoteSummaryEntity, SimilarityVoteEntity 저장
 		voteSummaryRepository.save(voteSummary);
+		similarityVoteRepository.save(vote);
 
 		log.info("[AI 유사도 검사 완료] voteId={}, aiDecision={}, approveWeight={}, denyWeight={}, totalWeight={}",
 			response.voteId(), voteSummary.getAiDecision(),
