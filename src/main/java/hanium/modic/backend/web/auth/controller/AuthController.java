@@ -1,5 +1,9 @@
 package hanium.modic.backend.web.auth.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -10,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.response.AppResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.auth.constant.AuthConstant;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
@@ -23,7 +29,7 @@ import hanium.modic.backend.web.auth.dto.VerifyEmailCodeRequest;
 import hanium.modic.backend.web.auth.dto.VerifyEmailCodeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -37,6 +43,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
 	private final AuthService authService;
+	private final CookieUtil cookieUtil;
+	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping("/login")
 	@Operation(
@@ -52,10 +60,35 @@ public class AuthController {
 		LoginResponse loginResponse = authService.login(request.email(), request.password());
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + loginResponse.accessToken());
-		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(loginResponse.refreshToken());
-		response.addCookie(refreshTokenCookie);
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshCookie(loginResponse.refreshToken());
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 		return ResponseEntity.ok(AppResponse.ok(loginResponse));
+	}
+
+	@PostMapping("/logout")
+	@Operation(
+		summary = "로그아웃 API",
+		description = """
+			리프레시 토큰을 통해 로그아웃합니다. <br>
+			로그아웃된 토큰으로 요청시 [C-005] - 차단된 토큰입니다를 반환합니다.
+			"""
+	)
+	@ApiErrorMapping({
+		USER_NOT_FOUND_EXCEPTION,
+	})
+	public ResponseEntity<AppResponse<Void>> logout(
+		@CookieValue(name = "refreshToken") String refreshToken,
+		HttpServletRequest request,
+		HttpServletResponse response
+	) {
+		String accessToken = jwtTokenProvider.extractAccessToken(request).get(); // accessToken은 무조건 존재함
+		authService.logout(refreshToken, accessToken);
+
+		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
+		response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshTokenCookie.toString());
+
+		return ResponseEntity.ok(AppResponse.noContent());
 	}
 
 	@PostMapping("/reissue")
@@ -73,8 +106,8 @@ public class AuthController {
 		ReissueResponse reissueResponse = authService.reissue(refreshToken);
 
 		response.addHeader(AuthConstant.AUTHORIZATION, AuthConstant.BEARER + reissueResponse.accessToken());
-		Cookie refreshTokenCookie = CookieUtil.createRefreshCookie(reissueResponse.refreshToken());
-		response.addCookie(refreshTokenCookie);
+		ResponseCookie refreshTokenCookie = cookieUtil.createRefreshCookie(reissueResponse.refreshToken());
+		response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
 		return ResponseEntity.ok().build();
 	}

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,7 +28,9 @@ import org.springframework.web.bind.MissingRequestCookieException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import hanium.modic.backend.base.BaseControllerTest;
+import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.web.auth.dto.CheckEmailDuplicateResponse;
 import hanium.modic.backend.web.auth.dto.LoginRequest;
 import hanium.modic.backend.web.auth.dto.LoginResponse;
@@ -45,7 +48,11 @@ class AuthControllerTest extends BaseControllerTest {
 	private MockMvc mockMvc;
 
 	@MockitoBean
+	private CookieUtil cookieUtil;
+	@MockitoBean
 	private AuthService authService;
+	@MockitoBean
+	private JwtTokenProvider jwtTokenProvider;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,6 +66,8 @@ class AuthControllerTest extends BaseControllerTest {
 
 		when(authService.login(email, password))
 			.thenReturn(new LoginResponse("accessToken", "refreshToken"));
+		when(cookieUtil.createRefreshCookie("refreshToken"))
+			.thenReturn(ResponseCookie.from("refreshToken", "refreshToken").build());
 
 		// when
 		MvcResult result = mockMvc.perform(post("/api/auth/login")
@@ -127,6 +136,8 @@ class AuthControllerTest extends BaseControllerTest {
 		ReissueResponse mockResponse = new ReissueResponse(newAccessToken, newRefreshToken);
 
 		when(authService.reissue(oldRefreshToken)).thenReturn(mockResponse);
+		when(cookieUtil.createRefreshCookie(newRefreshToken))
+			.thenReturn(ResponseCookie.from("refreshToken", newRefreshToken).build());
 
 		// when, then
 		mockMvc.perform(post("/api/auth/reissue")

@@ -3,8 +3,12 @@ package hanium.modic.backend.web.user.controller;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
+import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.swagger.ApiErrorMapping;
+import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
@@ -33,6 +39,8 @@ import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -46,6 +54,8 @@ public class UserController {
 
 	private final UserService userService;
 	private final UserCoinService userCoinService;
+	private final CookieUtil cookieUtil;
+	private final JwtTokenProvider jwtTokenProvider;
 
 	@PostMapping
 	@Operation(
@@ -61,6 +71,26 @@ public class UserController {
 				request.name(),
 				request.code()
 			)));
+	}
+
+	@DeleteMapping
+	@Operation(
+		summary = "회원탈퇴 API",
+		description = "로그인한 유저의 계정을 삭제합니다."
+	)
+	public ResponseEntity<AppResponse<Void>> deleteUser(
+		@CurrentUser UserEntity user,
+		@CookieValue(name = "refreshToken") String refreshToken,
+		HttpServletRequest request,
+		HttpServletResponse response
+	) {
+		String accessToken = jwtTokenProvider.extractAccessToken(request).get(); // accessToken은 무조건 존재함
+		userService.deleteAndLogout(user.getId(), refreshToken, accessToken);
+
+		ResponseCookie deleteRefreshTokenCookie = cookieUtil.deleteRefreshCookie();
+		response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshTokenCookie.toString());
+
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/me")

@@ -96,4 +96,10 @@ public class UserEntity extends BaseEntity {
 		}
 		this.email = email;
 	}
+
+	public void softWithdraw() {
+		this.userRole = UserRole.WITHDRAWN;
+		this.email = "withdrawn_" + this.id + "_" + java.util.UUID.randomUUID().toString() + "@modic.com";
+		this.name = "탈퇴회원";
+	}
 }

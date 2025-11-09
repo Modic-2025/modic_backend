@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
@@ -40,6 +41,9 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private AuthCodeRepository authCodeRepository;
+
+	@Autowired
+	private CookieUtil cookieUtil;
 
 	@Test
 	@DisplayName("로그인 API 테스트")
@@ -77,11 +81,19 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 			.build();
 		refreshTokenRepository.save(refreshToken);
 
-		Cookie refreshCookie = CookieUtil.createRefreshCookie(token.refreshToken());
+		ResponseCookie refreshCookie = cookieUtil.createRefreshCookie(token.refreshToken());
+
+		// ResponseCookie → Cookie 변환
+		Cookie servletCookie = new Cookie(refreshCookie.getName(), refreshCookie.getValue());
+
+		// 옵션 맞춰주기 (테스트용이라 최소 설정만)
+		servletCookie.setPath(refreshCookie.getPath());
+		servletCookie.setHttpOnly(refreshCookie.isHttpOnly());
+		servletCookie.setSecure(refreshCookie.isSecure());
 
 		// when, then
 		mockMvc.perform(post("/api/auth/reissue")
-				.cookie(refreshCookie))
+				.cookie(servletCookie))
 			.andExpect(status().isOk())
 			.andExpect(header().string("Authorization", startsWith("Bearer ")))
 			.andExpect(cookie().exists("refreshToken"));
