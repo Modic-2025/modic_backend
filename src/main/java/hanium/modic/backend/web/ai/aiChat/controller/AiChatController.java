@@ -50,6 +50,8 @@ public class AiChatController {
 	private final AiChatMessageService aiChatMessageService;
 	private final AiResponseSseService aiResponseSseService;
 
+	private static final long SSE_TIMEOUT = 5 * 60 * 1000L; // 5 minutes
+
 	@Operation(
 		summary = "채팅방 정보 조회",
 		description = """
@@ -179,9 +181,8 @@ public class AiChatController {
 		@PathVariable @NotBlank(message = "요청 ID는 필수입니다.") String requestId,
 		@CurrentUser UserEntity userEntity
 	) {
-		// SSE 연결 생성 및 Emitter 등록
-		// Todo: 현재 Timeout을 무한대로 설정했는데, 적절한 값으로 변경 필요 및 처리 기능 필요
-		SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+		// SSE 연결 생성 및 Emitter 등록, 타임아웃 5분
+		SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 		aiResponseSseService.addEmitter(userEntity.getId(), requestId, emitter);
 
 		// 기타 장애가 나면 연결 해제
