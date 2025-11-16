@@ -15,13 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hanium.modic.backend.common.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.ai.aiChat.service.AiChatImageService;
-import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageOrderService;
-import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
+import hanium.modic.backend.domain.ai.aiChat.service.AiChatImageService;
+import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageOrderService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
 import hanium.modic.backend.domain.ai.aiServer.dto.AiImageRequestMessageDto;
@@ -33,6 +32,7 @@ import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
+import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,15 +82,11 @@ public class AiServerService {
 				.orElse(List.of());
 		}
 
-		final Long postId = chatMessage.getPostId();
-
-		// 해당 Post에 대한 AI 이미지 생성 권한 검증
-		validateAiRequestPermission(nowUserId, postId);
-
 		// AI 요청 처리
 		try {
 			// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분
-			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent(), chatMessage.hasImage());
+			RequestCategory requestCategory = classifyRequestCategory(chatMessage.getTextContent(),
+				chatMessage.hasImage());
 			log.info("Classified request category: {}", requestCategory);
 
 			if (requestCategory == RequestCategory.CHAT_GENERATION) {
@@ -111,20 +107,20 @@ public class AiServerService {
 	// AiAgent를 통해 해당 메시지 채팅응답용인지, 이미지 생성용인지 구분 후 처리
 	private RequestCategory classifyRequestCategory(String message, boolean hasImage) {
 		String systemPrompt = """
-        You are a classifier.
-        The user can provide both text and/or an image.
-        
-        Decide the intent:
-        - "IMAGE_GENERATION":
-            * If the user only provides an image without text.
-            * If the text is asking to generate, modify, or create a new image.
-            * If the user provides both image and text, but the text still indicates a new image should be generated.
-        - "CHAT_GENERATION":
-            * If the user only wants a conversational response.
-            * If the user provides both image and text, but the text indicates normal chat about the image, not a request for new generation.
-
-        Only return one of the two exact words.
-        """;
+			You are a classifier.
+			The user can provide both text and/or an image.
+			
+			Decide the intent:
+			- "IMAGE_GENERATION":
+			    * If the user only provides an image without text.
+			    * If the text is asking to generate, modify, or create a new image.
+			    * If the user provides both image and text, but the text still indicates a new image should be generated.
+			- "CHAT_GENERATION":
+			    * If the user only wants a conversational response.
+			    * If the user provides both image and text, but the text indicates normal chat about the image, not a request for new generation.
+			
+			Only return one of the two exact words.
+			""";
 
 		// 메시지가 null 또는 빈 문자열일 수 있으니 기본값 처리
 		String safeMessage = (message == null) ? "" : message;
@@ -254,16 +250,9 @@ public class AiServerService {
 		// 5. MQ에 요청
 		messageQueueService.sendImageGenerationRequest(aiImageRequestMessageDto);
 
-		// 6. 사용권소모, MQ과정까지 실패하면 사용권 소모하면 안됨.
+		// 6. 사용권소모, MQ과정까지 실패하면 DLQ 리스너에서 복구
 		aiImagePermissionService.consumeRemainingGenerations(nowUserId, postId);
 
-	}
-
-	// 해당 Post에 대한 AI 이미지 생성 권한 검증
-	private void validateAiRequestPermission(Long userId, Long postId) {
-		if (!aiChatRoomRepository.existsByUserIdAndPostId(userId, postId)) {
-			throw new AppException(ErrorCode.AI_IMAGE_PERMISSION_NOT_FOUND);
-		}
 	}
 
 	// AiChatMessageEntity 리스트를 ChatMessage 리스트로 변환

@@ -51,12 +51,14 @@ public class AiChatMessageService {
 	private final KeyGenerator keyGenerator;
 
 	// 사용자의 메시지,이미지 저장 후 AI 요청
-	@Transactional
+	// @Transactional 붙이면 장애남(AiChatMessage가 커밋되기 전에 processAiRequest가 실행되어 MQ에서 메시지를 못찾음)
 	public ChatMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
 		// 메시지랑 이미지 둘 다 비어있으면 에러
 		validateRequestMessageNotEmpty(request);
 		// 이미지가 다른 사람의 이미지면 에러
 		validateAiChatImageOwnership(userId, request.aiChatImageId());
+		// 이미지 생성권 없으면 에러
+		validateRemainingGenerationsEnough(userId, postId);
 
 		// 채팅방 조회
 		AiChatRoomEntity aiChatRoom = aiChatRoomRepository.findByUserIdAndPostId(userId, postId)
@@ -139,6 +141,15 @@ public class AiChatMessageService {
 		if (aiChatImageId != null) {
 			aiChatImageRepository.findById(aiChatImageId)
 				.orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND_EXCEPTION));
+		}
+	}
+
+	// 이미지 생성권 없으면 에러
+	private void validateRemainingGenerationsEnough(Long userId, Long postId) {
+		AiChatRoomEntity aip = aiChatRoomRepository.findByUserIdAndPostId(userId, postId)
+			.orElseThrow(() -> new AppException(AI_IMAGE_PERMISSION_NOT_FOUND));
+		if (!aip.hasRemainingGenerations()) {
+			throw new AppException(REMAINING_GENERATIONS_NOT_ENOUGH_EXCEPTION);
 		}
 	}
 
