@@ -27,7 +27,6 @@ import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
 import hanium.modic.backend.web.ai.aiChat.dto.response.GetChatRoomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -79,15 +78,16 @@ public class AiChatController {
 			이미지가 없으면 imageId에 null을 입력합니다.
 			
 			이미지는 사전에 업로드되어 있어야 하며, 업로드된 이미지 ID를 함께 전송해야 합니다.
-			""",
-		responses = {
-			@ApiResponse(responseCode = "404", description = "AI 채팅방을 찾을 수 없습니다.[AC-001]"),
-			@ApiResponse(responseCode = "404", description = "해당 이미지를 찾을 수 없습니다.[I-002]"),
-			@ApiResponse(responseCode = "400", description = "AI 이미지 생성권이 부족합니다.[AI-007]"),
-			@ApiResponse(responseCode = "500", description = "AI 서버와의 통신 중 에러가 발생하였습니다.[AI-012]"),
-			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
-		}
+			"""
 	)
+	@ApiErrorMapping({
+		AI_CHAT_ROOM_NOT_FOUND,
+		IMAGE_NOT_FOUND_EXCEPTION,
+		REMAINING_GENERATIONS_NOT_ENOUGH_EXCEPTION,
+		USER_INPUT_EXCEPTION,
+		AI_SERVER_ERROR,
+		IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION
+	})
 	public ResponseEntity<AppResponse<ChatMessageResponse>> sendUserMessage(
 		@Parameter(description = "ai chat room ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Valid @RequestBody ChatMessageRequest request,
