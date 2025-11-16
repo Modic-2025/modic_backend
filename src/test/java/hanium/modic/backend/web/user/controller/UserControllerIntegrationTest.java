@@ -88,7 +88,7 @@ public class UserControllerIntegrationTest extends BaseIntegrationTest {
 				.header("Authorization", "Bearer " + token.accessToken())
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpectAll(jsonPath("$.data.id").value(user.getId()),
+			.andExpectAll(jsonPath("$.data.userId").value(user.getId()),
 				jsonPath("$.data.userEmail").value(user.getEmail()),
 				jsonPath("$.data.userName").value(user.getName()));
 	}
