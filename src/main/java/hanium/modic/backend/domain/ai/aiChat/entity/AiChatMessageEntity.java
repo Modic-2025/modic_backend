@@ -1,9 +1,8 @@
 package hanium.modic.backend.domain.ai.aiChat.entity;
 
 import hanium.modic.backend.common.entity.BaseEntity;
-import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
-import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
+import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

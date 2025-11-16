@@ -60,4 +60,6 @@ public interface AiChatMessageRepository extends JpaRepository<AiChatMessageEnti
 	 * 특정 사용자-포스트의 메시지 개수 조회
 	 */
 	long countByUserIdAndPostId(Long userId, Long postId);
+
+	Optional<AiChatMessageEntity> findByIdAndUserId(Long id, Long userId);
 }

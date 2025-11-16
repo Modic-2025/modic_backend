@@ -14,18 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import hanium.modic.backend.common.annotation.user.CurrentUser;
-import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.ai.aiChat.dto.ChatContextResetResponse;
-import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
-import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
-import hanium.modic.backend.web.ai.aiChat.dto.response.GetChatRoomResponse;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatMessageService;
 import hanium.modic.backend.domain.ai.aiChat.service.AiChatRoomService;
 import hanium.modic.backend.domain.ai.aiServer.service.AiResponseSseService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.web.ai.aiChat.dto.request.ChatMessageRequest;
+import hanium.modic.backend.web.ai.aiChat.dto.response.ChatMessageResponse;
+import hanium.modic.backend.web.ai.aiChat.dto.response.GetChatRoomResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,18 +51,18 @@ public class AiChatController {
 
 	private static final long SSE_TIMEOUT = 5 * 60 * 1000L; // 5 minutes
 
+	@GetMapping("/room")
 	@Operation(
 		summary = "채팅방 정보 조회",
 		description = """
 			특정 포스트에 대한 사용자의 채팅방 정보를 조회합니다.
 			AI 이미지 생성권이 있어야 합니다.(생성권을 다 소모하더라도 조회는 가능합니다.)
-			""",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
-		}
+			"""
 	)
-	@GetMapping("/room")
+	@ApiErrorMapping({
+		AI_IMAGE_PERMISSION_NOT_FOUND,
+		USER_INPUT_EXCEPTION
+	})
 	public ResponseEntity<AppResponse<GetChatRoomResponse>> getChatRoom(
 		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@CurrentUser UserEntity user
@@ -72,6 +71,7 @@ public class AiChatController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
+	@PostMapping("/messages")
 	@Operation(
 		summary = "채팅 메시지 전송",
 		description = """
@@ -88,7 +88,6 @@ public class AiChatController {
 			@ApiResponse(responseCode = "400", description = "이미지를 훔칠 수 없습니다.[I-006]")
 		}
 	)
-	@PostMapping("/messages")
 	public ResponseEntity<AppResponse<ChatMessageResponse>> sendUserMessage(
 		@Parameter(description = "ai chat room ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Valid @RequestBody ChatMessageRequest request,
@@ -99,6 +98,28 @@ public class AiChatController {
 		return ResponseEntity.ok(AppResponse.ok(response));
 	}
 
+	@PostMapping("/messages/{messageId}/cancel")
+	@Operation(
+		summary = "AI 응답 취소",
+		description = "진행 중인 AI 응답을 취소합니다. 이미 완료된 응답은 취소할 수 없습니다.",
+		responses = {
+			@ApiResponse(responseCode = "409", description = "이미 완료된 응답은 취소할 수 없습니다.[AI-013]")
+		}
+	)
+	@ApiErrorMapping({
+		AI_CHAT_MESSAGE_NOT_FOUND,
+		AI_CHAT_CANNOT_CANCEL
+	})
+	public ResponseEntity<AppResponse<ChatMessageResponse>> cancelAiResponse(
+		@CurrentUser UserEntity user,
+		@Parameter(description = "메시지 ID") @PathVariable @Positive(message = "메시지 ID는 양수여야 합니다.") Long messageId
+	) {
+		ChatMessageResponse response = aiChatMessageService.cancelAiRequest(user.getId(), messageId);
+
+		return ResponseEntity.ok(AppResponse.ok(response));
+	}
+
+	@GetMapping("/messages")
 	@Operation(
 		summary = "채팅 메시지 목록 조회",
 		description = """
@@ -110,6 +131,7 @@ public class AiChatController {
 			- REQUEST, // 요청 상태 및 요청 완료 상태
 			- REQUEST_PENDING, // AI 요청 대기 상태 -> SSE에 연결하면 응답을 실시간으로 받을 수 있습니다.
 			- REQUEST_FAILED, // AI 요청 실패 상태 -> SSE에 연결해도 답장을 받을 수 없습니다.
+			- REQUEST_CANCELLED, // AI 요청 취소 상태 -> SSE에 연결해도 답장을 받을 수 없습니다.
 			- RESPONSE // AI의 응답을 의미
 			
 			"""
@@ -118,7 +140,6 @@ public class AiChatController {
 		AI_IMAGE_PERMISSION_NOT_FOUND,
 		USER_INPUT_EXCEPTION
 	})
-	@GetMapping("/messages")
 	public ResponseEntity<AppResponse<PageResponse<ChatMessageResponse>>> getChatMessages(
 		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@Parameter(description = "페이지 번호 (0부터 시작)")
@@ -133,15 +154,15 @@ public class AiChatController {
 		return ResponseEntity.ok(AppResponse.ok(responses));
 	}
 
+	@PostMapping("/context/reset")
 	@Operation(
 		summary = "채팅 컨텍스트 초기화",
-		description = "채팅 컨텍스트를 초기화합니다. 기존 채팅 내역은 유지되지만 AI가 참조하지 않습니다.",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "404", description = "AI 이미지 생성권을 구매한 이력이 없습니다.[AI-004]")
-		}
+		description = "채팅 컨텍스트를 초기화합니다. 기존 채팅 내역은 유지되지만 AI가 참조하지 않습니다."
 	)
-	@PostMapping("/context/reset")
+	@ApiErrorMapping({
+		AI_IMAGE_PERMISSION_NOT_FOUND,
+		USER_INPUT_EXCEPTION
+	})
 	public ResponseEntity<AppResponse<ChatContextResetResponse>> resetContext(
 		@Parameter(description = "포스트 ID") @PathVariable @Positive(message = "포스트 ID는 양수여야 합니다.") Long postId,
 		@CurrentUser UserEntity user) {
@@ -171,12 +192,12 @@ public class AiChatController {
 			  "status": "RESPONSE" // 응답이므로 RESPONSE
 			}
 			
-			""",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]"),
-			@ApiResponse(responseCode = "403", description = "유저 권한 오류[C-002]")
-		}
+			"""
 	)
+	@ApiErrorMapping({
+		USER_INPUT_EXCEPTION,
+		USER_ROLE_EXCEPTION
+	})
 	public SseEmitter subscribe(
 		@PathVariable @NotBlank(message = "요청 ID는 필수입니다.") String requestId,
 		@CurrentUser UserEntity userEntity
