@@ -35,7 +35,6 @@ import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
 import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
 import hanium.modic.backend.web.user.dto.response.GetUserUpdateTokenResponse;
-import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -109,12 +108,12 @@ public class UserController {
 		description = "검색어를 기반으로 사용자 목록을 페이지 단위로 조회합니다. page는 0부터 시작합니다."
 	)
 	@ApiErrorMapping({USER_INPUT_EXCEPTION})
-	public ResponseEntity<AppResponse<PageResponse<SearchUsersResponse>>> searchUsersByName(
+	public ResponseEntity<AppResponse<PageResponse<UserInfoResponse>>> searchUsersByName(
 		@RequestParam @NotBlank(message = "검색어는 필수입니다.") String keyword,
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
 		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size
 	) {
-		Page<SearchUsersResponse> result = userService.searchUsersByName(
+		Page<UserInfoResponse> result = userService.searchUsersByName(
 			keyword.strip(), page, size
 		);
 		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(result)));
