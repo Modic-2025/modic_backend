@@ -15,9 +15,11 @@ import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.dto.FollowerWithStatus;
 import hanium.modic.backend.domain.follow.dto.FollowingWithStatus;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
+import hanium.modic.backend.domain.notification.dto.NotificationPayload;
+import hanium.modic.backend.domain.notification.enums.NotificationType;
+import hanium.modic.backend.domain.notification.service.NotificationService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersResponse;
 import hanium.modic.backend.web.follow.dto.response.GetFollowersWithStatusResponse;
@@ -28,10 +30,15 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class FollowService {
+	// 팔로우 관련
 	private final FollowEntityRepository followRepository;
+
+	// 유저 관련
 	private final UserEntityRepository userRepository;
 	private final UserImageService userImageService;
-	private final UserImageEntityRepository userImageRepository;
+
+	// 알림 관련
+	private final NotificationService notificationService;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -51,6 +58,14 @@ public class FollowService {
 		// 팔로우 요청 및 기존 팔로우 존재 여부에 따라 팔로우, 언팔로우 처리
 		if (type == FOLLOW) {
 			followRepository.insertFollowIfExist(me.getId(), target.getId());
+
+			// 알림 생성
+			notificationService.createNotification(
+				targetId,
+				NotificationType.FOLLOWED,
+				NotificationPayload.builder(me.getId(), me.getName(), me.getEmail())
+					.build()
+			);
 		} else if (type == UNFOLLOW) {
 			followRepository.deleteByMyIdAndFollowingId(me.getId(), targetId);
 		}
