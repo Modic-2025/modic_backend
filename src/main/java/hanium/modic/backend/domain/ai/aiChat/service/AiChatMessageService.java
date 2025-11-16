@@ -51,7 +51,7 @@ public class AiChatMessageService {
 	private final KeyGenerator keyGenerator;
 
 	// 사용자의 메시지,이미지 저장 후 AI 요청
-	@Transactional
+	// @Transactional 붙이면 장애남(AiChatMessage가 커밋되기 전에 processAiRequest가 실행되어 MQ에서 메시지를 못찾음)
 	public ChatMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
 		// 메시지랑 이미지 둘 다 비어있으면 에러
 		validateRequestMessageNotEmpty(request);
