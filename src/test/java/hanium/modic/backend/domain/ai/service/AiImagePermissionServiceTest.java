@@ -16,6 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.notification.enums.NotificationType;
+import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
@@ -49,6 +52,12 @@ class AiImagePermissionServiceTest {
 	@Mock
 	private LockManager lockManager;
 
+	@Mock
+	private NotificationService notificationService;
+
+	@Mock
+	private UserEntityRepository userEntityRepository;
+
 	@Test
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionByCoin_Success() {
@@ -59,6 +68,8 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
+		when(userEntityRepository.findById(anyLong())).thenReturn(Optional.of(testUser));
+		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
 
 		// when
 		aiImagePermissionService.buyAiImagePermissionByCoin(testUser.getId(), testPost.getId());
@@ -123,6 +134,8 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
+		when(userEntityRepository.findById(anyLong())).thenReturn(Optional.of(testUser));
+		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
 
 		// when
 		aiImagePermissionService.buyAiImagePermissionByTicket(testUser.getId(), testPost.getId());
