@@ -149,7 +149,7 @@ class UserControllerTest extends BaseControllerTest {
 		// when & then
 		mockMvc.perform(get("/api/users/me"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.id").value(mockUser.getId()))
+			.andExpect(jsonPath("$.data.userId").value(mockUser.getId()))
 			.andExpect(jsonPath("$.data.userEmail").value(mockUser.getEmail()));
 
 		SecurityContextHolder.clearContext();

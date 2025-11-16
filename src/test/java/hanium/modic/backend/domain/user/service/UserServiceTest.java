@@ -131,7 +131,7 @@ class UserServiceTest {
 		UserInfoResponse response = userService.getUserInfo(user);
 
 		// then
-		assertThat(response.id()).isEqualTo(userId);
+		assertThat(response.userId()).isEqualTo(userId);
 		assertThat(response.userEmail()).isEqualTo(user.getEmail());
 		assertThat(response.userName()).isEqualTo(user.getName());
 	}
