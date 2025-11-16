@@ -3,8 +3,6 @@ package hanium.modic.backend.domain.ai.aiChat.service;
 import static hanium.modic.backend.common.error.ErrorCode.*;
 import static hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus.*;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +17,6 @@ import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
-import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.ai.aiServer.service.AiServerService;
@@ -58,6 +55,8 @@ public class AiChatMessageService {
 	public ChatMessageResponse sendUserMessage(Long userId, Long postId, ChatMessageRequest request) {
 		// 메시지랑 이미지 둘 다 비어있으면 에러
 		validateRequestMessageNotEmpty(request);
+		// 이미지가 다른 사람의 이미지면 에러
+		validateAiChatImageOwnership(userId, request.aiChatImageId());
 
 		// 채팅방 조회
 		AiChatRoomEntity aiChatRoom = aiChatRoomRepository.findByUserIdAndPostId(userId, postId)
@@ -85,18 +84,8 @@ public class AiChatMessageService {
 			.build();
 		aiChatMessageRepository.save(message);
 
-		// 이미지 조회
-		List<AiChatImageEntity> aiChatImages = List.of();
-		if (request.aiChatImageId() != null) {
-			aiChatImages = aiChatImageRepository.findById(request.aiChatImageId())
-				.map(List::of)
-				.orElse(List.of());
-			// 이미지들이 자신의 것인지 확인
-			validateAiChatImagesOwnership(userId, aiChatImages);
-		}
-
 		// Ai 요청
-		aiServerService.processAiRequest(userId, message, aiChatImages);
+		aiServerService.processAiRequest(userId, message.getId(), request.aiChatImageId());
 
 		// 이미지 유무에 따른 응답 생성
 		return createChatMessageResponseByAiChatImageId(message);
@@ -135,11 +124,13 @@ public class AiChatMessageService {
 	}
 
 	// 이미지들이 자신의 것인지 확인
-	private void validateAiChatImagesOwnership(Long userId, List<AiChatImageEntity> aiChatImages) {
-		for (AiChatImageEntity image : aiChatImages) {
-			if (!image.getUserId().equals(userId)) {
-				throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
-			}
+	private void validateAiChatImageOwnership(Long userId, Long aiChatImageId) {
+		if (aiChatImageId == null) {
+			return; // 이미지 ID가 null인 경우 소유권 검증 불필요
+		}
+		boolean hasUserImage = aiChatImageRepository.existsByIdAndUserId(aiChatImageId, userId);
+		if (!hasUserImage) {
+			throw new AppException(ErrorCode.IMAGE_CAN_NOT_BE_STOLEN_EXCEPTION);
 		}
 	}
 

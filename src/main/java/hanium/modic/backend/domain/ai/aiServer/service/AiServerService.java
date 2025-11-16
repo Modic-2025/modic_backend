@@ -67,9 +67,21 @@ public class AiServerService {
 	@Async("llmTaskExecutor")
 	public void processAiRequest(
 		final Long nowUserId,
-		AiChatMessageEntity chatMessage,
-		List<AiChatImageEntity> aiChatImages // 없으면 빈 리스트
+		final Long messageId,
+		final Long aiChatImageId // 없으면 null, null이 아니면 해당 이미지는 반드시 존재해야 함
 	) {
+		// 비동기 통신이라 chatMessage를 외부에서 받아오지 않고 여기서 다시 조회
+		AiChatMessageEntity chatMessage = aiChatMessageRepository.findById(messageId)
+			.orElseThrow(() -> new AppException(ErrorCode.AI_CHAT_MESSAGE_NOT_FOUND));
+
+		// 이미지가 있으면 해당 이미지 조회
+		List<AiChatImageEntity> aiChatImages = List.of();
+		if (aiChatImageId != null) {
+			aiChatImages = aiChatImageRepository.findById(aiChatImageId)
+				.map(List::of)
+				.orElse(List.of());
+		}
+
 		final Long postId = chatMessage.getPostId();
 
 		// 해당 Post에 대한 AI 이미지 생성 권한 검증
