@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.common.property.property.VoteProperties;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.entity.UserVoteStreak;
 import hanium.modic.backend.domain.user.repository.UserVoteStreakRepository;
 

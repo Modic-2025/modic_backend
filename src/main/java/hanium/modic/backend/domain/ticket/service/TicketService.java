@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.common.property.property.VoteProperties;
 import hanium.modic.backend.domain.ticket.entity.TicketEntity;
 import hanium.modic.backend.domain.ticket.repository.TicketRepository;

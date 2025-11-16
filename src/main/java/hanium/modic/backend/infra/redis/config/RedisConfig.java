@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.redis.config;
+package hanium.modic.backend.infra.redis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

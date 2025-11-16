@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.ai.aiServer.listener;
 
-import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+import static hanium.modic.backend.infra.amqp.config.RabbitMqConfig.*;
 
 import java.util.Optional;
 

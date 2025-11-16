@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.redis.distributedLock;
+package hanium.modic.backend.infra.redis.distributedLock;
 
 import java.util.concurrent.TimeUnit;
 

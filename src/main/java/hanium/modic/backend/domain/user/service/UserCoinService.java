@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.domain.notification.dto.NotificationPayload;
+import hanium.modic.backend.domain.notification.enums.NotificationType;
+import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
@@ -21,6 +24,8 @@ public class UserCoinService {
 	private final UserEntityRepository userEntityRepository;
 
 	private final LockManager lockManager;
+
+	private final NotificationService notificationService;
 
 
 	// 코인 잔액 조회
@@ -44,9 +49,14 @@ public class UserCoinService {
 
 	// 코인 양도
 	public void transferCoin(final long fromUserId, final long toUserId, long coin) throws AppException {
+		// 자기 자신에게 양도 불가
 		if (fromUserId == toUserId) {
 			throw new AppException(USER_COIN_TRANSFER_SAME_USER_EXCEPTION);
 		}
+
+		// 받는 사람 존재 확인
+		UserEntity toUser = userEntityRepository.findById(toUserId)
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 
 		try {
 			lockManager.multipleUserLock(List.of(fromUserId, toUserId), () -> {
@@ -58,6 +68,15 @@ public class UserCoinService {
 		} catch (LockException e) {
 			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
 		}
+
+		// 알림
+		notificationService.createNotification(
+			toUserId,
+			NotificationType.COIN_RECEIVED,
+			NotificationPayload.builder(fromUserId, toUser.getName(), toUser.getEmail())
+				.amount(coin)
+				.build()
+		);
 	}
 
 	// 코인 소비

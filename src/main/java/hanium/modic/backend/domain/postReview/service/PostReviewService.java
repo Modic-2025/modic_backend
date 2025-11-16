@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
+import hanium.modic.backend.domain.notification.dto.NotificationPayload;
+import hanium.modic.backend.domain.notification.enums.NotificationType;
+import hanium.modic.backend.domain.notification.service.NotificationService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
@@ -31,13 +34,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PostReviewService {
 
+	// 포스트 리뷰 관련
 	private final PostReviewRepository postReviewRepository;
 	private final PostReviewImageService postReviewImageService;
 	private final PostReviewImageRepository postReviewImageRepository;
-	private final PostEntityRepository postEntityRepository;
-	private final UserEntityRepository userEntityRepository;
 	private final PostReviewAuthorizationService postReviewAuthorizationService;
+
+	// 포스트 관련
+	private final PostEntityRepository postEntityRepository;
+
+	// 유저 관련
+	private final UserEntityRepository userEntityRepository;
 	private final UserImageService userImageService;
+
+	// 알림 관련
+	private final NotificationService notificationService;
 
 	// 포스트 리뷰 생성
 	@Transactional
@@ -64,6 +75,17 @@ public class PostReviewService {
 			.forEach(image -> {
 				image.updatePostReview(postReview);
 			});
+
+		// 알람
+		notificationService.createNotification(
+			post.getUserId(),
+			NotificationType.POST_REVIEWED,
+			NotificationPayload.builder(user.getId(), user.getName(), user.getEmail())
+				.postId(postId)
+				.postTitle(post.getTitle())
+				.reviewContent(postReview.getDescription())
+				.build()
+		);
 	}
 
 	// 포스트 리뷰 삭제

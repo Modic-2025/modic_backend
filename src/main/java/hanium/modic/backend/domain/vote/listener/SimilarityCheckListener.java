@@ -1,7 +1,7 @@
 package hanium.modic.backend.domain.vote.listener;
 
-import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
 import static hanium.modic.backend.domain.vote.enums.VoteStatus.*;
+import static hanium.modic.backend.infra.amqp.config.RabbitMqConfig.*;
 
 import java.util.Optional;
 
