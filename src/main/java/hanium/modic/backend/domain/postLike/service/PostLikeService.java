@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.postLike.entity.PostLikeEntity;

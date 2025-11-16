@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.redis.distributedLock;
+package hanium.modic.backend.infra.redis.distributedLock;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,8 +10,6 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
 import hanium.modic.backend.common.error.exception.LockException;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

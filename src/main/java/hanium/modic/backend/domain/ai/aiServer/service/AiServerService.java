@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import hanium.modic.backend.common.amqp.service.MessageQueueService;
+import hanium.modic.backend.infra.amqp.service.MessageQueueService;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;

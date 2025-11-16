@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.sse.service.EmitterService;
+import hanium.modic.backend.infra.sse.service.EmitterService;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatMessageEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;

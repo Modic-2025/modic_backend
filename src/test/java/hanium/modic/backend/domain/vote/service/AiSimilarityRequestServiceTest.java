@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.vote.service;
 
-import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+import static hanium.modic.backend.infra.amqp.config.RabbitMqConfig.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

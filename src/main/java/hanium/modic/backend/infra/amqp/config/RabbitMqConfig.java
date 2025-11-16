@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.amqp.config;
+package hanium.modic.backend.infra.amqp.config;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package hanium.modic.backend.common.sse.service;
+package hanium.modic.backend.infra.sse.service;
 
 import java.io.IOException;
 import java.util.Map;

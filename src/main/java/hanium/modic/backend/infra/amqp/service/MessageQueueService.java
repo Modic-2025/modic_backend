@@ -1,6 +1,6 @@
-package hanium.modic.backend.common.amqp.service;
+package hanium.modic.backend.infra.amqp.service;
 
-import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+import static hanium.modic.backend.infra.amqp.config.RabbitMqConfig.*;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;

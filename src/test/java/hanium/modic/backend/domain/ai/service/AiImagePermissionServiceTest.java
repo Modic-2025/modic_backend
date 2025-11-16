@@ -16,7 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;

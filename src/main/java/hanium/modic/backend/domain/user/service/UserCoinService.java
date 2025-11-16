@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
-import hanium.modic.backend.common.redis.distributedLock.LockManager;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;

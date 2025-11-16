@@ -1,6 +1,6 @@
 package hanium.modic.backend.domain.vote.service;
 
-import static hanium.modic.backend.common.amqp.config.RabbitMqConfig.*;
+import static hanium.modic.backend.infra.amqp.config.RabbitMqConfig.*;
 
 import java.util.Optional;
 
@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.domain.vote.dto.SimilarityCheckRequestDto;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
-import hanium.modic.backend.domain.vote.enums.VoteStatus;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
