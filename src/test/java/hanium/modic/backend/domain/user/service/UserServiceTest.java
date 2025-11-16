@@ -29,7 +29,6 @@ import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserImageEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
-import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 
@@ -153,7 +152,7 @@ class UserServiceTest {
 		when(userEntityRepository.findByNameContainingIgnoreCase(eq("user"), any(Pageable.class))).thenReturn(users);
 		when(userImageService.createImageGetUrlMap(List.of(1L, 2L))).thenReturn(Map.of());
 
-		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
+		Page<UserInfoResponse> result = userService.searchUsersByName(keyword, page, size);
 
 		assertThat(result.getContent()).hasSize(2);
 		assertThat(result.getContent().get(0).userImageUrl()).isEqualTo(null);
@@ -182,7 +181,7 @@ class UserServiceTest {
 		when(userEntityRepository.findByNameContainingIgnoreCase(eq("absent"), any(Pageable.class)))
 			.thenReturn(emptyPage);
 
-		Page<SearchUsersResponse> result = userService.searchUsersByName(keyword, page, size);
+		Page<UserInfoResponse> result = userService.searchUsersByName(keyword, page, size);
 
 		assertThat(result.getContent()).isEmpty();
 		assertThat(result.getTotalElements()).isZero();

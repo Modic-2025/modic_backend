@@ -21,7 +21,6 @@ import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.repository.UserUpdateTokenRepository;
-import hanium.modic.backend.web.user.dto.response.SearchUsersResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +93,7 @@ public class UserService {
 
 	// 이름으로 회원 목록 조회
 	@Transactional(readOnly = true)
-	public Page<SearchUsersResponse> searchUsersByName(final String keyword, final int page, final int size) {
+	public Page<UserInfoResponse> searchUsersByName(final String keyword, final int page, final int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
 
 		// 1. 이름으로 유저 목록 조회
@@ -107,10 +106,9 @@ public class UserService {
 
 		// 3. 각 유저의 이미지 URL 조회 및 응답 변환
 		return users.map(user -> {
-			final boolean hasUserImage = imageGetUrlMap.containsKey(user.getId());
-			final String resolvedImageUrl = imageGetUrlMap.getOrDefault(user.getId(), null);
+			final String userImageUrl = imageGetUrlMap.getOrDefault(user.getId(), null);
 
-			return SearchUsersResponse.of(user, hasUserImage, resolvedImageUrl);
+			return UserInfoResponse.of(user, userImageUrl);
 		});
 	}
 
