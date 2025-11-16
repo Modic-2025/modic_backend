@@ -101,10 +101,7 @@ public class AiChatController {
 	@PostMapping("/messages/{messageId}/cancel")
 	@Operation(
 		summary = "AI 응답 취소",
-		description = "진행 중인 AI 응답을 취소합니다. 이미 완료된 응답은 취소할 수 없습니다.",
-		responses = {
-			@ApiResponse(responseCode = "409", description = "이미 완료된 응답은 취소할 수 없습니다.[AI-013]")
-		}
+		description = "진행 중인 AI 응답을 취소합니다. 이미 완료된 응답은 취소할 수 없습니다."
 	)
 	@ApiErrorMapping({
 		AI_CHAT_MESSAGE_NOT_FOUND,
