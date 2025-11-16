@@ -98,6 +98,8 @@ public enum ErrorCode {
 	AI_CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-001", "AI 채팅방을 찾을 수 없습니다."),
 	EMPTY_CHAT_MESSAGE_EXCEPTION(HttpStatus.BAD_REQUEST, "AC-002", "채팅 메시지랑 이미지가 모두 비어있습니다."),
 	AI_CHAT_MESSAGE_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-003", "AI 채팅 메시지 순서 정보를 찾을 수 없습니다."),
+	AI_CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "AC-004", "AI 채팅 메시지를 찾을 수 없습니다."),
+	AI_CHAT_CANNOT_CANCEL(HttpStatus.BAD_REQUEST, "AC-005", "요청이 아닌 메시지는 취소할 수 없습니다."),
 
 	// Vote
 	VOTE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "V-001", "해당 투표를 찾을 수 없습니다."),

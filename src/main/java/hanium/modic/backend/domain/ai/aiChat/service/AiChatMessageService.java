@@ -1,5 +1,8 @@
 package hanium.modic.backend.domain.ai.aiChat.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+import static hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus.*;
+
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -17,7 +20,6 @@ import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatMessageRepository;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
-import hanium.modic.backend.domain.ai.aiServer.enums.AiImageStatus;
 import hanium.modic.backend.domain.ai.aiServer.enums.SenderType;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.ai.aiServer.service.AiServerService;
@@ -78,7 +80,7 @@ public class AiChatMessageService {
 			.senderType(SenderType.USER)
 			.textContent(request.textContent())
 			.aiChatImageId(request.aiChatImageId()) // null 가능
-			.status(AiImageStatus.REQUEST_PENDING)
+			.status(REQUEST_PENDING)
 			.requestId(requestId)
 			.build();
 		aiChatMessageRepository.save(message);
@@ -97,11 +99,29 @@ public class AiChatMessageService {
 		aiServerService.processAiRequest(userId, message, aiChatImages);
 
 		// 이미지 유무에 따른 응답 생성
-		if (request.aiChatImageId() == null) {
-			return ChatMessageResponse.from(message);
-		} else {
-			return ChatMessageResponse.of(message, aiChatImageService.createImageGetUrl(request.aiChatImageId()));
+		return createChatMessageResponseByAiChatImageId(message);
+	}
+
+	// AI 채팅 요청 취소
+	@Transactional
+	public ChatMessageResponse cancelAiRequest(Long userId, Long messageId) {
+		// 유저ID와 메시지ID로 메시지 조회(유저 ID가 권한체크 역할을 함, userId는 토큰에서 가져옴)
+		AiChatMessageEntity aiChatMessage = aiChatMessageRepository.findByIdAndUserId(messageId, userId)
+			.orElseThrow(() -> new AppException(AI_CHAT_MESSAGE_NOT_FOUND));
+
+		// 요청이 아닌 것은 취소 불가
+		if (!(aiChatMessage.getStatus() == REQUEST_PENDING)) {
+			throw new AppException(AI_CHAT_CANNOT_CANCEL);
 		}
+
+		// MQ에 있는 메세지는 삭제 불가능(리스너에서 후처리)
+
+		// 요청메세지 상태를 취소됨으로 변경
+		aiChatMessage.updateStatus(REQUEST_CANCELLED);
+		aiChatMessageRepository.save(aiChatMessage);
+
+		// 변경된 메시지 응답(이미지 유무에 따른 응답 생성)
+		return createChatMessageResponseByAiChatImageId(aiChatMessage);
 	}
 
 	// 요청 메세지가 비어있는지 검증
@@ -170,5 +190,15 @@ public class AiChatMessageService {
 
 		// PageResponse로 감싸서 반환
 		return PageResponse.of(responsePage);
+	}
+
+	// 채팅 Image 존재 여부에 따라 ChatMessageResponse 생성
+	private ChatMessageResponse createChatMessageResponseByAiChatImageId(AiChatMessageEntity message) {
+		if (message.getAiChatImageId() == null) {
+			return ChatMessageResponse.from(message);
+		} else {
+			String imageUrl = aiChatImageService.createImageGetUrl(message.getAiChatImageId());
+			return ChatMessageResponse.of(message, imageUrl);
+		}
 	}
 }

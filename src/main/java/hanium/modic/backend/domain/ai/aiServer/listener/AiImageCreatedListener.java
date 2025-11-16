@@ -53,7 +53,13 @@ public class AiImageCreatedListener {
 		}
 		AiChatMessageEntity requestChatMessage = chatMessageOpt.get();
 
-		// 2. 채팅 룸 조회 및 요약 업데이트
+		// 2.요청 메세지가 취소된 경우 처리 중단
+		if (requestChatMessage.getStatus() == AiImageStatus.REQUEST_CANCELLED) {
+			log.info("[AI 이미지 처리 중단] 요청이 취소되었습니다. requestId: {}", message.requestId());
+			return;
+		}
+
+		// 3. 채팅 룸 조회 및 요약 업데이트
 		Optional<AiChatRoomEntity> aiChatRoomOpt = aiChatRoomRepository.findById(requestChatMessage.getAiChatRoomId());
 		if (aiChatRoomOpt.isEmpty()) {
 			log.error("[AI 이미지 처리 실패] AI 채팅방을 찾을 수 없습니다. aiChatImageId: {}", requestChatMessage.getAiChatImageId());
@@ -63,7 +69,7 @@ public class AiImageCreatedListener {
 		aiChatRoom.updateChatSummary(message.chatSummary());
 		aiChatRoomRepository.save(aiChatRoom);
 
-		// 3.응답 이미지가 있는지 확인 후 이에 따라 SSE 응답
+		// 4.응답 이미지가 있는지 확인 후 이에 따라 SSE 응답
 		if (message.isImageGenerated()) {
 			handleSuccessImageGeneration(message, requestChatMessage, aiChatRoom);
 		} else {
