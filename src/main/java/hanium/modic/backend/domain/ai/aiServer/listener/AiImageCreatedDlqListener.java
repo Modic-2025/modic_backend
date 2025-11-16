@@ -50,7 +50,7 @@ public class AiImageCreatedDlqListener {
 
 		AiChatMessageEntity requestChatMessage = chatMessageOpt.get();
 
-		// 2. 메시지 상태를 RESPONSE_FAILED로 변경
+		// 2. 메시지 상태를 RESPONSE_FAILED로 변경 -> 요청 메세지의 상태를 RESPONSE_FAILED로 변경
 		requestChatMessage.updateStatus(AiImageStatus.RESPONSE_FAILED);
 		aiChatMessageRepository.save(requestChatMessage);
 		log.info("[상태 업데이트] requestId={} 메시지 상태를 RESPONSE_FAILED로 변경", messageDto.requestId());

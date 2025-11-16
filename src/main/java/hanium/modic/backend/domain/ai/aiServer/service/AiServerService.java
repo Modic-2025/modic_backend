@@ -157,10 +157,14 @@ public class AiServerService {
 			.build();
 		aiChatMessageRepository.save(message);
 
-		// 3.채팅룸 요약 업데이트
+		// 3. 요청 메세지 상태 변경
+		chatMessage.updateStatus(AiImageStatus.REQUEST);
+		aiChatMessageRepository.save(chatMessage);
+
+		// 4.채팅룸 요약 업데이트
 		aiChatRoomService.updateChatSummary(userId, postId, response.newSummary());
 
-		// 3. 사용자가 보낸 image 조회
+		// 5. 사용자가 보낸 image 조회
 		String imageUrl;
 		if (aiChatImages.isEmpty()) {
 			imageUrl = null;
@@ -168,7 +172,7 @@ public class AiServerService {
 			imageUrl = aiChatImageService.createImageGetUrl(aiChatImages.get(0).getId());
 		}
 
-		// 4. SSE로 실시간 응답
+		// 6. SSE로 실시간 응답
 		aiResponseSseService.sendToClient(
 			chatMessage.getRequestId(),
 			ChatMessageResponse.of(message, imageUrl)
