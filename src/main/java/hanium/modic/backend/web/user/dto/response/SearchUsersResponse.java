@@ -3,8 +3,8 @@ package hanium.modic.backend.web.user.dto.response;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 
 public record SearchUsersResponse(
-	Long id,
-	String name,
+	Long userId,
+	String userName,
 	boolean hasUserImage,
 	String userImageUrl
 ) {
