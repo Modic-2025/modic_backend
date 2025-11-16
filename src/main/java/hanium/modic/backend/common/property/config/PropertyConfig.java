@@ -7,6 +7,7 @@ import hanium.modic.backend.common.property.property.AiProperties;
 import hanium.modic.backend.common.property.property.CloudFrontProperties;
 import hanium.modic.backend.common.property.property.CorsProperties;
 import hanium.modic.backend.common.property.property.EmailProperty;
+import hanium.modic.backend.common.property.property.NotificationProperties;
 import hanium.modic.backend.common.property.property.RabbitMqProperties;
 import hanium.modic.backend.common.property.property.RedisProperty;
 import hanium.modic.backend.common.property.property.S3Properties;
@@ -28,7 +29,8 @@ import hanium.modic.backend.common.property.property.VoteProperties;
 	RabbitMqProperties.class,
 	CloudFrontProperties.class,
 	AiProperties.class,
-	VoteProperties.class
+	VoteProperties.class,
+	NotificationProperties.class
 })
 public class PropertyConfig {
 }
