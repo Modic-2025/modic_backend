@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.user.service;
+package hanium.modic.backend.domain.transaction.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
 
@@ -11,34 +11,37 @@ import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.domain.notification.dto.NotificationPayload;
 import hanium.modic.backend.domain.notification.enums.NotificationType;
 import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
+import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class UserCoinService {
+public class AccountService {
 
-	private final UserEntityRepository userEntityRepository;
+	private final AccountRepository accountRepository;
 
 	private final LockManager lockManager;
 
 	private final NotificationService notificationService;
-
+	private final UserEntityRepository userEntityRepository;
 
 	// 코인 잔액 조회
 	public GetCoinBalanceResponse getCoinBalance(final Long userId) {
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-		return new GetCoinBalanceResponse(user.getCoin());
+		Account account = accountRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
+
+		return new GetCoinBalanceResponse(account.getCoin());
 	}
 
 	// 코인 충전
 	public void chargeCoin(final long userId, final long coin) {
 		try {
-			lockManager.userLock(userId, () -> {
+			lockManager.accountLock(userId, () -> {
 				addCoin(userId, coin);
 			});
 		} catch (LockException e) {
@@ -57,7 +60,10 @@ public class UserCoinService {
 		// 받는 사람 존재 확인
 		UserEntity toUser = userEntityRepository.findById(toUserId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		accountRepository.findById(toUserId)
+			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 
+		// 락 걸고 양도 처리
 		try {
 			lockManager.multipleUserLock(List.of(fromUserId, toUserId), () -> {
 				// 출금
@@ -82,7 +88,7 @@ public class UserCoinService {
 	// 코인 소비
 	public void consumeCoin(final long userId, long coin) throws AppException {
 		try {
-			lockManager.userLock(userId, () -> {
+			lockManager.accountLock(userId, () -> {
 				addCoin(userId, -coin);
 			});
 		} catch (LockException e) {
@@ -92,10 +98,10 @@ public class UserCoinService {
 
 	// 코인 추가, 트랜잭션은 lockManager에 의해 관리됨
 	private void addCoin(final long userId, final long coin) {
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
+		Account account = accountRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 
-		user.addCoin(coin);
-		userEntityRepository.save(user);
+		account.addCoin(coin);
+		accountRepository.save(account);
 	}
 }

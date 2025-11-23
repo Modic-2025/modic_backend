@@ -16,20 +16,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
-import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
+import hanium.modic.backend.domain.notification.service.NotificationService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.service.TicketService;
+import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
-import hanium.modic.backend.domain.user.service.UserCoinService;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 
 @ExtendWith(MockitoExtension.class)
 class AiImagePermissionServiceTest {
@@ -38,7 +37,7 @@ class AiImagePermissionServiceTest {
 	private AiImagePermissionService aiImagePermissionService;
 
 	@Mock
-	private UserCoinService userCoinService;
+	private AccountService accountService;
 
 	@Mock
 	private TicketService ticketService;
@@ -77,7 +76,7 @@ class AiImagePermissionServiceTest {
 		// then
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(userCoinService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
+		verify(accountService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
 	}
 
 	@Test
@@ -90,14 +89,14 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 		// when & then
-		AppException exception = assertThrows(AppException.class, 
+		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.buyAiImagePermissionByCoin(testUser.getId(), testPost.getId()));
-		
+
 		assertEquals(POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository, never()).upsertAndIncrease(anyLong(), anyLong(), anyInt());
-		verify(userCoinService, never()).consumeCoin(anyLong(), anyLong());
+		verify(accountService, never()).consumeCoin(anyLong(), anyLong());
 	}
 
 	@Test
@@ -111,17 +110,17 @@ class AiImagePermissionServiceTest {
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION))
-			.when(userCoinService).consumeCoin(anyLong(), anyLong());
+			.when(accountService).consumeCoin(anyLong(), anyLong());
 
 		// when & then
-		AppException exception = assertThrows(AppException.class, 
+		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.buyAiImagePermissionByCoin(testUser.getId(), testPost.getId()));
-		
+
 		assertEquals(USER_COIN_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(userCoinService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
+		verify(accountService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
 	}
 
 	@Test
@@ -156,9 +155,9 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 		// when & then
-		AppException exception = assertThrows(AppException.class, 
+		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.buyAiImagePermissionByTicket(testUser.getId(), testPost.getId()));
-		
+
 		assertEquals(POST_NOT_FOUND_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
@@ -180,9 +179,9 @@ class AiImagePermissionServiceTest {
 			.when(ticketService).useTicket(anyLong(), anyLong());
 
 		// when & then
-		AppException exception = assertThrows(AppException.class, 
+		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.buyAiImagePermissionByTicket(testUser.getId(), testPost.getId()));
-		
+
 		assertEquals(AI_REQUEST_TICKET_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
@@ -205,7 +204,7 @@ class AiImagePermissionServiceTest {
 
 		when(aiChatRoomRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.of(permission));
-		
+
 		doAnswer(invocation -> {
 			Runnable callback = invocation.getArgument(2);
 			callback.run();
@@ -231,7 +230,7 @@ class AiImagePermissionServiceTest {
 
 		when(aiChatRoomRepository.findByUserIdAndPostId(anyLong(), anyLong()))
 			.thenReturn(Optional.empty());
-		
+
 		doAnswer(invocation -> {
 			Runnable callback = invocation.getArgument(2);
 			callback.run();
@@ -239,9 +238,9 @@ class AiImagePermissionServiceTest {
 		}).when(lockManager).aiImagePermissionLock(anyLong(), anyLong(), any(Runnable.class));
 
 		// when & then
-		AppException exception = assertThrows(AppException.class, 
+		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.consumeRemainingGenerations(userId, postId));
-		
+
 		assertEquals(AI_IMAGE_PERMISSION_NOT_FOUND, exception.getErrorCode());
 
 		verify(lockManager).aiImagePermissionLock(eq(userId), eq(postId), any(Runnable.class));

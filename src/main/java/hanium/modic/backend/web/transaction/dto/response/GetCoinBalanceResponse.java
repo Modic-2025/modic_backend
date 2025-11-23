@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.dto.response;
+package hanium.modic.backend.web.transaction.dto.response;
 
 public record GetCoinBalanceResponse(
 	Long coinBalance

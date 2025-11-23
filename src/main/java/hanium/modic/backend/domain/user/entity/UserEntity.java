@@ -45,9 +45,6 @@ public class UserEntity extends BaseEntity {
 	@Enumerated(EnumType.STRING)
 	private UserRole userRole = UserRole.USER;
 
-	@Column(name = "coin", nullable = false)
-	private Long coin = 0L;
-
 	@Builder
 	private UserEntity(String email, String password, String name, String uniqueId) {
 		this.email = email;
@@ -59,13 +56,6 @@ public class UserEntity extends BaseEntity {
 
 	private String generateTemporaryPassword() {
 		return "OAUTH_" + java.util.UUID.randomUUID().toString().replace("-", "");
-	}
-
-	public void addCoin(Long coin) {
-		if (this.coin + coin < 0) {
-			throw new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION);
-		}
-		this.coin += coin;
 	}
 
 	public UserEntity update(String email, String name) {

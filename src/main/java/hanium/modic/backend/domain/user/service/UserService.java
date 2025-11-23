@@ -17,6 +17,8 @@ import hanium.modic.backend.common.util.TempPasswordGenerator;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.service.component.EmailSender;
 import hanium.modic.backend.domain.auth.service.dto.EmailDto;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserUpdateToken;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -37,6 +39,9 @@ public class UserService {
 	// 인증 관련
 	private final AuthService authService;
 
+	// 계좌 관련
+	private final AccountRepository accountRepository;
+
 	// 기타
 	private final BCryptPasswordEncoder passwordEncoder;
 	private final EmailSender emailSender;
@@ -52,14 +57,22 @@ public class UserService {
 		checkDuplicateEmail(email);
 		authService.checkEmailCodeAndDelete(email, code);
 
+		// 비밀번호 암호화
 		final String encodedPassword = passwordEncoder.encode(password);
 
+		// 유저 엔티티 생성 및 저장
 		final UserEntity user = UserEntity.builder()
 			.email(email)
 			.password(encodedPassword)
 			.name(name)
 			.build();
 		userEntityRepository.save(user);
+
+		// 계좌 생성 및 저장
+		Account account = Account.builder()
+			.userId(user.getId())
+			.build();
+		accountRepository.save(account);
 
 		return UserCreateResponse.from(user);
 	}
@@ -73,16 +86,18 @@ public class UserService {
 
 	// 회원탈퇴
 	@Transactional
-	public void deleteAndLogout(final long id, final String refreshToken, final String accessToken) {
+	public void deleteAndLogout(final long userId, final String refreshToken, final String accessToken) {
 		// 소프트 삭제 처리
-		UserEntity user = userEntityRepository.findById(id)
+		UserEntity user = userEntityRepository.findById(userId)
 			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 		user.softWithdraw();
-
 		userEntityRepository.save(user);
 
 		// 관련 토큰 삭제
 		authService.logout(refreshToken, accessToken);
+
+		// 계좌 삭제, 추후 해당 userId로 코인 거래시 not found 예외 발생
+		accountRepository.deleteById(userId);
 	}
 
 	// 회원 정보 조회

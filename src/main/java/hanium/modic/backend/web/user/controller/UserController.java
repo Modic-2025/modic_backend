@@ -23,17 +23,16 @@ import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
 import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
+import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.service.UserCoinService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.request.GetUserUpdateTokenRequest;
 import hanium.modic.backend.web.user.dto.request.ResetUserPasswordRequest;
-import hanium.modic.backend.web.user.dto.request.TransferCoinsRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserEmailRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
 import hanium.modic.backend.web.user.dto.request.UserCreateRequest;
-import hanium.modic.backend.web.user.dto.response.GetCoinBalanceResponse;
+import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import hanium.modic.backend.web.user.dto.response.GetUserUpdateTokenResponse;
 import hanium.modic.backend.web.user.dto.response.UserCreateResponse;
 import hanium.modic.backend.web.user.dto.response.UserInfoResponse;
@@ -52,7 +51,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService userService;
-	private final UserCoinService userCoinService;
+	private final AccountService accountService;
 	private final CookieUtil cookieUtil;
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -179,33 +178,15 @@ public class UserController {
 		return ResponseEntity.ok().build();
 	}
 
+	// 기존 API 호환을 위한 중복 API(AccountController에도 동일한 API 존재)
 	@GetMapping("/coins")
 	@Operation(
 		summary = "유저 코인 조회 API",
 		description = "로그인한 유저의 코인 잔액을 조회합니다."
 	)
 	public ResponseEntity<AppResponse<GetCoinBalanceResponse>> getUserCoins(@CurrentUser UserEntity user) {
-		GetCoinBalanceResponse response = userCoinService.getCoinBalance(user.getId());
+		GetCoinBalanceResponse response = accountService.getCoinBalance(user.getId());
 		return ResponseEntity.ok(AppResponse.ok(response));
-	}
-
-	@PostMapping("/coins/transfer")
-	@Operation(
-		summary = "코인 송금 API",
-		description = "유저가 다른 유저에게 코인을 송금합니다."
-	)
-	@ApiErrorMapping({
-		USER_COIN_NOT_ENOUGH_EXCEPTION,
-		USER_COIN_TRANSFER_SAME_USER_EXCEPTION,
-		USER_COIN_TRANSFER_FAIL_EXCEPTION
-	})
-	public ResponseEntity<AppResponse<Void>> transferCoins(
-		@CurrentUser UserEntity user,
-		@RequestBody @Valid TransferCoinsRequest request
-	) {
-		userCoinService.transferCoin(user.getId(), request.toUserId(), request.coin());
-
-		return ResponseEntity.ok().build();
 	}
 
 	@PostMapping("/update-token")

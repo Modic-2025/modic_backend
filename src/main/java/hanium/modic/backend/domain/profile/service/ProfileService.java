@@ -1,5 +1,7 @@
 package hanium.modic.backend.domain.profile.service;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
+
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserImageEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -21,11 +24,18 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
+
+	// 유저 관련
 	private final UserEntityRepository userRepository;
-	private final PostEntityRepository postRepository;
-	private final FollowEntityRepository followRepository;
 	private final UserImageService userImageService;
 	private final UserImageEntityRepository userImageEntityRepository;
+
+	// 포스트 관련
+	private final PostEntityRepository postRepository;
+
+	// 팔로우 관련
+	private final FollowEntityRepository followRepository;
+	private final AccountRepository accountRepository;
 
 	// 내 프로필 조회(코인 함께 조회)
 	@Transactional(readOnly = true)
@@ -37,6 +47,9 @@ public class ProfileService {
 		final Optional<Long> userImageId = userImageEntityRepository.findByUserId(user.getId())
 			.map(UserImageEntity::getId);
 		final boolean hasUserImage = userImageUrl.isPresent();
+		final long coinAmount = accountRepository.findById(user.getId())
+			.map(account -> account.getCoin())
+			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 
 		return new GetMyProfileResponse(
 			user.getId(),
@@ -48,7 +61,7 @@ public class ProfileService {
 			postCount,
 			followerCount,
 			followingCount,
-			user.getCoin()
+			coinAmount
 		);
 	}
 

@@ -1,4 +1,4 @@
-package hanium.modic.backend.domain.user.service;
+package hanium.modic.backend.domain.transaction;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -12,26 +12,37 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import hanium.modic.backend.base.BaseIntegrationTest;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
+import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 
-class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
+class AccountServiceIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	UserEntityRepository userRepository;
 
 	@Autowired
-	UserCoinService userCoinService;
+	AccountRepository accountRepository;
+
+	@Autowired
+	AccountService accountService;
 
 	private UserEntity userA;
 	private UserEntity userB;
+
+	private Account accountA;
+	private Account accountB;
 
 	@BeforeEach
 	void setup() {
 		userRepository.deleteAll();
 		userA = userRepository.save(UserFactory.createMockUserWithoutId("userA"));
+		accountA = accountRepository.save(Account.builder().userId(userA.getId()).build());
 		userB = userRepository.save(UserFactory.createMockUserWithoutId("userB"));
+		accountB = accountRepository.save(Account.builder().userId(userB.getId()).build());
 	}
 
 	@Test
@@ -44,7 +55,7 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executor.execute(() -> {
 				try {
-					userCoinService.chargeCoin(userA.getId(), 100);
+					accountService.chargeCoin(userA.getId(), 100);
 				} finally {
 					latch.countDown();
 				}
@@ -52,8 +63,8 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 		}
 
 		latch.await();
-		UserEntity updatedUser = userRepository.findById(userA.getId()).orElseThrow();
-		assertThat(updatedUser.getCoin()).isEqualTo(100 * threadCount);
+		Account account = accountRepository.findById(userA.getId()).orElseThrow();
+		assertThat(account.getCoin()).isEqualTo(100 * threadCount);
 	}
 
 	@Test
@@ -65,7 +76,7 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				userCoinService.chargeCoin(userA.getId(), 200);
+				accountService.chargeCoin(userA.getId(), 200);
 			} finally {
 				latch.countDown();
 			}
@@ -73,7 +84,7 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				userCoinService.transferCoin(userA.getId(), userB.getId(), 100);
+				accountService.transferCoin(userA.getId(), userB.getId(), 100);
 			} finally {
 				latch.countDown();
 			}
@@ -81,17 +92,17 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 
 		latch.await();
 
-		UserEntity updatedA = userRepository.findById(userA.getId()).orElseThrow();
-		UserEntity updatedB = userRepository.findById(userB.getId()).orElseThrow();
+		Account accountA = accountRepository.findById(userA.getId()).orElseThrow();
+		Account accountB = accountRepository.findById(userB.getId()).orElseThrow();
 
-		assertThat(updatedA.getCoin() + updatedB.getCoin()).isEqualTo(200);
+		assertThat(accountA.getCoin() + accountB.getCoin()).isEqualTo(200);
 	}
 
 	@Test
 	@DisplayName("TEST3: 동시에 코인 소비가 되면 차례대로 처리된다")
 	void coinConsumeConcurrencyTest() throws InterruptedException {
 		// 사전 충전
-		userCoinService.chargeCoin(userA.getId(), 500);
+		accountService.chargeCoin(userA.getId(), 500);
 
 		int threadCount = 5;
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -100,7 +111,7 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 		for (int i = 0; i < threadCount; i++) {
 			executor.execute(() -> {
 				try {
-					userCoinService.consumeCoin(userA.getId(), 50);
+					accountService.consumeCoin(userA.getId(), 50);
 				} finally {
 					latch.countDown();
 				}
@@ -108,7 +119,8 @@ class UserCoinServiceIntegrationTest extends BaseIntegrationTest {
 		}
 
 		latch.await();
-		UserEntity updatedUser = userRepository.findById(userA.getId()).orElseThrow();
-		assertThat(updatedUser.getCoin()).isEqualTo(500 - (50 * threadCount));
+
+		Account updatedAccount = accountRepository.findById(userA.getId()).orElseThrow();
+		assertThat(updatedAccount.getCoin()).isEqualTo(500 - (50 * threadCount));
 	}
 }
