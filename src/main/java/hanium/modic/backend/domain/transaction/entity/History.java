@@ -3,6 +3,7 @@ package hanium.modic.backend.domain.transaction.entity;
 import static jakarta.persistence.EnumType.*;
 
 import hanium.modic.backend.common.entity.BaseEntity;
+import hanium.modic.backend.domain.transaction.enums.HistoryType;
 import hanium.modic.backend.domain.transaction.enums.TransactionDirection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,7 +34,7 @@ public class History extends BaseEntity {
 
 	@Column(name = "history_type", nullable = false)
 	@Enumerated(STRING)
-	private String historyType;
+	private HistoryType historyType;
 
 	@Column(name = "body", nullable = false, length = 500)
 	private String body;
@@ -48,7 +49,7 @@ public class History extends BaseEntity {
 	@Builder
 	private History(
 		Long userId,
-		String historyType,
+		HistoryType historyType,
 		String body,
 		TransactionDirection direction,
 		Long amount

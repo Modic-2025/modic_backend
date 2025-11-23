@@ -15,7 +15,7 @@ public record GetHistoryEntityResponse(
 ) {
 	public static GetHistoryEntityResponse from(History history) {
 		return new GetHistoryEntityResponse(
-			HistoryType.valueOf(history.getHistoryType()),
+			history.getHistoryType(),
 			history.getBody(),
 			history.getAmount(),
 			history.getDirection(),

@@ -40,14 +40,14 @@ public class HistoryService {
 	) {
 		History senderHistory = History.builder()
 			.userId(userId)
-			.historyType(historyType.name())
+			.historyType(historyType)
 			.body(fromBody)
 			.direction(TransactionDirection.DEBIT)
 			.amount(amount)
 			.build();
 		History receiverHistory = History.builder()
 			.userId(userId)
-			.historyType(historyType.name())
+			.historyType(historyType)
 			.body(toBody)
 			.direction(TransactionDirection.CREDIT)
 			.amount(amount)
