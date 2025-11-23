@@ -13,6 +13,7 @@ public record GetNotificationsResponse(
 	String title,
 	String body,
 	Long postId,
+	Long senderId,
 	LocalDateTime createdAt
 ) {
 
@@ -24,6 +25,7 @@ public record GetNotificationsResponse(
 			entity.getTitle(),
 			entity.getBody(),
 			payload.postId(),
+			payload.senderId(),
 			entity.getCreateAt()
 		);
 	}
