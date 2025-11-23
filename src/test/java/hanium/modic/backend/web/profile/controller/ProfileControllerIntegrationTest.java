@@ -13,6 +13,8 @@ import hanium.modic.backend.base.login.ContextHolderUtil;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.image.domain.ImageExtension;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserImageEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
@@ -25,12 +27,15 @@ public class ProfileControllerIntegrationTest extends BaseIntegrationTest {
 	private UserEntityRepository userEntityRepository;
 	@Autowired
 	private UserImageEntityRepository userImageRepository;
+	@Autowired
+	private AccountRepository accountRepository;
 
 	@Test
 	@DisplayName("TEST1: 내 프로필 조회 성공")
 	@WithCustomUser(email = "me@test.com")
 	void getMyProfileSuccess() throws Exception {
 		UserEntity user = ContextHolderUtil.getCurrentUser();
+		accountRepository.save(Account.builder().userId(user.getId()).build());
 
 		// when: 내 프로필 조회 요청
 		ResultActions result = mockMvc.perform(get("/api/profiles/me"));

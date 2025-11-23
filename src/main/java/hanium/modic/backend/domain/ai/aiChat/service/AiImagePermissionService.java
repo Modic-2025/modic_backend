@@ -7,18 +7,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
+import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
+import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.notification.dto.NotificationPayload;
 import hanium.modic.backend.domain.notification.enums.NotificationType;
 import hanium.modic.backend.domain.notification.service.NotificationService;
-import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.infra.redis.distributedLock.LockManager;
-import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
-import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.service.TicketService;
-import hanium.modic.backend.domain.user.service.UserCoinService;
+import hanium.modic.backend.domain.transaction.service.AccountService;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.web.ai.aiChat.dto.response.GetRemainingGenerationsResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AiImagePermissionService {
 
-	private final UserCoinService userCoinService;
+	private final AccountService accountService;
 	private final TicketService ticketService;
 	private final PostEntityRepository postRepository;
 	private final AiChatRoomRepository aiChatRoomRepository;
@@ -48,7 +48,7 @@ public class AiImagePermissionService {
 		aiChatRoomRepository.upsertAndIncrease(userId, postId, AI_IMAGE_PERMISSION_COUNT);
 
 		// 3) 코인 후차감, 코인 거래는 별도의 트랜잭션으로 동작하여 후처리, 예외는 전파
-		userCoinService.consumeCoin(userId, post.getNonCommercialPrice());
+		accountService.consumeCoin(userId, post.getNonCommercialPrice());
 
 		// 4) 알림
 		UserEntity user = userEntityRepository.findById(userId)

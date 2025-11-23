@@ -18,6 +18,8 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.profile.service.ProfileService;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -47,6 +49,9 @@ class ProfileServiceTest {
 	@Mock
 	private UserImageService userImageService;
 
+	@Mock
+	private AccountRepository accountRepository;
+
 	@Test
 	@DisplayName("TEST1: 내 프로필 조회 성공")
 	void getMyProfileSuccess() {
@@ -57,6 +62,11 @@ class ProfileServiceTest {
 		when(followRepository.countByMyId(1L)).thenReturn(3L);
 		when(followRepository.countByFollowingId(1L)).thenReturn(7L);
 		when(userImageEntityRepository.findByUserId(1L)).thenReturn(Optional.empty());
+		when(accountRepository.findById(1L)).thenReturn(
+			Optional.ofNullable(
+				Account.builder().userId(1L).build()
+			)
+		);
 
 		// when
 		GetMyProfileResponse response = profileService.getMyProfile(me);

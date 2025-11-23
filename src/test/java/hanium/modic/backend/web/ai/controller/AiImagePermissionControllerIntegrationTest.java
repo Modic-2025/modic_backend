@@ -15,11 +15,13 @@ import hanium.modic.backend.base.BaseIntegrationTest;
 import hanium.modic.backend.base.login.WithCustomUser;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
+import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.enums.PostStatus;
+import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.entity.TicketEntity;
 import hanium.modic.backend.domain.ticket.repository.TicketRepository;
-import hanium.modic.backend.domain.post.entity.PostEntity;
-import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.ai.aiChat.dto.request.BuyAiImagePermissionRequest;
@@ -37,6 +39,9 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 
 	@Autowired
 	private UserEntityRepository userRepository;
+
+	@Autowired
+	private AccountRepository accountRepository;
 
 	private PostEntity createTestPost(UserEntity user) {
 		return postRepository.save(PostEntity.builder()
@@ -57,10 +62,12 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 			.build());
 	}
 
-	private UserEntity getCurrentUserWithCoin(Long coinAmount) {
-		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
-		user.addCoin(coinAmount);
-		return userRepository.save(user);
+	private Account createAccountForUser(UserEntity user, Long initialCoin) {
+		Account account = Account.builder()
+			.userId(user.getId())
+			.build();
+		account.addCoin(initialCoin);
+		return accountRepository.save(account);
 	}
 
 	@Test
@@ -68,9 +75,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionWithCoin_Success() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(10000L);
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
+		Account account = createAccountForUser(user, 10000L);
 		PostEntity post = createTestPost(user);
-		
+
 		BuyAiImagePermissionRequest request = new BuyAiImagePermissionRequest(post.getId());
 
 		// when
@@ -91,8 +99,9 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 
 		// 코인이 차감되었는지 확인
 		UserEntity updatedUser = userRepository.findById(user.getId()).orElse(null);
+		Account updatedAccount = accountRepository.findById(user.getId()).orElse(null);
 		assertThat(updatedUser).isNotNull();
-		assertThat(updatedUser.getCoin()).isEqualTo(5000L); // 10000 - 5000
+		assertThat(updatedAccount.getCoin()).isEqualTo(5000L); // 10000 - 5000
 	}
 
 	@Test
@@ -100,9 +109,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 중복 구매시 생성 횟수 증가")
 	void buyAiImagePermissionWithCoin_DuplicatePurchase_IncreasesGenerations() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(10000L);
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
+		Account account = createAccountForUser(user, 10000L);
 		PostEntity post = createTestPost(user);
-		
+
 		// 이미 구매한 권한 생성
 		AiChatRoomEntity existingPermission = AiChatRoomEntity.builder()
 			.userId(user.getId())
@@ -112,7 +122,7 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		aiChatRoomRepository.save(existingPermission);
 
 		BuyAiImagePermissionRequest request = new BuyAiImagePermissionRequest(post.getId());
-		
+
 		// when
 		ResultActions resultActions = mockMvc.perform(post("/api/ai/image-permissions/buy-with-coin")
 			.contentType(MediaType.APPLICATION_JSON)
@@ -135,7 +145,8 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 코인 부족")
 	void buyAiImagePermissionWithCoin_InsufficientCoin() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(500L); // 부족한 코인 설정
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
+		Account account = createAccountForUser(user, 500L);
 		PostEntity post = createTestPost(user);
 
 		BuyAiImagePermissionRequest request = new BuyAiImagePermissionRequest(post.getId());
@@ -147,8 +158,8 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 
 		// then
 		resultActions.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.code").value(USER_COIN_NOT_ENOUGH_EXCEPTION.getCode()))
-			.andExpect(jsonPath("$.message").value(USER_COIN_NOT_ENOUGH_EXCEPTION.getMessage()));
+			.andExpect(jsonPath("$.code").value(COIN_NOT_ENOUGH_EXCEPTION.getCode()))
+			.andExpect(jsonPath("$.message").value(COIN_NOT_ENOUGH_EXCEPTION.getMessage()));
 
 		// 권한이 생성되지 않았는지 확인 (upsert에 의해 생성되었을 수도 있으므로 확인 필요)
 		boolean permissionExists = aiChatRoomRepository.existsByUserIdAndPostId(user.getId(), post.getId());
@@ -179,7 +190,7 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("티켓으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionWithTicket_Success() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(0L); // 코인은 필요 없음
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		PostEntity post = createTestPost(user);
 		TicketEntity ticket = createTestTicket(user);
 
@@ -212,10 +223,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("티켓으로 AI 이미지 생성권 구매 - 티켓 부족")
 	void buyAiImagePermissionWithTicket_InsufficientTicket() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(0L);
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		PostEntity post = createTestPost(user);
 		TicketEntity ticket = createTestTicket(user);
-		
+
 		// 티켓을 모두 소모
 		ticket.decreaseTicket(3);
 		ticketRepository.save(ticket);
@@ -276,9 +287,9 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("AI 이미지 생성권 남은 횟수 조회 - 성공")
 	void getRemainingGenerations_Success() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(0L);
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		PostEntity post = createTestPost(user);
-		
+
 		// AI 이미지 권한 생성
 		AiChatRoomEntity permission = AiChatRoomEntity.builder()
 			.userId(user.getId())
@@ -302,7 +313,7 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 	@DisplayName("AI 이미지 생성권 남은 횟수 조회 - 구매한 이력이 없음")
 	void getRemainingGenerations_PermissionNotFound() throws Exception {
 		// given
-		UserEntity user = getCurrentUserWithCoin(0L);
+		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		PostEntity post = createTestPost(user);
 
 		// when

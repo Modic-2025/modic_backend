@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.user.dto.request;
+package hanium.modic.backend.web.transaction.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

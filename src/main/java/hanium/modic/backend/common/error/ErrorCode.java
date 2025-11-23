@@ -33,9 +33,6 @@ public enum ErrorCode {
 	USER_EMAIL_DUPLICATED_EXCEPTION(HttpStatus.CONFLICT, "U-001", "이미 사용중인 이메일입니다."),
 	USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-002", "해당 유저를 찾을 수 없습니다."),
 	USER_PASSWORD_MISMATCH_EXCEPTION(HttpStatus.UNAUTHORIZED, "U-003", "비밀번호가 일치하지 않습니다."),
-	USER_COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "U-004", "코인이 부족합니다."),
-	USER_COIN_TRANSFER_SAME_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "U-005", "자신에게 코인을 송금할 수 업습니다."),
-	USER_COIN_TRANSFER_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "U-006", "코인 송금에 실패하였습니다."),
 	USER_IMAGE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "U-007", "해당 유저의 프로필 이미지를 찾을 수 없습니다."),
 	USER_UPDATE_TOKEN_INVALID_EXCEPTION(HttpStatus.BAD_REQUEST, "U-008", "토큰이 유효하지 않습니다."),
 	WITHDRAWN_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "U-009", "탈퇴한 유저입니다."),
@@ -111,6 +108,12 @@ public enum ErrorCode {
 	VOTE_SUMMARY_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "V-007", "투표 집계 정보를 찾을 수 없습니다."),
 	VOTE_UPDATE_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "V-008", "투표 집계 업데이트에 실패했습니다."),
 	NO_AVAILABLE_VOTES_EXCEPTION(HttpStatus.NOT_FOUND, "V-009", "참여 가능한 투표가 없습니다."),
+
+	// Account
+	ACCOUNT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "ACC-001", "해당 계좌을 찾을 수 없습니다."),
+	COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "ACC-002", "코인이 부족합니다."),
+	COIN_TRANSFER_SAME_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "ACC-003", "자신에게 코인을 송금할 수 업습니다."),
+	COIN_TRANSFER_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-004", "코인 송금에 실패하였습니다."),
 	;
 
 	private final HttpStatus status;

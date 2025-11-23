@@ -24,6 +24,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.auth.service.AuthService;
+import hanium.modic.backend.domain.transaction.entity.Account;
+import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -56,6 +58,9 @@ class UserServiceTest {
 	@Mock
 	private UserImageEntityRepository userImageEntityRepository;
 
+	@Mock
+	private AccountRepository accountRepository;
+
 	@Test
 	@DisplayName("유저 회원가입 테스트")
 	void userCreateTest() {
@@ -68,6 +73,7 @@ class UserServiceTest {
 		when(userEntityRepository.existsByEmail(email)).thenReturn(false);
 		when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
 		doNothing().when(authService).checkEmailCodeAndDelete(email, code);
+		when(accountRepository.save(any(Account.class))).thenReturn(null);
 
 		// when
 		UserCreateResponse user = userService.createUser(email, password, name, code);

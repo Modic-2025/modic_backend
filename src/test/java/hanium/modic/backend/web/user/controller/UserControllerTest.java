@@ -29,7 +29,7 @@ import hanium.modic.backend.common.jwt.JwtTokenProvider;
 import hanium.modic.backend.domain.auth.util.CookieUtil;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
-import hanium.modic.backend.domain.user.service.UserCoinService;
+import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.user.service.UserService;
 import hanium.modic.backend.web.user.dto.request.UpdateUserNameRequest;
 import hanium.modic.backend.web.user.dto.request.UpdateUserPasswordRequest;
@@ -45,7 +45,7 @@ class UserControllerTest extends BaseControllerTest {
 	@MockitoBean
 	private UserService userService;
 	@MockitoBean
-	private UserCoinService userCoinService;
+	private AccountService accountService;
 	@MockitoBean
 	private CookieUtil cookieUtil;
 	@MockitoBean

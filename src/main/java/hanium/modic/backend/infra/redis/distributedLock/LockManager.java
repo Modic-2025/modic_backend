@@ -30,9 +30,10 @@ public class LockManager {
 	private final String AI_PERMISSION_PREFIX = "lock:ai:perm:";
 	private final String VOTE_SUMMARY_PREFIX = "lock:vote:summary:";
 	private final String VOTE_STREAK_PREFIX = "lock:vote:streak:";
+	private final String ACCOUNT_PREFIX = "lock:account:";
 
-	public void userLock(long userId, Runnable block) throws LockException {
-		exec.withLock(USER_PREFIX + userId, block);
+	public void accountLock(long userId, Runnable block) throws LockException {
+		exec.withLock(ACCOUNT_PREFIX + userId, block);
 	}
 
 	public void multipleUserLock(List<Long> userIds, Runnable block) throws LockException {
