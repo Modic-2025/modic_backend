@@ -12,12 +12,17 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
+import hanium.modic.backend.domain.notification.dto.NotificationPayload;
+import hanium.modic.backend.domain.notification.enums.NotificationType;
+import hanium.modic.backend.domain.notification.service.NotificationService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.enums.PostStatus;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
+import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
 import hanium.modic.backend.domain.vote.entity.SimilarityVoteSummaryEntity;
 import hanium.modic.backend.domain.vote.enums.VoteDecision;
@@ -25,6 +30,7 @@ import hanium.modic.backend.domain.vote.enums.VoteStatus;
 import hanium.modic.backend.domain.vote.enums.VoteType;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
 import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
+import hanium.modic.backend.domain.vote.service.AiSimilarityRequestService;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -42,8 +48,14 @@ public class AiDerivedPostService {
 	private final SimilarityVoteRepository similarityVoteRepository;
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 
+	// 알림관련
+	private final NotificationService notificationService;
+
 	// AI 유사도 검사 요청 서비스
-	private final hanium.modic.backend.domain.vote.service.AiSimilarityRequestService aiSimilarityRequestService;
+	private final AiSimilarityRequestService aiSimilarityRequestService;
+
+	// 유저 관련
+	private final UserEntityRepository userEntityRepository;
 
 	/**
 	 * AI 파생 포스트 생성 (투표 시스템 연동)
@@ -66,6 +78,9 @@ public class AiDerivedPostService {
 		Long nonCommercialPrice,
 		Long ticketPrice
 	) {
+		UserEntity user = userEntityRepository.findById(userId)
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
 		// 1. 생성된 AI 이미지 조회
 		AiChatImageEntity createdAiImage = AiChatImageRepository.findById(createdAiImageId)
 			.orElseThrow(() -> new AppException(ErrorCode.AI_IMAGE_NOT_FOUND_EXCEPTION));
@@ -152,6 +167,16 @@ public class AiDerivedPostService {
 
 		// 게시글 통계 초기화 (비동기)
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
+
+		// 12. 알람 생성
+		notificationService.createNotification(
+			originalPost.getUserId(),
+			NotificationType.DERIVED_POST_CREATED,
+			NotificationPayload.builder(user.getId(), user.getName(), user.getEmail())
+				.postId(aiDerivedPost.getId())
+				.postTitle(aiDerivedPost.getTitle())
+				.build()
+		);
 
 		return CreatePostResponse.of(savedPost.getId());
 	}
