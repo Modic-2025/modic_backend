@@ -21,7 +21,7 @@ import lombok.NoArgsConstructor;
 /**
  * Transaction 거래의 단위 거래(debit, credit)
  */
-@Table(name = "coin_transcation_entity")
+@Table(name = "coin_tranaction_entities")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -120,8 +120,8 @@ public class CoinTransactionEntity extends BaseEntity {
 	}
 
 	// 거래 취소하기
+	// 별도로 취소 상태의 CoinTransactionEntity 생성해야 함
 	public void discardTransaction(LocalDateTime discardedAt) {
-		this.status = TransactionStatus.ARCHIVED;
 		this.discardedAt = discardedAt;
 	}
 }
