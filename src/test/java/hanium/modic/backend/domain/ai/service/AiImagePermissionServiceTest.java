@@ -25,6 +25,7 @@ import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.transaction.service.AccountService;
+import hanium.modic.backend.domain.transaction.service.HistoryService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
@@ -57,6 +58,9 @@ class AiImagePermissionServiceTest {
 	@Mock
 	private UserEntityRepository userEntityRepository;
 
+	@Mock
+	private HistoryService historyService;
+
 	@Test
 	@DisplayName("코인으로 AI 이미지 생성권 구매 - 성공")
 	void buyAiImagePermissionByCoin_Success() {
@@ -69,6 +73,7 @@ class AiImagePermissionServiceTest {
 			.thenReturn(1);
 		when(userEntityRepository.findById(anyLong())).thenReturn(Optional.of(testUser));
 		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
+		doNothing().when(historyService).saveTransferHistories(anyLong(), anyLong(), any(), any(), any());
 
 		// when
 		aiImagePermissionService.buyAiImagePermissionByCoin(testUser.getId(), testPost.getId());
