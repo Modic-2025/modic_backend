@@ -42,7 +42,7 @@ public class Account {
 
 	public void addCoin(Long coin) {
 		if (this.coin + coin < 0) {
-			throw new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION);
+			throw new AppException(COIN_NOT_ENOUGH_EXCEPTION);
 		}
 		this.coin += coin;
 	}

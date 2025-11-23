@@ -46,7 +46,7 @@ public class AccountService {
 			});
 		} catch (LockException e) {
 			// Todo: 추후 결제 포함될 시, 결제 취소 로직 필요
-			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class AccountService {
 	public void transferCoin(final long fromUserId, final long toUserId, long coin) throws AppException {
 		// 자기 자신에게 양도 불가
 		if (fromUserId == toUserId) {
-			throw new AppException(USER_COIN_TRANSFER_SAME_USER_EXCEPTION);
+			throw new AppException(COIN_TRANSFER_SAME_USER_EXCEPTION);
 		}
 
 		// 받는 사람 존재 확인
@@ -72,7 +72,7 @@ public class AccountService {
 				addCoin(toUserId, coin);
 			});
 		} catch (LockException e) {
-			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 
 		// 알림
@@ -92,7 +92,7 @@ public class AccountService {
 				addCoin(userId, -coin);
 			});
 		} catch (LockException e) {
-			throw new AppException(USER_COIN_TRANSFER_FAIL_EXCEPTION);
+			throw new AppException(COIN_TRANSFER_FAIL_EXCEPTION);
 		}
 	}
 

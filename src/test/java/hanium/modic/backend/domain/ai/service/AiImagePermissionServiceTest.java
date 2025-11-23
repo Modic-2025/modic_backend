@@ -109,14 +109,14 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
-		doThrow(new AppException(USER_COIN_NOT_ENOUGH_EXCEPTION))
+		doThrow(new AppException(COIN_NOT_ENOUGH_EXCEPTION))
 			.when(accountService).consumeCoin(anyLong(), anyLong());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class,
 			() -> aiImagePermissionService.buyAiImagePermissionByCoin(testUser.getId(), testPost.getId()));
 
-		assertEquals(USER_COIN_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
+		assertEquals(COIN_NOT_ENOUGH_EXCEPTION, exception.getErrorCode());
 
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);

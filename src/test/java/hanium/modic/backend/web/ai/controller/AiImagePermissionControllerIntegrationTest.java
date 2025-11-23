@@ -158,8 +158,8 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 
 		// then
 		resultActions.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.code").value(USER_COIN_NOT_ENOUGH_EXCEPTION.getCode()))
-			.andExpect(jsonPath("$.message").value(USER_COIN_NOT_ENOUGH_EXCEPTION.getMessage()));
+			.andExpect(jsonPath("$.code").value(COIN_NOT_ENOUGH_EXCEPTION.getCode()))
+			.andExpect(jsonPath("$.message").value(COIN_NOT_ENOUGH_EXCEPTION.getMessage()));
 
 		// 권한이 생성되지 않았는지 확인 (upsert에 의해 생성되었을 수도 있으므로 확인 필요)
 		boolean permissionExists = aiChatRoomRepository.existsByUserIdAndPostId(user.getId(), post.getId());

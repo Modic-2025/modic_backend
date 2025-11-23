@@ -45,9 +45,10 @@ public class AccountController {
 		description = "유저가 다른 유저에게 코인을 송금합니다."
 	)
 	@ApiErrorMapping({
-		USER_COIN_NOT_ENOUGH_EXCEPTION,
-		USER_COIN_TRANSFER_SAME_USER_EXCEPTION,
-		USER_COIN_TRANSFER_FAIL_EXCEPTION
+		COIN_NOT_ENOUGH_EXCEPTION,
+		COIN_TRANSFER_SAME_USER_EXCEPTION,
+		COIN_TRANSFER_FAIL_EXCEPTION,
+		ACCOUNT_NOT_FOUND_EXCEPTION
 	})
 	public ResponseEntity<AppResponse<Void>> transferCoins(
 		@CurrentUser UserEntity user,
