@@ -49,7 +49,7 @@ public enum NotificationType {
 	POST_REVIEWED {
 		@Override
 		public String generateTitle(NotificationPayload payload) {
-			return "'" + payload.postTitle() + "' 게시글에 새로운 후기가 달렸습니다";
+			return "'" + payload.postTitle() + "' 게시글에 새로운 후기가 작성되었습니다.";
 		}
 
 		@Override
@@ -61,7 +61,7 @@ public enum NotificationType {
 	FOLLOWED {
 		@Override
 		public String generateTitle(NotificationPayload payload) {
-			return sender(payload) + "님이 회원님을 팔로우했습니다";
+			return sender(payload) + "님이 회원님을 팔로우하기 시작했습니다.";
 		}
 
 		@Override
@@ -73,15 +73,28 @@ public enum NotificationType {
 	DERIVED_POST_CREATED {
 		@Override
 		public String generateTitle(NotificationPayload payload) {
-			return "'" + payload.postTitle() + "' 게시글로 파생 포스트가 생성되었습니다";
+			return "'" + payload.postTitle() + "' 을 이용하여 2차 창작물이 등록되었습니다.";
 		}
 
 		@Override
 		public String generateBody(NotificationPayload payload) {
 			return sender(payload)
-				+ "님이 '" + payload.postTitle() + "'을(를) 기반으로 파생 포스트를 만들었습니다.";
+				+ "님이 '" + payload.postTitle() + "'을 이용하여 2차 창작물을 등록했습니다.";
 		}
-	};
+	},
+
+	LIKED {
+		@Override
+		public String generateTitle(NotificationPayload payload) {
+			return sender(payload) + "님이 '" + payload.postTitle() + "' 게시글에 좋아요를 눌렀습니다.";
+		}
+
+		@Override
+		public String generateBody(NotificationPayload payload) {
+			return sender(payload) + "님이 '" + payload.postTitle() + "' 게시글에 좋아요를 눌렀습니다.";
+		}
+	}
+	;
 
 	public abstract String generateTitle(NotificationPayload payload);
 
