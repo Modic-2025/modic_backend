@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,18 +25,19 @@ import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.util.ImageUtil;
+import hanium.modic.backend.domain.notification.service.NotificationService;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostImageEntityRepository;
 import hanium.modic.backend.domain.postLike.service.AsyncPostStatisticsService;
-import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
-import hanium.modic.backend.domain.vote.enums.VoteStatus;
-import hanium.modic.backend.domain.vote.enums.VoteType;
-import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
-import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.factory.UserFactory;
+import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.vote.entity.SimilarityVoteEntity;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteRepository;
+import hanium.modic.backend.domain.vote.repository.SimilarityVoteSummaryRepository;
+import hanium.modic.backend.domain.vote.service.AiSimilarityRequestService;
 import hanium.modic.backend.web.post.dto.response.CreatePostResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,7 +68,13 @@ class AiDerivedPostServiceTest {
 	private SimilarityVoteSummaryRepository voteSummaryRepository;
 
 	@Mock
-	private hanium.modic.backend.domain.vote.service.AiSimilarityRequestService aiSimilarityRequestService;
+	private AiSimilarityRequestService aiSimilarityRequestService;
+
+	@Mock
+	private NotificationService notificationService;
+
+	@Mock
+	private UserEntityRepository userEntityRepository;
 
 	@InjectMocks
 	private AiDerivedPostService aiDerivedPostService;
@@ -105,6 +111,7 @@ class AiDerivedPostServiceTest {
 				.build();
 			PostEntity mockSavedPost = createMockPostWithId(newPostId, mockUser);
 
+			when(userEntityRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 			when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
 			when(postEntityRepository.findById(originalPostId)).thenReturn(Optional.of(mockOriginalPost));
 			when(postImageEntityRepository.findById(originalImageId)).thenReturn(Optional.of(mockOriginalImage));
@@ -112,6 +119,7 @@ class AiDerivedPostServiceTest {
 			when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
 			when(voteSummaryRepository.save(any())).thenReturn(null);
 			doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
+			doNothing().when(notificationService).createNotification(anyLong(), any(), any());
 
 			// Create a mock vote entity with ID
 			SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);
@@ -183,7 +191,9 @@ class AiDerivedPostServiceTest {
 		Long commercialPrice = 2000L;
 		Long nonCommercialPrice = 1000L;
 		Long ticketPrice = 300L;
+		UserEntity mockUser = UserFactory.createMockUser(userId);
 
+		when(userEntityRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 		when(createdAiImageRepository.findById(nonExistentAiImageId)).thenReturn(Optional.empty());
 
 		// when & then
@@ -211,11 +221,13 @@ class AiDerivedPostServiceTest {
 		Long commercialPrice = 2000L;
 		Long nonCommercialPrice = 1000L;
 		Long ticketPrice = 300L;
+		UserEntity mockUser = UserFactory.createMockUser(userId);
 
 		// 다른 사용자의 AI 이미지
 		AiChatImageEntity mockAiImage = createMockCreatedAiImageWithId(
 			createdAiImageId, otherUserId, 1L, "request-123");
 
+		when(userEntityRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 		when(createdAiImageRepository.findById(createdAiImageId)).thenReturn(Optional.of(mockAiImage));
 
 		// when & then
