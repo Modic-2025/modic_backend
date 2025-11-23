@@ -23,6 +23,7 @@ import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.domain.transaction.entity.Account;
 import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
+import hanium.modic.backend.domain.user.factory.UserFactory;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.web.ai.aiChat.dto.request.BuyAiImagePermissionRequest;
 
@@ -66,7 +67,7 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		Account account = Account.builder()
 			.userId(user.getId())
 			.build();
-		account.addCoin(initialCoin);
+		account.updateBalance(initialCoin);
 		return accountRepository.save(account);
 	}
 
@@ -77,7 +78,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		Account account = createAccountForUser(user, 10000L);
-		PostEntity post = createTestPost(user);
+
+		UserEntity user2 = userRepository.save(UserFactory.createMockUserWithoutId("sellerUser"));
+		Account account2 = createAccountForUser(user2, 0L);
+		PostEntity post = createTestPost(user2);
 
 		BuyAiImagePermissionRequest request = new BuyAiImagePermissionRequest(post.getId());
 
@@ -101,7 +105,7 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		UserEntity updatedUser = userRepository.findById(user.getId()).orElse(null);
 		Account updatedAccount = accountRepository.findById(user.getId()).orElse(null);
 		assertThat(updatedUser).isNotNull();
-		assertThat(updatedAccount.getCoin()).isEqualTo(5000L); // 10000 - 5000
+		assertThat(updatedAccount.getPostedBalance()).isEqualTo(5000L); // 10000 - 5000
 	}
 
 	@Test
@@ -111,7 +115,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		Account account = createAccountForUser(user, 10000L);
-		PostEntity post = createTestPost(user);
+
+		UserEntity user2 = userRepository.save(UserFactory.createMockUserWithoutId("sellerUser"));
+		Account account2 = createAccountForUser(user2, 0L);
+		PostEntity post = createTestPost(user2);
 
 		// 이미 구매한 권한 생성
 		AiChatRoomEntity existingPermission = AiChatRoomEntity.builder()
@@ -147,7 +154,10 @@ class AiImagePermissionControllerIntegrationTest extends BaseIntegrationTest {
 		// given
 		UserEntity user = userRepository.findByEmail("test@test.com").orElseThrow();
 		Account account = createAccountForUser(user, 500L);
-		PostEntity post = createTestPost(user);
+
+		UserEntity user2 = userRepository.save(UserFactory.createMockUserWithoutId("sellerUser"));
+		Account account2 = createAccountForUser(user2, 0L);
+		PostEntity post = createTestPost(user2);
 
 		BuyAiImagePermissionRequest request = new BuyAiImagePermissionRequest(post.getId());
 

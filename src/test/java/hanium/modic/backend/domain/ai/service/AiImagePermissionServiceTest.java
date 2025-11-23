@@ -76,7 +76,7 @@ class AiImagePermissionServiceTest {
 		// then
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(accountService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
+		verify(accountService).transferCoin(testUser.getId(), testPost.getUserId(), testPost.getNonCommercialPrice());
 	}
 
 	@Test
@@ -96,7 +96,7 @@ class AiImagePermissionServiceTest {
 
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository, never()).upsertAndIncrease(anyLong(), anyLong(), anyInt());
-		verify(accountService, never()).consumeCoin(anyLong(), anyLong());
+		verify(accountService, never()).transferCoin(anyLong(), anyLong(), anyLong());
 	}
 
 	@Test
@@ -110,7 +110,7 @@ class AiImagePermissionServiceTest {
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
 		doThrow(new AppException(COIN_NOT_ENOUGH_EXCEPTION))
-			.when(accountService).consumeCoin(anyLong(), anyLong());
+			.when(accountService).transferCoin(anyLong(), anyLong(), anyLong());
 
 		// when & then
 		AppException exception = assertThrows(AppException.class,
@@ -120,7 +120,7 @@ class AiImagePermissionServiceTest {
 
 		verify(postRepository).findById(testPost.getId());
 		verify(aiChatRoomRepository).upsertAndIncrease(testUser.getId(), testPost.getId(), 20);
-		verify(accountService).consumeCoin(testUser.getId(), testPost.getNonCommercialPrice());
+		verify(accountService).transferCoin(testUser.getId(), testPost.getUserId(), testPost.getNonCommercialPrice());
 	}
 
 	@Test

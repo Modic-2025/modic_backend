@@ -9,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,12 +28,12 @@ public class Account {
 	@Column(name = "user_id", nullable = false, unique = true)
 	private Long userId;
 
-	@Column(name = "coin", nullable = false)
-	private Long coin = 0L;
+	// Ledger가 관리하는 version
+	@Column(name = "ledger_version", nullable = false)
+	private Long ledgerVersion = 0L;
 
-	@Version
-	@Column(name = "version", nullable = false)
-	private Long version = 0L;
+	@Column(name = "posted_balance", nullable = false)
+	private Long postedBalance = 0L;
 
 	/**
 	 * 사용자 아이디로 계좌 생성
@@ -45,10 +44,13 @@ public class Account {
 		this.userId = userId;
 	}
 
-	public void addCoin(Long coin) {
-		if (this.coin + coin < 0) {
+	// 잔액 업데이트
+	public void updateBalance(Long newBalance) {
+		if (newBalance < 0) {
 			throw new AppException(COIN_NOT_ENOUGH_EXCEPTION);
 		}
-		this.coin += coin;
+
+		this.postedBalance = newBalance;
+		this.ledgerVersion++; // Balance 변경 시마다 version 증가
 	}
 }

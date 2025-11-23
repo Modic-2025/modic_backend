@@ -32,9 +32,11 @@ class AccountServiceIntegrationTest extends BaseIntegrationTest {
 
 	private UserEntity userA;
 	private UserEntity userB;
+	private UserEntity userC;
 
 	private Account accountA;
 	private Account accountB;
+	private Account accountC;
 
 	@BeforeEach
 	void setup() {
@@ -43,40 +45,25 @@ class AccountServiceIntegrationTest extends BaseIntegrationTest {
 		accountA = accountRepository.save(Account.builder().userId(userA.getId()).build());
 		userB = userRepository.save(UserFactory.createMockUserWithoutId("userB"));
 		accountB = accountRepository.save(Account.builder().userId(userB.getId()).build());
+		userC = userRepository.save(UserFactory.createMockUserWithoutId("userC"));
+		accountC = accountRepository.save(Account.builder().userId(userC.getId()).build());
 	}
 
 	@Test
-	@DisplayName("TEST1: 동시에 코인 충전이 되면 차례대로 처리된다")
-	void coinChargeConcurrencyTest() throws InterruptedException {
-		int threadCount = 5;
-		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-		CountDownLatch latch = new CountDownLatch(threadCount);
-
-		for (int i = 0; i < threadCount; i++) {
-			executor.execute(() -> {
-				try {
-					accountService.chargeCoin(userA.getId(), 100);
-				} finally {
-					latch.countDown();
-				}
-			});
-		}
-
-		latch.await();
-		Account account = accountRepository.findById(userA.getId()).orElseThrow();
-		assertThat(account.getCoin()).isEqualTo(100 * threadCount);
-	}
-
-	@Test
-	@DisplayName("TEST2: 동시에 A유저가 코인을 충전하고, B유저가 A유저에게 코인을 양도하면 무사히 처리된다")
+	@DisplayName("TEST1: 동시에 B, C유저가 A유저에게 코인을 양도하면 무사히 처리된다")
 	void chargeAndTransferCoinConcurrencyTest() throws InterruptedException {
+		accountB.updateBalance(500L);
+		accountC.updateBalance(500L);
+		accountRepository.save(accountB);
+		accountRepository.save(accountC);
+
 		int threadCount = 2;
 		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 		CountDownLatch latch = new CountDownLatch(threadCount);
 
 		executor.execute(() -> {
 			try {
-				accountService.chargeCoin(userA.getId(), 200);
+				accountService.transferCoin(userC.getId(), userA.getId(), 500);
 			} finally {
 				latch.countDown();
 			}
@@ -84,7 +71,7 @@ class AccountServiceIntegrationTest extends BaseIntegrationTest {
 
 		executor.execute(() -> {
 			try {
-				accountService.transferCoin(userA.getId(), userB.getId(), 100);
+				accountService.transferCoin(userB.getId(), userA.getId(), 500);
 			} finally {
 				latch.countDown();
 			}
@@ -93,34 +80,7 @@ class AccountServiceIntegrationTest extends BaseIntegrationTest {
 		latch.await();
 
 		Account accountA = accountRepository.findById(userA.getId()).orElseThrow();
-		Account accountB = accountRepository.findById(userB.getId()).orElseThrow();
 
-		assertThat(accountA.getCoin() + accountB.getCoin()).isEqualTo(200);
-	}
-
-	@Test
-	@DisplayName("TEST3: 동시에 코인 소비가 되면 차례대로 처리된다")
-	void coinConsumeConcurrencyTest() throws InterruptedException {
-		// 사전 충전
-		accountService.chargeCoin(userA.getId(), 500);
-
-		int threadCount = 5;
-		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-		CountDownLatch latch = new CountDownLatch(threadCount);
-
-		for (int i = 0; i < threadCount; i++) {
-			executor.execute(() -> {
-				try {
-					accountService.consumeCoin(userA.getId(), 50);
-				} finally {
-					latch.countDown();
-				}
-			});
-		}
-
-		latch.await();
-
-		Account updatedAccount = accountRepository.findById(userA.getId()).orElseThrow();
-		assertThat(updatedAccount.getCoin()).isEqualTo(500 - (50 * threadCount));
+		assertThat(accountA.getPostedBalance()).isEqualTo(1000L);
 	}
 }

@@ -11,6 +11,7 @@ import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
+import hanium.modic.backend.domain.transaction.entity.Account;
 import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.entity.UserImageEntity;
@@ -48,7 +49,7 @@ public class ProfileService {
 			.map(UserImageEntity::getId);
 		final boolean hasUserImage = userImageUrl.isPresent();
 		final long coinAmount = accountRepository.findById(user.getId())
-			.map(account -> account.getCoin())
+			.map(Account::getPostedBalance)
 			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 
 		return new GetMyProfileResponse(

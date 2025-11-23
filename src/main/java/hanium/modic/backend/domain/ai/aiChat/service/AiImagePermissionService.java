@@ -47,8 +47,8 @@ public class AiImagePermissionService {
 		// 2) 권한 업서트 + 증가 (원자적)
 		aiChatRoomRepository.upsertAndIncrease(userId, postId, AI_IMAGE_PERMISSION_COUNT);
 
-		// 3) 코인 후차감, 코인 거래는 별도의 트랜잭션으로 동작하여 후처리, 예외는 전파
-		accountService.consumeCoin(userId, post.getNonCommercialPrice());
+		// 3) 코인을 원작자에게 전송, 코인 거래는 별도의 트랜잭션으로 동작하여 후처리, 예외는 전파
+		accountService.transferCoin(userId, post.getUserId(), post.getNonCommercialPrice());
 
 		// 4) 알림
 		UserEntity user = userEntityRepository.findById(userId)
