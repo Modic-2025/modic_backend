@@ -57,7 +57,7 @@ public class AiImagePermissionService {
 		historyService.saveTransferHistories(userId, post.getNonCommercialPrice(), POST_PURCHASE, post.getTitle(),
 			post.getTitle());
 
-		// 4) 알림
+		// 5) 알림
 		UserEntity user = userEntityRepository.findById(userId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		notificationService.createNotification(
