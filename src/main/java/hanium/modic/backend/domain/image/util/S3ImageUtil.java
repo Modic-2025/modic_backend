@@ -48,7 +48,7 @@ public class S3ImageUtil implements ImageUtil {
 	private final ImageValidationService imageValidationService;
 	private final PrivateKey pk;
 
-	private final Duration EXPIRATION_TIME = Duration.ofMinutes(2); // 2분
+	private final Duration EXPIRATION_TIME = Duration.ofDays(1); // 1일
 	private final String HTTPS = "https://";
 
 	public S3ImageUtil(S3Properties s3Properties,
