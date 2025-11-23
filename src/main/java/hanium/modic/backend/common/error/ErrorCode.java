@@ -114,6 +114,7 @@ public enum ErrorCode {
 	COIN_NOT_ENOUGH_EXCEPTION(HttpStatus.BAD_REQUEST, "ACC-002", "코인이 부족합니다."),
 	COIN_TRANSFER_SAME_USER_EXCEPTION(HttpStatus.BAD_REQUEST, "ACC-003", "자신에게 코인을 송금할 수 업습니다."),
 	COIN_TRANSFER_FAIL_EXCEPTION(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-004", "코인 송금에 실패하였습니다."),
+	EFFECTIVE_AT_CANT_NOT_BE_NULL(HttpStatus.BAD_REQUEST, "ACC-005", "유효 시간이 null일 수 없습니다.")
 	;
 
 	private final HttpStatus status;
