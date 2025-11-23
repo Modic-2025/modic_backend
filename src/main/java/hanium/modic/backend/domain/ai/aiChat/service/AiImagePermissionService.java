@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.ai.aiChat.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
+import static hanium.modic.backend.domain.transaction.enums.HistoryType.*;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.transaction.service.AccountService;
+import hanium.modic.backend.domain.transaction.service.HistoryService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.infra.redis.distributedLock.LockManager;
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class AiImagePermissionService {
 
 	private final AccountService accountService;
+	private final HistoryService historyService;
 	private final TicketService ticketService;
 	private final PostEntityRepository postRepository;
 	private final AiChatRoomRepository aiChatRoomRepository;
@@ -50,7 +53,11 @@ public class AiImagePermissionService {
 		// 3) 코인을 원작자에게 전송, 코인 거래는 별도의 트랜잭션으로 동작하여 후처리, 예외는 전파
 		accountService.transferCoin(userId, post.getUserId(), post.getNonCommercialPrice());
 
-		// 4) 알림
+		// 4) 히스토리 저장
+		historyService.saveTransferHistories(userId, post.getNonCommercialPrice(), POST_PURCHASE, post.getTitle(),
+			post.getTitle());
+
+		// 5) 알림
 		UserEntity user = userEntityRepository.findById(userId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		notificationService.createNotification(
