@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,6 +31,10 @@ public class Account {
 
 	@Column(name = "coin", nullable = false)
 	private Long coin = 0L;
+
+	@Version
+	@Column(name = "version", nullable = false)
+	private Long version = 0L;
 
 	/**
 	 * 사용자 아이디로 계좌 생성
