@@ -32,8 +32,12 @@ public class LockManager {
 	private final String VOTE_STREAK_PREFIX = "lock:vote:streak:";
 	private final String ACCOUNT_PREFIX = "lock:account:";
 
-	public void accountLock(long userId, Runnable block) throws LockException {
-		exec.withLock(ACCOUNT_PREFIX + userId, block);
+	// 유저당 계쫘가 한 개라 userId로 락을 걸어도 무방
+	public void multipleAccountLock(List<Long> userIds, Runnable block) throws LockException {
+		List<String> keys = userIds.stream()
+			.map(id -> ACCOUNT_PREFIX + id)
+			.toList();
+		exec.withMultiLock(keys, block);
 	}
 
 	public void multipleUserLock(List<Long> userIds, Runnable block) throws LockException {

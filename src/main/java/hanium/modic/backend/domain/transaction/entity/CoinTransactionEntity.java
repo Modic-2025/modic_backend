@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 /**
  * Transaction 거래의 단위 거래(debit, credit)
  */
-@Table(name = "coin_tranaction_entities")
+@Table(name = "coin_transaction_entities")
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
