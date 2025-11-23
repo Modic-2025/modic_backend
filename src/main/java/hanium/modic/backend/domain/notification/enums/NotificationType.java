@@ -86,12 +86,12 @@ public enum NotificationType {
 	LIKED {
 		@Override
 		public String generateTitle(NotificationPayload payload) {
-			return sender(payload) + "님이 " + payload.postTitle() + " 게시글에 좋아요를 눌렀습니다.";
+			return sender(payload) + "님이 '" + payload.postTitle() + "' 게시글에 좋아요를 눌렀습니다.";
 		}
 
 		@Override
 		public String generateBody(NotificationPayload payload) {
-			return sender(payload) + "님이 " + payload.postTitle() + " 게시글에 좋아요를 눌렀습니다.";
+			return sender(payload) + "님이 '" + payload.postTitle() + "' 게시글에 좋아요를 눌렀습니다.";
 		}
 	}
 	;
