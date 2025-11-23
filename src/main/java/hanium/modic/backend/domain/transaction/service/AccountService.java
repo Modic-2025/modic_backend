@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.transaction.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
+import static hanium.modic.backend.domain.transaction.enums.HistoryType.*;
 
 import java.time.LocalDateTime;
 
@@ -21,8 +22,8 @@ import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.transaction.repository.CoinTransactionEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.web.transaction.dto.request.GetTransactionEntityResponse;
-import hanium.modic.backend.web.transaction.dto.request.GetTransactionsResponse;
+import hanium.modic.backend.web.transaction.dto.response.GetTransactionEntityResponse;
+import hanium.modic.backend.web.transaction.dto.response.GetTransactionsResponse;
 import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -41,6 +42,9 @@ public class AccountService {
 	// 유저 관련
 	private final UserEntityRepository userEntityRepository;
 
+	// 히스토리 관련
+	private final HistoryService historyService;
+
 	// 코인 잔액 조회
 	public GetCoinBalanceResponse getCoinBalance(final Long userId) {
 		Account account = accountRepository.findById(userId)
@@ -57,12 +61,25 @@ public class AccountService {
 			throw new AppException(COIN_TRANSFER_SAME_USER_EXCEPTION);
 		}
 
+		UserEntity fromUser = userEntityRepository.findById(fromUserId)
+			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 		// 받는 사람 존재 확인
 		UserEntity toUser = userEntityRepository.findById(toUserId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 
+
 		// 양도 처리
 		ledgerService.transfer(fromUserId, toUserId, coin);
+
+		// 히스토리 저장
+		historyService.saveTransferHistories(
+			fromUserId,
+			coin,
+			COIN_TRANSFER,
+			toUser.getName() + "(" + toUser.getEmail() + ")",
+			fromUser.getName() + "(" + fromUser.getEmail() + ")"
+		);
+
 
 		// 알림
 		notificationService.createNotification(

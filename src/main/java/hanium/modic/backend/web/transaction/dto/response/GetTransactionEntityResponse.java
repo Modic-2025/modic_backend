@@ -1,4 +1,4 @@
-package hanium.modic.backend.web.transaction.dto.request;
+package hanium.modic.backend.web.transaction.dto.response;
 
 import java.time.LocalDateTime;
 

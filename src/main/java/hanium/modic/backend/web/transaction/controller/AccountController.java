@@ -15,7 +15,7 @@ import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.web.transaction.dto.request.GetTransactionsResponse;
+import hanium.modic.backend.web.transaction.dto.response.GetTransactionsResponse;
 import hanium.modic.backend.web.transaction.dto.request.TransferCoinsRequest;
 import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import io.swagger.v3.oas.annotations.Operation;
