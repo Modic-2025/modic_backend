@@ -10,16 +10,14 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.ticket.service.TicketService;
 import hanium.modic.backend.domain.transaction.service.AccountService;
 import hanium.modic.backend.domain.transaction.service.HistoryService;
-import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import hanium.modic.backend.web.ai.aiChat.dto.response.GetRemainingGenerationsResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +26,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AiImagePermissionService {
 
+	// 거래 관련
 	private final AccountService accountService;
 	private final HistoryService historyService;
 	private final TicketService ticketService;
+
+	// 포스트 관련
 	private final PostEntityRepository postRepository;
+
+	// 채팅 관련
 	private final AiChatRoomRepository aiChatRoomRepository;
-	private final NotificationService notificationService;
-	private final LockManager lockManager;
+
+	// 알림 관련
+	private final NotificationFactory notificationFactory;
+
+	// 유저 관련
 	private final UserEntityRepository userEntityRepository;
+	private final UserImageService userImageService;
+
+	// 기타
+	private final LockManager lockManager;
 
 	private final int AI_IMAGE_PERMISSION_COUNT = 20; // 구매 시 제공되는 이미지 생성 횟수
 
@@ -58,17 +68,7 @@ public class AiImagePermissionService {
 			post.getTitle());
 
 		// 5) 알림
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-		notificationService.createNotification(
-			post.getUserId(),
-			NotificationType.POST_PURCHASED_BY_COIN,
-			NotificationPayload.builder(userId, user.getName(), user.getEmail())
-				.postId(post.getId())
-				.postTitle(post.getTitle())
-				.amount(post.getNonCommercialPrice())
-				.build()
-		);
+		notificationFactory.postPurchasedByCoin(userId, postId);
 	}
 
 	// 티켓으로 AI 이미지 생성권 구매
@@ -85,17 +85,7 @@ public class AiImagePermissionService {
 		ticketService.useTicket(userId, post.getTicketPrice());
 
 		// 4) 알림
-		UserEntity user = userEntityRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-		notificationService.createNotification(
-			post.getUserId(),
-			NotificationType.POST_PURCHASED_BY_TICKET,
-			NotificationPayload.builder(userId, user.getName(), user.getEmail())
-				.postId(post.getId())
-				.postTitle(post.getTitle())
-				.amount(post.getTicketPrice())
-				.build()
-		);
+		notificationFactory.postPurchasedByTicket(userId, postId);
 	}
 
 	// 이미지 생성권 소모

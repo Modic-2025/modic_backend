@@ -3,7 +3,7 @@ package hanium.modic.backend.domain.notification.dto;
 public record NotificationPayload(
 	Long senderId,
 	String senderNickname,
-	String senderEmail,   // 추가됨
+	String senderEmail,
 	Long postId,
 	String postTitle,
 	Long amount,
@@ -12,7 +12,13 @@ public record NotificationPayload(
 
 	public static NotificationPayload empty() {
 		return new NotificationPayload(
-			null, null, null, null, null, null, null
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null
 		);
 	}
 
@@ -30,7 +36,11 @@ public record NotificationPayload(
 		private Long amount;
 		private String reviewContent;
 
-		public Builder(Long senderId, String senderNickname, String senderEmail) {
+		public Builder(
+			Long senderId,
+			String senderNickname,
+			String senderEmail
+		) {
 			this.senderId = senderId;
 			this.senderNickname = senderNickname;
 			this.senderEmail = senderEmail;
