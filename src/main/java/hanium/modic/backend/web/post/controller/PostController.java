@@ -1,5 +1,6 @@
 package hanium.modic.backend.web.post.controller;
 
+import static hanium.modic.backend.common.error.ErrorCode.*;
 import static org.springframework.http.HttpStatus.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import hanium.modic.backend.common.annotation.user.CurrentUser;
 import hanium.modic.backend.common.response.AppResponse;
 import hanium.modic.backend.common.response.PageResponse;
+import hanium.modic.backend.common.swagger.ApiErrorMapping;
 import hanium.modic.backend.domain.post.enums.PostType;
 import hanium.modic.backend.domain.post.service.PostService;
 import hanium.modic.backend.domain.postReview.service.PostReviewAuthorizationService;
@@ -95,12 +97,12 @@ public class PostController {
 		summary = "게시글 목록 조회 API",
 		description = """
 			게시글 목록을 조회합니다. 정렬 기준, 페이지 번호, 페이지 크기, 포스트 타입을 입력받습니다.
-			postType은 (ALL, ORIGINAL, AI_DERIVED)가 존재한다.
-			""",
-		responses = {
-			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
-		}
+			postType은 (ALL, ORIGINAL, AI_DERIVED, HOTTEST)가 존재한다.
+			"""
 	)
+	@ApiErrorMapping({
+		USER_INPUT_EXCEPTION
+	})
 	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getPosts(
 		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
 		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
@@ -110,13 +112,32 @@ public class PostController {
 		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(response)));
 	}
 
+	@GetMapping("/following")
+	@Operation(
+		summary = "팔로우한 사용자의 게시글 목록 조회 API",
+		description = """
+			팔로우한 사용자의 게시글 목록을 조회합니다. 페이지 번호, 페이지 크기, 포스트 타입을 입력받습니다.
+			"""
+	)
+	@ApiErrorMapping({
+		USER_INPUT_EXCEPTION
+	})
+	public ResponseEntity<AppResponse<PageResponse<GetPostsResponse>>> getFollowingPosts(
+		@RequestParam(required = false, defaultValue = "0") @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다") Integer page,
+		@RequestParam(required = false, defaultValue = "10") @Min(value = 10, message = "페이지 크기는 10 이상이어야 합니다.") @Max(value = 20, message = "페이지 크기는 20 이하여야 합니다.") Integer size,
+		@CurrentUser UserEntity user
+	) {
+		Page<GetPostsResponse> response = postService.getFollowingPosts(user.getId(), page, size);
+		return ResponseEntity.ok(AppResponse.ok(PageResponse.of(response)));
+	}
+
 	@GetMapping("/search")
 	@Operation(
 		summary = "게시글 검색 API",
 		description = """
-			제목 또는 설명에 검색어가 포함된 게시글을 조회합니다.
-			검색 대상은 postType(ALL, ORIGINAL, AI_DERIVED)에 따라 달라집니다.
-		""",
+				제목 또는 설명에 검색어가 포함된 게시글을 조회합니다.
+				검색 대상은 postType(ALL, ORIGINAL, AI_DERIVED)에 따라 달라집니다.
+			""",
 		responses = {
 			@ApiResponse(responseCode = "400", description = "사용자 입력 오류[C-001]")
 		}

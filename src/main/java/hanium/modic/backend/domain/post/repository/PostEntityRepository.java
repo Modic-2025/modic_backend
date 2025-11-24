@@ -65,4 +65,30 @@ public interface PostEntityRepository extends JpaRepository<PostEntity, Long> {
 	List<PostEntity> findAllDescendantsByPostId(@Param("postId") Long postId);
 
 	boolean existsByParentPostIdAndThumbnailImageId(Long postId, Long createdAiImageId);
+
+	@Query("""
+    SELECT p
+    FROM PostEntity p
+    LEFT JOIN PostStatisticsEntity ps
+        ON p.id = ps.postId
+    WHERE p.postStatus IN (hanium.modic.backend.domain.post.enums.PostStatus.ORIGINAL
+    					, hanium.modic.backend.domain.post.enums.PostStatus.DERIVED_APPROVED)
+    ORDER BY ps.likeCount DESC NULLS LAST, p.createAt DESC
+    """)
+	Page<PostEntity> findHottestPosts(Pageable pageable);
+
+	@Query("""
+		SELECT p
+		FROM PostEntity p
+		WHERE p.postStatus IN (hanium.modic.backend.domain.post.enums.PostStatus.ORIGINAL
+							, hanium.modic.backend.domain.post.enums.PostStatus.DERIVED_APPROVED)
+		AND
+		p.userId IN (
+		    SELECT f.followingId
+		    FROM FollowEntity f
+		    WHERE f.myId = :myId
+		)
+		ORDER BY p.createAt DESC
+		""")
+	Page<PostEntity> findPostsByFollowedUsers(@Param("myId") Long myId, Pageable pageable);
 }

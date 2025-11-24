@@ -237,6 +237,18 @@ public class PostService {
 		return createGetPostsResponse(posts);
 	}
 
+	// 팔로우한 포스트 목록 조회
+	@Transactional(readOnly = true)
+	public Page<GetPostsResponse> getFollowingPosts(
+		final long userId,
+		final int page,
+		final int size
+	) {
+		Pageable pageable = PageRequest.of(page, size, SORT_DIRECTION, SORT_CRITERIA);
+		Page<PostEntity> posts = postEntityRepository.findPostsByFollowedUsers(userId, pageable);
+		return createGetPostsResponse(posts);
+	}
+
 	// 검색어로 포스트 목록 조회
 
 	/**
@@ -416,6 +428,7 @@ public class PostService {
 			case ORIGINAL -> postEntityRepository.findAllByPostStatus(ORIGINAL, pageable);
 			case AI_DERIVED -> postEntityRepository.findAllByPostStatus(DERIVED_APPROVED, pageable);
 			case ALL -> postEntityRepository.findAllByPostStatusIn(List.of(ORIGINAL, DERIVED_APPROVED), pageable);
+			case HOTTEST -> postEntityRepository.findHottestPosts(pageable);
 		};
 	}
 
@@ -462,6 +475,7 @@ public class PostService {
 			case ORIGINAL -> List.of(ORIGINAL);
 			case AI_DERIVED -> List.of(DERIVED_APPROVED);
 			case ALL -> List.of(ORIGINAL, DERIVED_APPROVED);
+			case HOTTEST -> List.of(ORIGINAL, DERIVED_APPROVED);
 		};
 	}
 
