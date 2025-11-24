@@ -69,6 +69,9 @@ public class PostLikeService {
 					postLikeRepository.save(postLike);
 					log.debug("하트 추가: userId={}, postId={}", userId, postId);
 					asyncPostStatisticsService.incrementLikeCount(postId);
+
+					// 알림 전송
+					notificationFactory.liked(userId, postId);
 				} else {
 					// 4. 삭제 성공 시, 통계 감소
 					log.debug("하트 삭제: userId={}, postId={}", userId, postId);
@@ -78,9 +81,6 @@ public class PostLikeService {
 		} catch (LockException e) {
 			throw new AppException(POST_LIKE_FAIL_EXCEPTION);
 		}
-
-		// 알림 전송
-		notificationFactory.liked(userId, postId);
 	}
 
 	/**
