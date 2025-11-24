@@ -4,6 +4,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +24,7 @@ import hanium.modic.backend.domain.notification.entity.NotificationEntity;
 import hanium.modic.backend.domain.notification.enums.NotificationStatus;
 import hanium.modic.backend.domain.notification.enums.NotificationType;
 import hanium.modic.backend.domain.notification.repository.NotificationRepository;
+import hanium.modic.backend.domain.user.service.UserImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,8 +35,14 @@ public class NotificationService {
 
 	private static final Sort CREATED_AT_DESC = Sort.by(DESC, "createAt");
 
+	// 알림 관련
 	private final NotificationRepository notificationRepository;
 	private final NotificationProperties notificationProperties;
+
+	// 유저 관련
+	private final UserImageService userImageService;
+
+	// 기타
 	private final ObjectMapper objectMapper;
 
 	// 알림 목록 조회 및 읽음 처리
@@ -49,8 +57,19 @@ public class NotificationService {
 			snapshot,
 			pageable
 		);
-		Page<GetNotificationsResponse> responses = notifications.map(notification ->
-			GetNotificationsResponse.of(notification, deserializePayload(notification.getPayload()))
+		Page<GetNotificationsResponse> responses = notifications.map(notification -> {
+				NotificationPayload notificationPayload = deserializePayload(notification.getPayload());
+				Optional<String> imageGetUrlOptional = userImageService.createImageGetUrlOptional(
+					notificationPayload.senderId());
+				boolean hasSenderImage = imageGetUrlOptional.isPresent();
+
+				return GetNotificationsResponse.of(
+					notification,
+					notificationPayload,
+					hasSenderImage,
+					imageGetUrlOptional.orElse(null)
+				);
+			}
 		);
 
 		// 알림 읽음 처리
@@ -78,7 +97,8 @@ public class NotificationService {
 	private void markAsRead(List<NotificationEntity> notifications, LocalDateTime readAt) {
 		notifications.stream()
 			.filter(NotificationEntity::isUnread)
-			.forEach(notification -> notification.markAsRead(readAt, notificationProperties.getReadRetentionDuration()));
+			.forEach(
+				notification -> notification.markAsRead(readAt, notificationProperties.getReadRetentionDuration()));
 	}
 
 	// 만료된 읽음 알림 정리

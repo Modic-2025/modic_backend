@@ -12,9 +12,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.enums.PostStatus;
@@ -49,7 +47,7 @@ public class AiDerivedPostService {
 	private final SimilarityVoteSummaryRepository voteSummaryRepository;
 
 	// 알림관련
-	private final NotificationService notificationService;
+	private final NotificationFactory notificationFactory;
 
 	// AI 유사도 검사 요청 서비스
 	private final AiSimilarityRequestService aiSimilarityRequestService;
@@ -169,14 +167,7 @@ public class AiDerivedPostService {
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
 
 		// 12. 알람 생성
-		notificationService.createNotification(
-			originalPost.getUserId(),
-			NotificationType.DERIVED_POST_CREATED,
-			NotificationPayload.builder(user.getId(), user.getName(), user.getEmail())
-				.postId(aiDerivedPost.getId())
-				.postTitle(aiDerivedPost.getTitle())
-				.build()
-		);
+		notificationFactory.derivedPostCreated(userId, savedPost.getId());
 
 		return CreatePostResponse.of(savedPost.getId());
 	}

@@ -1,7 +1,6 @@
 package hanium.modic.backend.domain.postLike.service;
 
 import static hanium.modic.backend.common.error.ErrorCode.*;
-import static hanium.modic.backend.domain.notification.enums.NotificationType.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,17 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.error.exception.LockException;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.service.NotificationService;
-import hanium.modic.backend.domain.user.entity.UserEntity;
-import hanium.modic.backend.domain.user.repository.UserEntityRepository;
-import hanium.modic.backend.infra.redis.distributedLock.LockManager;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.postLike.entity.PostLikeEntity;
 import hanium.modic.backend.domain.postLike.entity.PostStatisticsEntity;
 import hanium.modic.backend.domain.postLike.repository.PostLikeEntityRepository;
 import hanium.modic.backend.domain.postLike.repository.PostStatisticsEntityRepository;
+import hanium.modic.backend.infra.redis.distributedLock.LockManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,8 +38,7 @@ public class PostLikeService {
 	private final PostEntityRepository postRepository;
 	private final AsyncPostStatisticsService asyncPostStatisticsService;
 	private final LockManager lockManager;
-	private final NotificationService notificationService;
-	private final UserEntityRepository userRepository;
+	private final NotificationFactory notificationFactory;
 
 	/**
 	 * 게시글 하트 토글 (추가/삭제)
@@ -54,9 +49,6 @@ public class PostLikeService {
 	 * @throws AppException 락 획득 실패 시
 	 */
 	public void toggleLike(Long userId, Long postId) {
-		UserEntity user = userRepository.findById(userId)
-			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
-
 		try {
 			lockManager.postLikeLock(userId, postId, () -> {
 				// 1. 게시글 존재 및 권한 확인
@@ -77,16 +69,6 @@ public class PostLikeService {
 					postLikeRepository.save(postLike);
 					log.debug("하트 추가: userId={}, postId={}", userId, postId);
 					asyncPostStatisticsService.incrementLikeCount(postId);
-
-					// 알림 전송
-					notificationService.createNotification(
-						post.getUserId(),
-						LIKED,
-						NotificationPayload.builder(user.getId(), user.getName(), user.getEmail())
-							.postId(post.getId())
-							.postTitle(post.getTitle())
-							.build()
-					);
 				} else {
 					// 4. 삭제 성공 시, 통계 감소
 					log.debug("하트 삭제: userId={}, postId={}", userId, postId);
@@ -96,6 +78,9 @@ public class PostLikeService {
 		} catch (LockException e) {
 			throw new AppException(POST_LIKE_FAIL_EXCEPTION);
 		}
+
+		// 알림 전송
+		notificationFactory.liked(userId, postId);
 	}
 
 	/**

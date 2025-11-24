@@ -13,18 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.common.response.PageResponse;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.transaction.entity.Account;
 import hanium.modic.backend.domain.transaction.entity.CoinTransactionEntity;
 import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.transaction.repository.CoinTransactionEntityRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
+import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import hanium.modic.backend.web.transaction.dto.response.GetTransactionEntityResponse;
 import hanium.modic.backend.web.transaction.dto.response.GetTransactionsResponse;
-import hanium.modic.backend.web.transaction.dto.response.GetCoinBalanceResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -37,7 +35,7 @@ public class AccountService {
 	private final CoinTransactionEntityRepository coinTransactionEntityRepository;
 
 	// 알림 관련
-	private final NotificationService notificationService;
+	private final NotificationFactory notificationFactory;
 
 	// 유저 관련
 	private final UserEntityRepository userEntityRepository;
@@ -67,7 +65,6 @@ public class AccountService {
 		UserEntity toUser = userEntityRepository.findById(toUserId)
 			.orElseThrow(() -> new AppException(USER_NOT_FOUND_EXCEPTION));
 
-
 		// 양도 처리
 		ledgerService.transfer(fromUserId, toUserId, coin);
 
@@ -80,15 +77,8 @@ public class AccountService {
 			fromUser.getName() + "(" + fromUser.getEmail() + ")"
 		);
 
-
 		// 알림
-		notificationService.createNotification(
-			toUserId,
-			NotificationType.COIN_RECEIVED,
-			NotificationPayload.builder(fromUserId, toUser.getName(), toUser.getEmail())
-				.amount(coin)
-				.build()
-		);
+		notificationFactory.coinReceived(fromUserId, toUserId, coin);
 	}
 
 	// 코인 거래 내역 조회

@@ -15,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import hanium.modic.backend.common.error.exception.AppException;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
 import hanium.modic.backend.domain.postReview.entity.PostReviewEntity;
@@ -48,7 +46,7 @@ public class PostReviewService {
 	private final UserImageService userImageService;
 
 	// 알림 관련
-	private final NotificationService notificationService;
+	private final NotificationFactory notificationFactory;
 
 	// 포스트 리뷰 생성
 	@Transactional
@@ -77,15 +75,7 @@ public class PostReviewService {
 			});
 
 		// 알람
-		notificationService.createNotification(
-			post.getUserId(),
-			NotificationType.POST_REVIEWED,
-			NotificationPayload.builder(user.getId(), user.getName(), user.getEmail())
-				.postId(postId)
-				.postTitle(post.getTitle())
-				.reviewContent(postReview.getDescription())
-				.build()
-		);
+		notificationFactory.postReviewed(user.getId(), postId, postReview.getId());
 	}
 
 	// 포스트 리뷰 삭제

@@ -19,7 +19,7 @@ import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.ai.aiChat.entity.AiChatRoomEntity;
 import hanium.modic.backend.domain.ai.aiChat.repository.AiChatRoomRepository;
 import hanium.modic.backend.domain.ai.aiChat.service.AiImagePermissionService;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entityfactory.PostFactory;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
@@ -53,7 +53,7 @@ class AiImagePermissionServiceTest {
 	private LockManager lockManager;
 
 	@Mock
-	private NotificationService notificationService;
+	private NotificationFactory notificationFactory;
 
 	@Mock
 	private UserEntityRepository userEntityRepository;
@@ -71,8 +71,7 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
-		when(userEntityRepository.findById(anyLong())).thenReturn(Optional.of(testUser));
-		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
+		doNothing().when(notificationFactory).postPurchasedByCoin(anyLong(), anyLong());
 		doNothing().when(historyService).saveTransferHistories(anyLong(), anyLong(), any(), any(), any());
 
 		// when
@@ -138,9 +137,7 @@ class AiImagePermissionServiceTest {
 		when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 		when(aiChatRoomRepository.upsertAndIncrease(anyLong(), anyLong(), anyInt()))
 			.thenReturn(1);
-		when(userEntityRepository.findById(anyLong())).thenReturn(Optional.of(testUser));
-		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
-
+		doNothing().when(notificationFactory).postPurchasedByTicket(anyLong(), anyLong());
 		// when
 		aiImagePermissionService.buyAiImagePermissionByTicket(testUser.getId(), testPost.getId());
 

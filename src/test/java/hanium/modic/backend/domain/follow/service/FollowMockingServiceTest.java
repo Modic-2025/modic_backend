@@ -22,7 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import hanium.modic.backend.common.error.ErrorCode;
 import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
@@ -45,7 +45,7 @@ class FollowMockingServiceTest {
 	private UserImageService userImageService;
 
 	@Mock
-	private NotificationService notificationService;
+	private NotificationFactory notificationFactory;
 
 	@Test
 	@DisplayName("TEST1: 존재하지 않는 유저의 팔로워 목록 조회 시 예외 발생")
@@ -73,7 +73,7 @@ class FollowMockingServiceTest {
 		when(target.getId()).thenReturn(2L);
 
 		when(userRepository.findById(2L)).thenReturn(Optional.of(target));
-		doNothing().when(notificationService).createNotification(anyLong(), any(), any());
+		doNothing().when(notificationFactory).followed(anyLong(), anyLong());
 
 		// when
 		followService.followOrUnfollow(me, 2L, FOLLOW);

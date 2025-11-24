@@ -15,9 +15,7 @@ import hanium.modic.backend.domain.follow.dto.FollowType;
 import hanium.modic.backend.domain.follow.dto.FollowerWithStatus;
 import hanium.modic.backend.domain.follow.dto.FollowingWithStatus;
 import hanium.modic.backend.domain.follow.repository.FollowEntityRepository;
-import hanium.modic.backend.domain.notification.dto.NotificationPayload;
-import hanium.modic.backend.domain.notification.enums.NotificationType;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.user.entity.UserEntity;
 import hanium.modic.backend.domain.user.repository.UserEntityRepository;
 import hanium.modic.backend.domain.user.service.UserImageService;
@@ -38,7 +36,7 @@ public class FollowService {
 	private final UserImageService userImageService;
 
 	// 알림 관련
-	private final NotificationService notificationService;
+	private final NotificationFactory notificationFactory;
 
 	// 팔로우 또는 언팔로우 처리
 	@Transactional
@@ -60,12 +58,7 @@ public class FollowService {
 			followRepository.insertFollowIfExist(me.getId(), target.getId());
 
 			// 알림 생성
-			notificationService.createNotification(
-				targetId,
-				NotificationType.FOLLOWED,
-				NotificationPayload.builder(me.getId(), me.getName(), me.getEmail())
-					.build()
-			);
+			notificationFactory.followed(me.getId(), targetId);
 		} else if (type == UNFOLLOW) {
 			followRepository.deleteByMyIdAndFollowingId(me.getId(), targetId);
 		}

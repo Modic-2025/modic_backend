@@ -25,7 +25,7 @@ import hanium.modic.backend.domain.ai.aiServer.entity.AiChatImageEntity;
 import hanium.modic.backend.domain.ai.aiServer.repository.AiChatImageRepository;
 import hanium.modic.backend.domain.image.domain.ImagePrefix;
 import hanium.modic.backend.domain.image.util.ImageUtil;
-import hanium.modic.backend.domain.notification.service.NotificationService;
+import hanium.modic.backend.domain.notification.factory.NotificationFactory;
 import hanium.modic.backend.domain.post.entity.PostEntity;
 import hanium.modic.backend.domain.post.entity.PostImageEntity;
 import hanium.modic.backend.domain.post.repository.PostEntityRepository;
@@ -71,7 +71,7 @@ class AiDerivedPostServiceTest {
 	private AiSimilarityRequestService aiSimilarityRequestService;
 
 	@Mock
-	private NotificationService notificationService;
+	private NotificationFactory notificationFactory;
 
 	@Mock
 	private UserEntityRepository userEntityRepository;
@@ -119,7 +119,7 @@ class AiDerivedPostServiceTest {
 			when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
 			when(voteSummaryRepository.save(any())).thenReturn(null);
 			doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
-			doNothing().when(notificationService).createNotification(anyLong(), any(), any());
+			doNothing().when(notificationFactory).derivedPostCreated(anyLong(), anyLong());
 
 			// Create a mock vote entity with ID
 			SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);

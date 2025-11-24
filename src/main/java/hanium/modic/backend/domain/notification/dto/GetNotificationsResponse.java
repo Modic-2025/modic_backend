@@ -1,6 +1,7 @@
 package hanium.modic.backend.domain.notification.dto;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import hanium.modic.backend.domain.notification.entity.NotificationEntity;
 import hanium.modic.backend.domain.notification.enums.NotificationStatus;
@@ -14,10 +15,17 @@ public record GetNotificationsResponse(
 	String body,
 	Long postId,
 	Long senderId,
+	boolean hasSenderImage,
+	String senderImageUrl,
 	LocalDateTime createdAt
 ) {
 
-	public static GetNotificationsResponse of(NotificationEntity entity, NotificationPayload payload) {
+	public static GetNotificationsResponse of(
+		NotificationEntity entity,
+		NotificationPayload payload,
+		boolean hasSenderImage,
+		String senderImageUrl
+	) {
 		return new GetNotificationsResponse(
 			entity.getId(),
 			entity.getType(),
@@ -26,6 +34,8 @@ public record GetNotificationsResponse(
 			entity.getBody(),
 			payload.postId(),
 			payload.senderId(),
+			hasSenderImage,
+			senderImageUrl,
 			entity.getCreateAt()
 		);
 	}
