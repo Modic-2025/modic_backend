@@ -5,6 +5,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import hanium.modic.backend.common.error.ErrorCode;
+import hanium.modic.backend.common.error.exception.AppException;
 import hanium.modic.backend.domain.notification.dto.NotificationPayload;
 import hanium.modic.backend.domain.notification.enums.NotificationType;
 import hanium.modic.backend.domain.notification.service.NotificationService;
@@ -33,7 +35,7 @@ public class NotificationFactory {
 	// 유저 조회
 	private UserEntity getUser(Long userId) {
 		return userRepository.findById(userId)
-			.orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
+			.orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 	}
 
 	// 유저 이미지 URL 조회
