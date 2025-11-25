@@ -19,7 +19,8 @@ public class DevCookieUtil implements CookieUtil {
 			.secure(true)
 			.path("/")
 			.maxAge(COOKIE_MAX_AGE)
-			.sameSite("Lax")  // 또는 "Strict"
+			.sameSite("None")  // 또는 "Strict"
+			.domain(".modic.kr")
 			.build();
 	}
 
@@ -29,7 +30,8 @@ public class DevCookieUtil implements CookieUtil {
 			.secure(true)
 			.path("/")
 			.maxAge(0)
-			.sameSite("Lax")
+			.sameSite("None")
+			.domain(".modic.kr")
 			.build();
 	}
 }
