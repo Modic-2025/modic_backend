@@ -18,6 +18,6 @@ public interface UserEntityRepository extends JpaRepository<UserEntity, Long> {
 	Optional<UserEntity> findByUniqueId(String uniqueId);
 
 	// Finds users whose names contain the provided keyword ignoring case.
-	@Query("SELECT u FROM UserEntity u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+	@Query("SELECT u FROM UserEntity u WHERE LOWER(u.name) LIKE LOWER(CONCAT('%', :name, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :name, '%'))")
 	Page<UserEntity> findByNameContainingIgnoreCase(@Param("name") String name, Pageable pageable);
 }
