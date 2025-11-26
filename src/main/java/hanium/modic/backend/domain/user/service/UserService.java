@@ -17,6 +17,8 @@ import hanium.modic.backend.common.util.TempPasswordGenerator;
 import hanium.modic.backend.domain.auth.service.AuthService;
 import hanium.modic.backend.domain.auth.service.component.EmailSender;
 import hanium.modic.backend.domain.auth.service.dto.EmailDto;
+import hanium.modic.backend.domain.ticket.entity.TicketEntity;
+import hanium.modic.backend.domain.ticket.repository.TicketRepository;
 import hanium.modic.backend.domain.transaction.entity.Account;
 import hanium.modic.backend.domain.transaction.repository.AccountRepository;
 import hanium.modic.backend.domain.user.entity.UserEntity;
@@ -41,6 +43,9 @@ public class UserService {
 
 	// 계좌 관련
 	private final AccountRepository accountRepository;
+
+	// 티켓 관련
+	private final TicketRepository ticketRepository;
 
 	// 기타
 	private final BCryptPasswordEncoder passwordEncoder;
@@ -72,7 +77,16 @@ public class UserService {
 		Account account = Account.builder()
 			.userId(user.getId())
 			.build();
+		// 계좌에 5코인
+		account.updateBalance(5L);
 		accountRepository.save(account);
+
+		// 티켓 5개 지급
+		TicketEntity newUserTicket = TicketEntity.builder()
+			.userId(user.getId())
+			.build();
+		newUserTicket.increaseTicket(5L);
+		ticketRepository.save(newUserTicket);
 
 		return UserCreateResponse.from(user);
 	}
