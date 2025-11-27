@@ -49,6 +49,8 @@ public class S3ImageUtil implements ImageUtil {
 	private final PrivateKey pk;
 
 	private final Duration EXPIRATION_TIME = Duration.ofDays(1); // 1일
+	private static final Instant FIXED_EXPIRE_DATE = Instant.parse("2035-01-01T00:00:00Z");
+
 	private final String HTTPS = "https://";
 
 	public S3ImageUtil(S3Properties s3Properties,
@@ -147,7 +149,7 @@ public class S3ImageUtil implements ImageUtil {
 			String path = resourcePath.startsWith("/") ? resourcePath : ("/" + resourcePath);
 			String resourceUrl = HTTPS + domain + path;
 
-			Date expires = Date.from(Instant.now().plus(EXPIRATION_TIME));
+			Date expires = Date.from(FIXED_EXPIRE_DATE);
 
 			return CloudFrontUrlSigner.getSignedURLWithCannedPolicy(
 				resourceUrl,
