@@ -48,7 +48,7 @@ public class ProfileService {
 		final Optional<Long> userImageId = userImageEntityRepository.findByUserId(user.getId())
 			.map(UserImageEntity::getId);
 		final boolean hasUserImage = userImageUrl.isPresent();
-		final long coinAmount = accountRepository.findById(user.getId())
+		final long coinAmount = accountRepository.findByUserId(user.getId())
 			.map(Account::getPostedBalance)
 			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 

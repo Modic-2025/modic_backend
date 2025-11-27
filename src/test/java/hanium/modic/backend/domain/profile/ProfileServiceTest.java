@@ -62,7 +62,7 @@ class ProfileServiceTest {
 		when(followRepository.countByMyId(1L)).thenReturn(3L);
 		when(followRepository.countByFollowingId(1L)).thenReturn(7L);
 		when(userImageEntityRepository.findByUserId(1L)).thenReturn(Optional.empty());
-		when(accountRepository.findById(1L)).thenReturn(
+		when(accountRepository.findByUserId(1L)).thenReturn(
 			Optional.ofNullable(
 				Account.builder().userId(1L).build()
 			)
