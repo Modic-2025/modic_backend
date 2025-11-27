@@ -45,7 +45,7 @@ public class AccountService {
 
 	// 코인 잔액 조회
 	public GetCoinBalanceResponse getCoinBalance(final Long userId) {
-		Account account = accountRepository.findById(userId)
+		Account account = accountRepository.findByUserId(userId)
 			.orElseThrow(() -> new AppException(ACCOUNT_NOT_FOUND_EXCEPTION));
 
 		return new GetCoinBalanceResponse(account.getPostedBalance());
