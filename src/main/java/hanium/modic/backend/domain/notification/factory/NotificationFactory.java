@@ -119,13 +119,13 @@ public class NotificationFactory {
 	}
 
 	// 2차 창작물 생성 알림(DERIVED_POST_CREATED)
-	public void derivedPostCreated(Long userId, Long derivedPostId) {
+	public void derivedPostCreated(Long userId, Long derivedPostId, String originalPostName) {
 		PostEntity derivedPost = postRepository.findById(derivedPostId)
 			.orElseThrow();
 
 		NotificationPayload payload = basePayload(userId)
 			.postId(derivedPost.getId())
-			.postTitle(derivedPost.getTitle())
+			.postTitle(originalPostName)
 			.build();
 
 		send(derivedPost.getUserId(), NotificationType.DERIVED_POST_CREATED, payload);

@@ -119,7 +119,7 @@ class AiDerivedPostServiceTest {
 			when(postImageEntityRepository.save(any(PostImageEntity.class))).thenReturn(mockOriginalImage);
 			when(voteSummaryRepository.save(any())).thenReturn(null);
 			doNothing().when(asyncPostStatisticsService).initializeStatistics(anyLong());
-			doNothing().when(notificationFactory).derivedPostCreated(anyLong(), anyLong());
+			doNothing().when(notificationFactory).derivedPostCreated(anyLong(), anyLong(), anyString());
 
 			// Create a mock vote entity with ID
 			SimilarityVoteEntity mockSavedVote = mock(SimilarityVoteEntity.class);

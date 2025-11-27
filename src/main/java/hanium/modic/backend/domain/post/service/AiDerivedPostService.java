@@ -167,7 +167,7 @@ public class AiDerivedPostService {
 		asyncPostStatisticsService.initializeStatistics(savedPost.getId());
 
 		// 12. 알람 생성
-		notificationFactory.derivedPostCreated(userId, savedPost.getId());
+		notificationFactory.derivedPostCreated(userId, savedPost.getId(), originalPost.getTitle());
 
 		return CreatePostResponse.of(savedPost.getId());
 	}
